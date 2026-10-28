@@ -4417,6 +4417,28 @@ function updateVehiclePartDropdown() {
 
 // ==================== AI Servis Bilgi Bankası & Çözüm Kütüphanesi ====================
 function loadServiceKnowledgeBaseFromLocalStorage() {
+  const appMode = (typeof localStorage !== 'undefined') ? localStorage.getItem('servisai_app_mode') : null;
+  // Temiz Başlangıç (Clean Slate) modundaysa demo kayıtları yüklenmez, firma kendi tecrübesiyle doldurur!
+  if (appMode === 'clean') {
+    try {
+      const raw = localStorage.getItem('servisai_knowledge_base');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        state.serviceKnowledgeBase = Array.isArray(parsed) ? parsed.filter(item => {
+          if (!item) return false;
+          const str = JSON.stringify(item).toLowerCase();
+          if (str.includes('143')) return false; // Yabancı/hatalı 143 nolu servis kaydını derhal temizle
+          return true;
+        }) : [];
+      } else {
+        state.serviceKnowledgeBase = [];
+      }
+    } catch (e) {
+      state.serviceKnowledgeBase = [];
+    }
+    return;
+  }
+
   let loaded = false;
   try {
     const raw = localStorage.getItem('servisai_knowledge_base');
@@ -4460,7 +4482,7 @@ function loadServiceKnowledgeBaseFromLocalStorage() {
         id: "KB-PRT-001",
         deviceType: "printer",
         title: "Yazıcı On (Güç) Durumuna Gelmeme & SMPS Besleme Arızası",
-        keywordMatch: ["printer", "yazıcı", "yazici", "açılmıyor", "smps", "besleme"],
+        keywordMatch: ["smps", "besleme", "sigorta", "standby", "voltaj yok"],
         rootCause: "Yazıcı SMPS anahtarlamalı güç besleme kartında (Power Supply Board) giriş darbe filtre katında T2A cam sigorta atması ve primer PWM devresinde aşırı gerilim kilidi saptandı. Cihaz on (güç) tuşuna basıldığında standby voltajı üretemiyor.",
         solution: "Arızalı SMPS besleme kartı revize edilecek, T2A 250V giriş sigortası ve aşırı gerilim varistörü (MOV) yenilenecek, sekonder 24V (motor/kafa) ve 5V (anakart) DC filtre kondansatörleri ESR testinden geçirilerek kart gerilimleri kararlı hale getirilecektir.",
         action: "Yazıcı güç kartı söküldü, atık T2A cam sigorta ve hasarlı varistör yenilendi. Soğuk lehimler tazelendi. 24V ve 5V DC DC bara voltajları multimetre ile doğrulandı. Cihaz on moduna alındı, mekanik selftest ve test çıktısı başarıyla tamamlandı.",
@@ -4478,7 +4500,7 @@ function loadServiceKnowledgeBaseFromLocalStorage() {
         id: "KB-PRT-002",
         deviceType: "printer",
         title: "Yazıcı Kağıt Besleme Patinaj & Sensör Hatası",
-        keywordMatch: ["roller", "patinaj", "sıkışma", "optik bayrak", "pick-up"],
+        keywordMatch: ["roller", "patinaj", "sıkışma", "optik bayrak", "pick-up", "kağıt çekmiyor"],
         rootCause: "Yazıcı kağıt çekici rulo (Pick-up roller) yüzeyinde aşınma ve tozlanma nedeniyle patinaj oluşmuş, kağıt bayrak optik sensörü zamanında tetiklenemediği için besleme hatası vermektedir.",
         solution: "Kağıt besleme pateni ve pick-up roller izopropil alkol ile temizlenecek veya yenilenecek, ayırma pedi (separation pad) yay tansiyonu ayarlanacaktır.",
         action: "Aşınmış pick-up roller yenilendi, separation pad yüzeyi temizlendi ve yay tansiyonu kalibre edildi. 50 adet ardışık test baskısında besleme kusursuz çalıştı.",
@@ -4529,7 +4551,10 @@ function synthesizeAIDiagnosis(brand, model, symptoms, order) {
     'ariza', 'cozum', 'kart', 'karti', 'kartı', 'cihaz', 'cihazi', 'cihazı',
     'tamir', 'servis', 'fakat', 'sonra', 'icin', 'için', 'ile', 've', 'veya',
     'olan', 'durumu', 'giriş', 'giris', 'normal', 'yüksek', 'yuksek', 'tespit',
-    'mudahale', 'müdahale', 'saniye', 'durum', 'arıza', 'çözüm', 'genel'
+    'mudahale', 'müdahale', 'saniye', 'durum', 'arıza', 'çözüm', 'genel',
+    'printer', 'yazıcı', 'yazici', 'ekipman', 'ünite', 'unite', 'model', 'marka',
+    'makine', 'makinesi', 'elektronik', 'sistem', 'sistemi', 'onarim', 'onarım',
+    'sorun', 'problem', 'yeni', 'tarifi', 'tarif', 'talep', 'kayıt', 'kayit'
   ]);
 
   // ÖNCELİK 1: SRV-2026-104 veya Delta VFD-075 Endüstriyel Sürücü Kartı Özel Teşhisi
@@ -4553,26 +4578,29 @@ function synthesizeAIDiagnosis(brand, model, symptoms, order) {
     learnedBadge = "⚡ Delta VFD-075 Endüstriyel Sürücü Güç Elektroniği & IGBT Teşhis Protokolü Doğrulandı.";
   } else {
     // ÖNCELİK 2: ÖĞRENEN YAPAY ZEKA: Servis Bilgi Bankası (Knowledge Base) Kontrol Edilir!
-    // Kural: Stop words filtrelenir; en az 2 adet anlamlı kelime eşleşmeli veya cihaz tipi tam uymalıdır!
+    // Kural: Stop words filtrelenir; cihaz tipi genel isimdir ve tek başına eşleşme sağlayamaz; en az 2 gerçek semptom eşleşmelidir!
     const kbMatch = (state.serviceKnowledgeBase || []).find(kb => {
       if (!kb) return false;
       // Eğer KB kaydı belirli bir iş emrine aitse ve aktif iş emri farklıysa eşleştirme
       if (kb.orderCode && orderCode && kb.orderCode !== orderCode) {
         return false;
       }
-      // Anlamlı kelimeleri filtrele
+      // Anlamlı belirti (symptom) kelimelerini filtrele
       const validKws = (kb.keywordMatch || []).map(k => String(k).toLowerCase().trim())
         .filter(k => k.length >= 3 && !stopWords.has(k));
       
+      if (validKws.length === 0) return false;
+
       let matchCount = 0;
       for (const kw of validKws) {
-        if (combined.includes(kw)) {
-          matchCount++;
+        if (cleanSymptoms.includes(kw)) {
+          matchCount += 1.5; // Şikayet metninde tam arıza semptomu
+        } else if (combined.includes(kw)) {
+          matchCount += 1.0;
         }
       }
-      if (kb.deviceType && combined.includes(kb.deviceType.toLowerCase()) && matchCount >= 1) {
-        return true;
-      }
+      
+      // Kesin şart: En az 2 adet spesifik arıza anahtar kelimesi uyuşmalıdır
       return matchCount >= 2;
     });
 
@@ -4592,12 +4620,35 @@ function synthesizeAIDiagnosis(brand, model, symptoms, order) {
   if (!rootCause) {
     if (combined.includes('printer') || combined.includes('yazıcı') || combined.includes('yazici') || 
         combined.includes('hp') || combined.includes('canon') || combined.includes('epson') || 
-        combined.includes('zebra') || combined.includes('brother') || combined.includes('barkod') || 
-        combined.includes('baskı') || combined.includes('fotokopi') || combined.includes('pos')) {
+        combined.includes('zebra') || combined.includes('brother') || combined.includes('oki') ||
+        combined.includes('tally') || combined.includes('barkod') || combined.includes('baskı') || 
+        combined.includes('fotokopi') || combined.includes('pos')) {
     
-    if (combined.includes('açılmıyor') || combined.includes('acilmiyor') || combined.includes('on') || 
-        combined.includes('güç') || combined.includes('guc') || combined.includes('enerji') || 
-        combined.includes('elektrik') || combined.includes('power')) {
+    // 3.1. Nokta Vuruşlu Baskı Kafası Pin/İğne Kırığı veya Sürücü Bobin Açık Devre Arızası
+    if (combined.includes('pin') || combined.includes('iğne') || combined.includes('igne') || 
+        combined.includes('kafa') || combined.includes('baskı kafası') || combined.includes('baski kafasi') || 
+        combined.includes('çizgi') || combined.includes('cizgi') || combined.includes('eksik bas') || 
+        combined.includes('nokta vuruş') || combined.includes('nokta vurus') || combined.includes('matrix') || 
+        combined.includes('dot matrix')) {
+      rootCause = `${brand || 'Yazıcı'} (${model || 'Baskı Ünitesi'}) nokta vuruşlu baskı kafasında (Dot-Matrix Printhead) elektromanyetik bobin iğne tahrik katında pin (iğne) kırılması veya iğne tahrik solenoid bobininde açık devre/kopukluk saptandı. Kılavuz yatakta sıkışan veya bobini yanan pin nedeniyle karakterlerde yatay beyaz çizgi ve eksik karakter basımı oluşmaktadır.`;
+      solution = `Baskı kafası demonte edilecek; 9-pin / 24-pin kafa iğne kılavuz burnu mikroskop altında temizlenerek kırık/eğik pin ve geri dönüş yayı yenilenecek, kafa flex kablosu ile anakart kafa sürücü transistör dizisinin (Darlington array) empedansları ölçülerek kafa-silindir aralık mesafesi (Head Gap Lever) 0.35 mm sentil şeridiyle kalibre edilecektir.`;
+      action = `Baskı kafası söküldü, kılavuz kanaldaki mürekkep ve karbon tortuları izopropil alkol ile temizlendi. Kırık 1 adet kafa pini ve geri dönüş yayı orijinal parça ile yenilendi. Kafa solenoid bobin dirençleri (nominal 28-34 Ohm) ölçülerek doğrulandı. Head gap ayar mandalı 0.35 mm kalınlık şeridiyle kalibre edildi ve ASCII karakter test çıktısı %100 netlikte alındı.`;
+      steps = [
+        "Baskı kafasını mekanik taşıyıcı arabadan sökerek iğne kılavuz ağzını ve şerit kalıntılarını izopropil alkol ile temizleyin.",
+        "Mikroskop / büyüteç altında 9 veya 24 adet tungsten kafa iğnesinin yatakta takılma, eğilme veya kırılma durumunu kontrol edin.",
+        "Kafa arka soketindeki elektromanyetik solenoid bobin empedanslarını multimetre ile tek tek ölçerek hasarlı iğne sürücüsünü doğrulayın.",
+        "Yeni pini taktıktan sonra kafa-silindir aralık ayar mandalını (Head Gap Lever) 0.35 mm şerit ile kalibre edip self-test çıktısı alın."
+      ];
+      partCodes = ["SIGORTA-16A", "SMD-OPTO-817", "ROLE-24V-16A"];
+      estMinutes = 35;
+      confidence = "%97 Uzman AI (Yazıcı Baskı Kafası & Pin Arızası)";
+      learnedBadge = "🎯 Yapay Zeka Teşhisi: Nokta Vuruşlu Yazıcı Baskı Kafası Pin/İğne ve Elektromanyetik Sürücü Protokolü.";
+    }
+    // 3.2. Açılmıyor / Besleme / SMPS Güç Arızası
+    else if (combined.includes('açılmıyor') || combined.includes('acilmiyor') || combined.includes('on') || 
+             combined.includes('güç') || combined.includes('guc') || combined.includes('enerji') || 
+             combined.includes('elektrik') || combined.includes('power') || combined.includes('smps') ||
+             combined.includes('besleme')) {
       rootCause = `${brand || 'Yazıcı'} (${model || 'Yazıcı Modeli'}) SMPS anahtarlamalı güç besleme kartında (Power Supply Board) giriş darbe filtre katında T2A cam sigorta atması ve primer PWM anahtarlama katında kısa devre saptandı. Cihaz on durumuna gelmiyor ve panel ışıkları yanmıyor.`;
       solution = `SMPS güç besleme kartı revize edilecek, T2A 250V cam sigorta ve aşırı gerilim varistörü (MOV) yenilenecek, sekonder 24V ve 5V DC filtre kondansatörleri ESR testinden geçirilerek kart çalışma gerilimleri kararlı hale getirilecektir.`;
       action = `Yazıcı güç kartı söküldü, açık devre olan T2A cam sigorta ve hasarlı varistör yenilendi. Soğuk lehimler tazelendi. 24V DC kafa/motor gerilimi ve 5V DC kontrol gerilimi kararlı kılındı. Cihaz on moduna alındı ve test sayfası başarıyla basıldı.`;
@@ -4610,7 +4661,25 @@ function synthesizeAIDiagnosis(brand, model, symptoms, order) {
       partCodes = ["SIGORTA-16A", "KOND-470UF", "ROLE-24V-16A"];
       estMinutes = 30;
       confidence = "%95 Güven (Yazıcı Güç Arızası)";
-    } else {
+    }
+    // 3.3. Fırınlama / Isıtıcı / Fuser Arızası
+    else if (combined.includes('fırın') || combined.includes('firin') || combined.includes('fuser') ||
+             combined.includes('termofilm') || combined.includes('ısıtıcı') || combined.includes('isitici') ||
+             combined.includes('leke') || combined.includes('silik') || combined.includes('dağıtıyor')) {
+      rootCause = `${brand || 'Yazıcı'} fırın ünitesinde (Fuser Unit) teflon film yırtılması veya ısıtıcı seramik rezistans termistöründe sıcaklık sapması saptandı. Toner kağıda tam sabitlenememekte ve lekelenme yapmaktadır.`;
+      solution = `Fırın ünitesi demonte edilecek; yırtık teflon sleeve film ve silikon baskı merdanesi yenilenecek, seramik ısıtıcı elemana yüksek ısı termal gres uygulanacaktır.`;
+      action = `Fırın söküldü, yırtık fuser film değiştirildi, silikon merdane temizlendi ve 300°C ısı dayanımlı yağ tatbik edildi. 20 adet numune baskı ile sabitleme teyit edildi.`;
+      steps = [
+        "Fırın ünitesi sökülerek teflon film ve baskı kauçuğundaki aşınmaları inceleyin.",
+        "Termistör omik direncini oda sıcaklığında ölçün (nominal ~300k - 400k Ohm).",
+        "Termal sigorta sürekliliğini test edip yeni film montajında termal yağ kullanın."
+      ];
+      partCodes = ["TERMOSTAT-K59", "ROLE-24V-16A"];
+      estMinutes = 35;
+      confidence = "%94 Güven (Yazıcı Fırınlama Arızası)";
+    }
+    // 3.4. Kağıt Paten / Roller Patinaj Arızası
+    else {
       rootCause = `${brand || 'Yazıcı'} mekanik kağıt çekici rulo (pick-up roller) veya termal baskı kafasında aşınma ve optik bayrak sensöründe tozlanma saptandı.`;
       solution = `Mekanik kağıt patenleri ve sensör yuvaları izopropil alkol ile temizlenecek, aşınmış patenler yenilenecek ve kafa basınç ayarı yapılacaktır.`;
       action = `Paten yüzeyleri yenilendi, optik bayrak sensörleri temizlendi. Cihaz 30 adet ardışık test baskısıyla test edildi ve sorunsuz teslim edildi.`;
@@ -4942,7 +5011,7 @@ function saveCurrentSolutionToKnowledgeBase() {
 
   const newKb = {
     id: `KB-SAVED-${Date.now().toString().slice(-6)}`,
-    orderCode: orderCode,
+    learnedFromOrder: orderCode, // Gelecekteki benzer iş emirlerinde de eşleşebilmesi için orderCode kilidi konmaz!
     deviceType: brand.toLowerCase(),
     title: `${brand} ${model} - ${complaint.slice(0, 40)}`,
     keywordMatch: keywords,
@@ -6296,6 +6365,8 @@ function startCleanSlateService() {
   state.stockMovements = [];
   state.staff = []; // Boş başla
   state.vehicles = []; // Boş filo
+  state.serviceKnowledgeBase = []; // AI kütüphanesini sıfırla - firma kendi çözümleriyle doldursun
+  saveServiceKnowledgeBaseToLocalStorage();
 
   const cleanManager = {
     id: 1,
@@ -6353,6 +6424,7 @@ window.startCleanSlateService = startCleanSlateService;
 function loadSampleDemoData(forceReload = false) {
   localStorage.setItem('servisai_app_mode', 'demo');
   localStorage.removeItem('servisai_work_orders');
+  localStorage.removeItem('servisai_knowledge_base');
   localStorage.removeItem('servisai_staff_jobs');
   localStorage.removeItem('servisai_company_profile');
   localStorage.removeItem('servisai_technician_expenses');
@@ -6575,6 +6647,19 @@ function initSettingsActions() {
     btnStartWizard.addEventListener('click', () => {
       closeSettingsModal();
       openOnboardingWizard(1);
+    });
+  }
+
+  // AI Hafızasını Temizle Butonu
+  const btnClearKb = document.getElementById('btn-clear-knowledge-base');
+  if (btnClearKb) {
+    btnClearKb.addEventListener('click', () => {
+      const count = (state.serviceKnowledgeBase || []).length;
+      if (confirm(`🧠 Yapay Zeka servis bilgi bankasında şu an ${count} adet kayıtlı saha deneyimi ve çözüm bulunmaktadır.\n\nTüm yapay zeka hafızası temizlensin ve sıfırdan kendi teknisyenlerinizin tecrübeleriyle doldurulacak boş kütüphaneye geçilsin mi?`)) {
+        state.serviceKnowledgeBase = [];
+        saveServiceKnowledgeBaseToLocalStorage();
+        showToast("🧠 Yapay Zeka bilgi bankası hafızası temizlendi. Artık firmanız kendi teknisyen çözümleriyle dolduracak!", "success");
+      }
     });
   }
 
