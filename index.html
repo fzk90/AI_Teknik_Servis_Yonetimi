@@ -2835,9 +2835,14 @@
 
           <!-- Sağ Panel: Filodaki Mevcut Araçlar -->
           <div class="fleet-cards-panel">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
               <strong style="font-size: 0.95rem; color: var(--text-main);">Kayıtlı Servis Araçları</strong>
-              <span class="badge badge-info" id="fleet-active-badge">4 Araç Kayıtlı</span>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="btn btn-outline-danger btn-xs" id="btn-clear-all-vehicles" title="Filodaki tüm araçları sil ve sıfırla">
+                  <span>🗑️ Tüm Filoyu Temizle</span>
+                </button>
+                <span class="badge badge-info" id="fleet-active-badge">4 Araç Kayıtlı</span>
+              </div>
             </div>
             <div class="fleet-cards-grid" id="fleet-cards-container">
               <!-- JavaScript ile doldurulur -->
@@ -2852,7 +2857,77 @@
     </div>
   </div>
 
-  <!-- ==================== 15. Yönetici Tanı  <!-- ==================== 15-B. Sistem & Servis Kurulum Ayarları Modalı ==================== -->
+  <!-- ==================== 15. Yönetici Tanımlama & Profil Yönetimi Modalı ==================== -->
+  <div class="modal-backdrop" id="manager-modal" style="display: none;">
+    <div class="modal-box manager-modal-box">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <span class="chip chip-purple">Yönetim & Yetki</span>
+          <h3 class="modal-title">👔 Sistem Yöneticileri ve Profil Yönetimi</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-manager-modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="manager-layout-grid">
+          
+          <!-- Sol Panel: Mevcut Yöneticiler Listesi -->
+          <div class="manager-cards-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <strong style="font-size: 0.95rem; color: var(--text-main);">Kayıtlı Yöneticiler</strong>
+              <span class="badge badge-info" id="manager-count-badge">2 Yönetici Kayıtlı</span>
+            </div>
+            <div class="manager-cards-list" id="manager-cards-container">
+              <!-- JavaScript ile doldurulur -->
+            </div>
+          </div>
+
+          <!-- Sağ Panel: Yeni Yönetici Ekleme Formu -->
+          <div class="fleet-form-panel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+            <div style="font-weight: 700; font-size: 0.9rem; color: var(--accent-cyan); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+              <span>➕ Yeni Yönetici Tanımla</span>
+            </div>
+            <form id="form-new-manager" style="display: flex; flex-direction: column; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label" for="mgr-new-name" style="font-size: 0.78rem;">Ad Soyad *</label>
+                <input type="text" id="mgr-new-name" class="form-input form-input-sm" placeholder="Örn: Ahmet Yılmaz" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="mgr-new-title" style="font-size: 0.78rem;">Ünvan / Görev *</label>
+                <input type="text" id="mgr-new-title" class="form-input form-input-sm" placeholder="Örn: Operasyon Müdürü" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="mgr-new-email" style="font-size: 0.78rem;">E-posta Adresi *</label>
+                <input type="email" id="mgr-new-email" class="form-input form-input-sm" placeholder="yonetici@servis.com" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="mgr-new-phone" style="font-size: 0.78rem;">Telefon Numarası</label>
+                <input type="text" id="mgr-new-phone" class="form-input form-input-sm" placeholder="Örn: 0532 123 4567">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="mgr-new-role" style="font-size: 0.78rem;">Yetki Seviyesi</label>
+                <select id="mgr-new-role" class="form-select form-select-sm">
+                  <option value="Süper Yönetici (Tüm Yetkiler)" selected>Süper Yönetici (Tüm Yetkiler)</option>
+                  <option value="Saha & Sevk Operasyon Sorumlusu">Saha & Sevk Operasyon Sorumlusu</option>
+                  <option value="Muhasebe & Finans Yöneticisi">Muhasebe & Finans Yöneticisi</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm mt-2" id="btn-submit-manager">
+                <span>➕ Yöneticiyi Kaydet</span>
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" id="btn-close-manager-footer">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 15-B. Sistem & Servis Kurulum Ayarları Modalı ==================== -->
   <div class="modal-backdrop" id="settings-modal" style="display: none;">
     <div class="modal-box settings-modal-box" style="max-width: 980px; width: 95%;">
       <div class="modal-header">
@@ -3001,6 +3076,23 @@
                 <span class="text-xs text-muted">Müşteri servis makbuzunun altına ödeme bilgisi olarak basılır</span>
               </div>
 
+              <!-- 6. Yetkili / Yönetici Bilgileri -->
+              <div class="form-group">
+                <label class="form-label" for="setting-company-manager-name">Yetkili / Yönetici Ad Soyad *</label>
+                <input type="text" id="setting-company-manager-name" class="form-input form-input-sm" value="Zafer Koçaş" placeholder="Örn: Zafer Koçaş veya Özkan Çam" required>
+                <span class="text-xs text-muted">Sağ üst kullanıcı profilinde ve resmi antetlerde görünür</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="setting-company-manager-title">Yönetici Unvanı / Rol</label>
+                <input type="text" id="setting-company-manager-title" class="form-input form-input-sm" value="Elektronik ve Haberleşme Mühendisi / Firma Sahibi" placeholder="Örn: Firma Sahibi / Genel Müdür">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="setting-company-manager-pin">Yönetici Güvenlik PIN Kodu</label>
+                <input type="password" id="setting-company-manager-pin" class="form-input form-input-sm" value="1234" maxlength="4" style="font-family: monospace; letter-spacing: 2px;">
+              </div>
+
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
@@ -3022,7 +3114,12 @@
                 Saha teknisyenlerinizin ikametgah/çıkış adresi akıllı mesafe hesaplamasında kullanılır. 4 haneli PIN şifreleri ile teknisyenler kendi mobil ekranlarına giriş yapar.
               </p>
             </div>
-            <span class="badge badge-purple" id="settings-staff-total-badge">4 Aktif Personel</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button type="button" class="btn btn-outline-danger btn-xs" id="btn-clear-all-staff" title="Kayıtlı tüm teknisyenleri listeden temizle">
+                <span>🗑️ Tüm Kadroyu Temizle</span>
+              </button>
+              <span class="badge badge-purple" id="settings-staff-total-badge">4 Aktif Personel</span>
+            </div>
           </div>
 
           <!-- Mevcut Personeller Kart Listesi -->
@@ -3897,10 +3994,7 @@
           <div class="form-group mb-3">
             <label class="form-label" for="login-tech-select">Saha Teknisyeni / Uzman:</label>
             <select id="login-tech-select" class="form-select">
-              <option value="2" data-pin="1234">Murat Aydın - Saha Mühendisi (Elektronik) • 34 ABC 101</option>
-              <option value="3" data-pin="2345">Caner Güler - Kıdemli Tekniker (Mekanik) • 34 DEF 202</option>
-              <option value="4" data-pin="3456">Selin Kaya - Otomasyon & PLC Mühendisi • 34 GHK 303</option>
-              <option value="5" data-pin="4567">Emre Yıldız - Saha Teknisyeni • 34 YTR 404</option>
+              <!-- JavaScript dinamik dolduracak -->
             </select>
           </div>
 
@@ -4538,7 +4632,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261028_1530"></script>
+  <script src="app.js?v=20261028_1615"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">

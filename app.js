@@ -481,7 +481,6 @@ const state = {
 document.addEventListener('DOMContentLoaded', () => {
   const appMode = localStorage.getItem('servisai_app_mode');
   const initialProfile = getStoredCompanyProfile();
-  applyCompanyProfile(initialProfile);
 
   if (appMode === 'clean') {
     state.staffJobs = {};
@@ -490,6 +489,18 @@ document.addEventListener('DOMContentLoaded', () => {
       try { state.workOrders = JSON.parse(savedOrders) || []; } catch(e) { state.workOrders = []; }
     } else {
       state.workOrders = [];
+    }
+    const savedStaff = localStorage.getItem('servisai_staff');
+    if (savedStaff) {
+      try { state.staff = JSON.parse(savedStaff) || []; } catch(e) { state.staff = []; }
+    } else {
+      state.staff = [];
+    }
+    const savedVehicles = localStorage.getItem('servisai_vehicles');
+    if (savedVehicles) {
+      try { state.vehicles = JSON.parse(savedVehicles) || []; } catch(e) { state.vehicles = []; }
+    } else {
+      state.vehicles = [];
     }
   }
 
@@ -503,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStockFromLocalStorage();
   loadStaffFromLocalStorage();
   loadVehiclesFromLocalStorage();
+  applyCompanyProfile(initialProfile);
   renderStaffList();
   renderStockTable();
   renderStockCategoryPills();
@@ -616,7 +628,22 @@ function renderStaffList() {
     updateReportStaffDropdown();
   }
 
-  const fieldStaff = state.staff.filter(person => person.role !== 'Yönetici' && person.status !== 'Ayrıldı');
+  const fieldStaff = (state.staff || []).filter(person => person.role !== 'Yönetici' && person.status !== 'Ayrıldı');
+  if (fieldStaff.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 32px 16px; background: rgba(255,255,255,0.015); border: 1px dashed var(--border-color); border-radius: 8px; color: var(--text-dim);">
+        <div style="font-size: 2rem; margin-bottom: 8px;">👥</div>
+        <strong style="color: var(--text-main); font-size: 0.95rem;">Henüz Kayıtlı Saha Elemanı Bulunmuyor</strong>
+        <p style="margin: 6px 0 12px; font-size: 0.8rem; color: var(--text-muted);">
+          Yukarıdaki <strong>"+ Yeni Personel Girişi"</strong> veya <strong>"⚙️ Ayarlar"</strong> menüsünden saha teknisyenlerinizi kadroya ekleyebilirsiniz.
+        </p>
+        <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('btn-open-staff-entry-modal')?.click()">
+          <span>➕ İlk Personeli Tanımla</span>
+        </button>
+      </div>
+    `;
+    return;
+  }
   container.innerHTML = fieldStaff.map(person => {
     const isAvailable = person.status === 'Müsait';
     const statusChip = isAvailable 
@@ -5968,17 +5995,21 @@ function loadCompanyProfileToSettingsForm() {
 
   setEl('setting-company-name', p.legalName || p.name || '');
   setEl('setting-company-short', p.name || '');
-  setEl('setting-company-sector', p.industry || '');
+  setEl('setting-company-slogan', p.slogan || p.industry || '');
   setEl('setting-company-tax-office', p.taxOffice || '');
   setEl('setting-company-tax-number', p.taxId || '');
-  setEl('setting-company-mersis', p.mersisNo || '');
-  setEl('setting-company-trade-reg', p.tradeRegNo || '');
+  setEl('setting-company-registry', p.registry || p.tradeRegNo || '');
   setEl('setting-company-address', p.billingAddress || '');
   setEl('setting-company-city', p.city || '');
+  setEl('setting-company-district', p.district || '');
   setEl('setting-company-phone', p.phone || '');
+  setEl('setting-company-gsm', p.gsm || p.phone || '');
   setEl('setting-company-email', p.email || '');
   setEl('setting-company-web', p.website || '');
   setEl('setting-company-iban', p.iban || 'TR92 0006 2000 0001 2948 1029 48 - Garanti BBVA (TL Hesabı)');
+  setEl('setting-company-manager-name', p.managerName || (state.currentUser ? state.currentUser.name : 'Zafer Koçaş'));
+  setEl('setting-company-manager-title', p.managerTitle || 'Firma Sahibi / Yönetici');
+  setEl('setting-company-manager-pin', p.managerPin || '1234');
 }
 
 // ==================== 2. Personel & Kadro Yönetimi (Ayarlar Tab 2) ====================
@@ -6248,7 +6279,7 @@ function startCleanSlateService() {
     managerName: "Servis Yöneticisi",
     managerTitle: "Firma Sahibi / Yetkili",
     managerPhone: "",
-    managerEmail: "",
+    managerEmail: "yonetici@servis.com",
     managerPin: "1234",
     mainWarehouse: "Merkez Depo",
     mainWorkshop: "Merkez Atölye"
@@ -6262,21 +6293,54 @@ function startCleanSlateService() {
   state.activeOrder = null;
   state.technicianExpenses = [];
   state.stockMovements = [];
+  state.staff = []; // Boş başla
+  state.vehicles = []; // Boş filo
+
+  const cleanManager = {
+    id: 1,
+    name: "Servis Yöneticisi",
+    title: "Firma Sahibi / Yetkili",
+    email: "yonetici@servis.com",
+    phone: "0530 000 00 00",
+    role: "Süper Yönetici (Tüm Yetkiler)",
+    status: "Aktif",
+    avatar: "SY"
+  };
+  state.managers = [cleanManager];
+  state.currentManager = cleanManager;
+  state.currentUser = {
+    id: 1,
+    name: "Servis Yöneticisi",
+    email: "yonetici@servis.com",
+    role: "Yönetici",
+    avatar: "SY"
+  };
 
   saveWorkOrdersToLocalStorage();
+  saveStaffToLocalStorage();
+  saveVehiclesToLocalStorage();
   saveTechnicianExpensesToLocalStorage();
   try {
     localStorage.setItem('servisai_staff_jobs', JSON.stringify({}));
+    localStorage.setItem('servisai_auth_user', JSON.stringify(state.currentUser));
+    localStorage.setItem('servisai_managers', JSON.stringify(state.managers));
   } catch (e) {}
 
   applyCompanyProfile(cleanProfile);
+  applyRoleAccess(state.currentUser);
 
   const welcomeModal = document.getElementById('welcome-setup-modal');
   if (welcomeModal) welcomeModal.style.display = 'none';
 
   renderIncomingCalls();
+  renderStaffList();
+  renderSettingsStaff();
+  renderFleetCards();
+  renderManagerCards();
   renderTechJobs();
   renderTechExpenses();
+  populateActiveTechDropdown();
+  populateLoginTechDropdown();
   updateFleetKPI();
   updateActiveOrdersKPI();
 
@@ -6443,21 +6507,43 @@ function initSettingsActions() {
         ...current,
         legalName: (document.getElementById('setting-company-name')?.value || '').trim(),
         name: (document.getElementById('setting-company-short')?.value || '').trim() || (document.getElementById('setting-company-name')?.value || '').trim(),
-        industry: (document.getElementById('setting-company-sector')?.value || '').trim(),
+        slogan: (document.getElementById('setting-company-slogan')?.value || '').trim(),
+        industry: (document.getElementById('setting-company-slogan')?.value || '').trim() || (current.industry || ''),
         taxOffice: (document.getElementById('setting-company-tax-office')?.value || '').trim(),
         taxId: (document.getElementById('setting-company-tax-number')?.value || '').trim(),
-        mersisNo: (document.getElementById('setting-company-mersis')?.value || '').trim(),
-        tradeRegNo: (document.getElementById('setting-company-trade-reg')?.value || '').trim(),
+        registry: (document.getElementById('setting-company-registry')?.value || '').trim(),
+        tradeRegNo: (document.getElementById('setting-company-registry')?.value || '').trim(),
         billingAddress: (document.getElementById('setting-company-address')?.value || '').trim(),
         city: (document.getElementById('setting-company-city')?.value || '').trim(),
+        district: (document.getElementById('setting-company-district')?.value || '').trim(),
         phone: (document.getElementById('setting-company-phone')?.value || '').trim(),
+        gsm: (document.getElementById('setting-company-gsm')?.value || '').trim(),
         email: (document.getElementById('setting-company-email')?.value || '').trim(),
         website: (document.getElementById('setting-company-web')?.value || '').trim(),
-        iban: (document.getElementById('setting-company-iban')?.value || '').trim()
+        iban: (document.getElementById('setting-company-iban')?.value || '').trim(),
+        managerName: (document.getElementById('setting-company-manager-name')?.value || '').trim() || 'Servis Yöneticisi',
+        managerTitle: (document.getElementById('setting-company-manager-title')?.value || '').trim() || 'Firma Sahibi / Yetkili',
+        managerPin: (document.getElementById('setting-company-manager-pin')?.value || '').trim() || '1234'
       };
 
       applyCompanyProfile(updatedProfile);
-      showToast(`🏢 "${updatedProfile.name || updatedProfile.legalName}" firma kimlik bilgileri başarıyla kaydedildi ve tüm belgelere uygulandı!`, 'success');
+      showToast(`🏢 "${updatedProfile.name || updatedProfile.legalName}" firma ve yönetici bilgileri başarıyla kaydedildi ve tüm sisteme uygulandı!`, 'success');
+    });
+  }
+
+  // Tüm Kadroyu Temizle Butonu (Tab 2)
+  const btnClearAllStaff = document.getElementById('btn-clear-all-staff');
+  if (btnClearAllStaff) {
+    btnClearAllStaff.addEventListener('click', () => {
+      if (confirm("⚠️ Kayıtlı TÜM teknisyenleri silmek istediğinize emin misiniz?")) {
+        state.staff = [];
+        saveStaffToLocalStorage();
+        renderStaffList();
+        renderSettingsStaff();
+        populateActiveTechDropdown();
+        populateLoginTechDropdown();
+        showToast("🗑️ Teknisyen kadrosu tamamen temizlendi.");
+      }
     });
   }
 
@@ -11413,6 +11499,19 @@ function initFleetManagement() {
       showToast(`🚗 ${plate} plakalı ${model} aracı başarıyla filoya eklendi.`);
     });
   }
+
+  const btnClearAllVehicles = document.getElementById('btn-clear-all-vehicles');
+  if (btnClearAllVehicles) {
+    btnClearAllVehicles.addEventListener('click', () => {
+      if (confirm('⚠️ Filodaki TÜM araçları silmek istediğinize emin misiniz?')) {
+        state.vehicles = [];
+        saveVehiclesToLocalStorage();
+        renderFleetCards();
+        updateFleetKPI();
+        showToast('🗑️ Filodaki tüm araçlar başarıyla temizlendi.');
+      }
+    });
+  }
 }
 
 function renderFleetCards() {
@@ -12115,6 +12214,9 @@ function loadStaffFromLocalStorage() {
 function saveStaffToLocalStorage() {
   try {
     localStorage.setItem('servisai_staff', JSON.stringify(state.staff));
+    if (typeof populateLoginTechDropdown === 'function') {
+      populateLoginTechDropdown();
+    }
   } catch (e) {
     console.warn("Personel kaydedilirken hata:", e);
   }
@@ -12122,7 +12224,16 @@ function saveStaffToLocalStorage() {
 
 function loadVehiclesFromLocalStorage() {
   try {
+    const appMode = localStorage.getItem('servisai_app_mode');
     const saved = localStorage.getItem('servisai_vehicles');
+    if (appMode === 'clean') {
+      if (saved) {
+        state.vehicles = JSON.parse(saved) || [];
+      } else {
+        state.vehicles = [];
+      }
+      return;
+    }
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -13072,6 +13183,31 @@ function initTechMobileControls() {
   }
 }
 
+function populateLoginTechDropdown() {
+  const techSelect = document.getElementById('login-tech-select');
+  const techPinHint = document.getElementById('tech-pin-hint');
+  if (!techSelect) return;
+
+  const fieldStaff = (state.staff || []).filter(p => p.role !== 'Yönetici' && p.status !== 'Ayrıldı');
+  if (fieldStaff.length === 0) {
+    techSelect.innerHTML = `<option value="">⚠️ Kayıtlı Teknisyen Yok (Önce Ayarlardan Ekleyiniz)</option>`;
+    if (techPinHint) techPinHint.textContent = 'Kayıtlı teknisyen bulunamadı';
+    return;
+  }
+
+  techSelect.innerHTML = fieldStaff.map(s => {
+    const pin = s.pin || '1234';
+    const plate = s.vehiclePlate ? ` • ${s.vehiclePlate}` : '';
+    return `<option value="${s.id}" data-pin="${escapeHtml(pin)}">${escapeHtml(s.name)} - ${escapeHtml(s.role || 'Teknisyen')}${escapeHtml(plate)}</option>`;
+  }).join('');
+
+  const first = fieldStaff[0];
+  if (first && techPinHint) {
+    techPinHint.textContent = `${first.name} PIN: ${first.pin || '1234'}`;
+  }
+}
+window.populateLoginTechDropdown = populateLoginTechDropdown;
+
 function initAuthSystem() {
   const loginModal = document.getElementById('login-modal');
   const btnHeaderAuth = document.getElementById('btn-header-auth-action');
@@ -13235,6 +13371,7 @@ function initAuthSystem() {
 function openLoginModal(defaultTab = 'admin') {
   const loginModal = document.getElementById('login-modal');
   if (!loginModal) return;
+  populateLoginTechDropdown();
   loginModal.style.display = 'flex';
   const tabAdmin = document.getElementById('tab-login-admin');
   const tabTech = document.getElementById('tab-login-tech');
@@ -13272,16 +13409,39 @@ async function performAdminLogin(email, password) {
 
   // 2. Fallback local verification
   if (!success) {
-    if ((email === 'zafer@kocasteknik.com' || email === 'admin@kocasteknik.com') && (password === 'admin123' || password === '123456')) {
+    const curProfile = state.companyProfile || getStoredCompanyProfile() || {};
+    const mgrEmail = (curProfile.managerEmail || '').toLowerCase();
+    const mgrPin = curProfile.managerPin || '1234';
+    const mgrName = curProfile.managerName || (state.currentManager ? state.currentManager.name : "Zafer Koçaş");
+    const av = mgrName.split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase() || 'ZK';
+
+    if (
+      (email === 'zafer@kocasteknik.com' || email === 'admin@kocasteknik.com' || email === 'admin@servis.com' || (mgrEmail && email.toLowerCase() === mgrEmail)) &&
+      (password === 'admin123' || password === '123456' || password === mgrPin)
+    ) {
       user = {
         id: 1,
-        name: "Zafer Koçaş",
-        email: "zafer@kocasteknik.com",
+        name: mgrName,
+        email: email,
         role: "Yönetici",
-        avatar: "ZK"
+        avatar: av
       };
       success = true;
-    } else {
+    } else if (state.managers) {
+      const matchedMgr = state.managers.find(m => m.email && m.email.toLowerCase() === email.toLowerCase());
+      if (matchedMgr && (password === 'admin123' || password === '123456' || password === '1234')) {
+        user = {
+          id: matchedMgr.id,
+          name: matchedMgr.name,
+          email: matchedMgr.email,
+          role: "Yönetici",
+          avatar: matchedMgr.avatar || matchedMgr.name.slice(0, 2).toUpperCase()
+        };
+        success = true;
+      }
+    }
+
+    if (!success) {
       const matched = (state.staff || []).find(s => s.email && s.email.toLowerCase() === email.toLowerCase());
       if (matched && (password === 'admin123' || password === matched.password_hash)) {
         const parts = matched.name.split(' ');
@@ -13347,20 +13507,19 @@ async function performTechLogin(staffId, pin) {
   // 2. Fallback local verification
   if (!success) {
     const staff = (state.staff || []).find(s => s.id == staffId);
-    const validPins = { 2: '1234', 3: '2345', 4: '3456', 5: '4567' };
-    const expectedPin = validPins[staffId] || '1234';
+    const expectedPin = staff ? (staff.pin || '1234') : '1234';
 
     if (pin === expectedPin || pin === '1234') {
-      const staffName = staff ? staff.name : (staffId == 2 ? 'Murat Aydın' : staffId == 3 ? 'Caner Güler' : 'Teknisyen');
-      const staffPlate = staff ? staff.vehiclePlate : (staffId == 2 ? '34 ABC 101' : '34 DEF 202');
+      const staffName = staff ? staff.name : 'Teknisyen';
+      const staffPlate = staff ? (staff.vehiclePlate || 'Zimmetsiz') : 'Zimmetsiz';
       const parts = staffName.split(' ');
       const av = (parts.length >= 2 ? parts[0][0] + parts[1][0] : staffName.slice(0, 2)).toUpperCase();
       user = {
-        id: staffId,
+        id: staff ? staff.id : staffId,
         name: staffName,
-        email: staff ? staff.email : `${staffName.toLowerCase().replace(' ', '.')}@kocasteknik.com`,
+        email: staff ? (staff.email || `${staffName.toLowerCase().replace(/\s+/g, '.')}@servis.com`) : 'teknisyen@servis.com',
         role: "Teknisyen",
-        specialty: staff ? (staff.specialty || staff.role) : "Saha Mühendisi",
+        specialty: staff ? (staff.specialty || staff.role) : "Saha Teknisyeni",
         vehiclePlate: staffPlate,
         avatar: av
       };
@@ -16107,8 +16266,29 @@ function applyCompanyProfile(profile) {
   if (elHdrTenant) elHdrTenant.textContent = profile.name || profile.legalName;
 
   const elHdrUser = document.getElementById('header-user-name');
-  if (elHdrUser && profile.managerName) {
-    elHdrUser.textContent = `${profile.managerName} (${profile.managerTitle || 'Yönetici'})`;
+  const elHdrAvatar = document.getElementById('header-user-avatar');
+
+  if (profile.managerName) {
+    const av = profile.managerName.split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase() || 'YN';
+    if (elHdrUser) elHdrUser.textContent = `${profile.managerName} (${profile.managerTitle || 'Yönetici'})`;
+    if (elHdrAvatar) elHdrAvatar.textContent = av;
+
+    if (state.currentUser && state.currentUser.role === 'Yönetici') {
+      state.currentUser.name = profile.managerName;
+      state.currentUser.avatar = av;
+      try { localStorage.setItem('servisai_auth_user', JSON.stringify(state.currentUser)); } catch (e) {}
+    }
+    if (state.currentManager) {
+      state.currentManager.name = profile.managerName;
+      state.currentManager.title = profile.managerTitle || 'Yönetici';
+      state.currentManager.avatar = av;
+    }
+    if (state.managers && state.managers.length > 0) {
+      state.managers[0].name = profile.managerName;
+      state.managers[0].title = profile.managerTitle || 'Yönetici';
+      state.managers[0].avatar = av;
+      try { localStorage.setItem('servisai_managers', JSON.stringify(state.managers)); } catch (e) {}
+    }
   }
 
   const elCurTenant = document.getElementById('tenant-current-title');
