@@ -514,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStockFromLocalStorage();
   loadStaffFromLocalStorage();
   loadVehiclesFromLocalStorage();
+  sanitizeStaffVehicleAssignments();
   applyCompanyProfile(initialProfile);
   renderStaffList();
   renderStockTable();
@@ -11503,12 +11504,19 @@ function initFleetManagement() {
   const btnClearAllVehicles = document.getElementById('btn-clear-all-vehicles');
   if (btnClearAllVehicles) {
     btnClearAllVehicles.addEventListener('click', () => {
-      if (confirm('⚠️ Filodaki TÜM araçları silmek istediğinize emin misiniz?')) {
+      if (confirm('⚠️ Filodaki TÜM araçları silmek istediğinize emin misiniz? Personeller üzerindeki tüm araç zimmetleri kaldırılacaktır.')) {
         state.vehicles = [];
+        (state.staff || []).forEach(s => {
+          s.vehiclePlate = "Zimmetsiz";
+        });
         saveVehiclesToLocalStorage();
+        saveStaffToLocalStorage();
         renderFleetCards();
+        renderStaffList();
+        renderSettingsStaff();
         updateFleetKPI();
-        showToast('🗑️ Filodaki tüm araçlar başarıyla temizlendi.');
+        updateFleetDriverDropdown();
+        showToast('🗑️ Filodaki tüm araçlar ve personele bağlı zimmetler başarıyla temizlendi.');
       }
     });
   }
@@ -11603,9 +11611,28 @@ function renderFleetCards() {
   });
 }
 
+// ==================== Veri Bütünlüğü: Personel & Araç Zimmet Senkronu ====================
+function sanitizeStaffVehicleAssignments() {
+  if (!state.staff || !Array.isArray(state.staff)) return;
+  const existingPlates = new Set((state.vehicles || []).map(v => v.plate));
+  let changed = false;
+  state.staff.forEach(s => {
+    if (s.vehiclePlate && s.vehiclePlate !== "Zimmetsiz" && !existingPlates.has(s.vehiclePlate)) {
+      s.vehiclePlate = "Zimmetsiz";
+      changed = true;
+    }
+  });
+  if (changed) {
+    saveStaffToLocalStorage();
+  }
+}
+window.sanitizeStaffVehicleAssignments = sanitizeStaffVehicleAssignments;
+
 function updateFleetDriverDropdown() {
   const select = document.getElementById('fleet-new-driver');
   if (!select) return;
+
+  sanitizeStaffVehicleAssignments();
 
   let html = `<option value="">Boşta / Zimmetsiz (Havuz Aracı)</option>`;
   state.staff.filter(s => s.role !== 'Yönetici' && s.status !== 'Ayrıldı').forEach(person => {
@@ -11827,6 +11854,7 @@ async function updateVehicleStatus(plate, newStatus) {
  * Araç Operasyon & Zimmet Modalı (Araç merkezli açılır)
  */
 function openVehicleActionModal(plate) {
+  sanitizeStaffVehicleAssignments();
   const veh = state.vehicles.find(v => v.plate === plate);
   if (!veh) return;
 
@@ -11974,6 +12002,7 @@ function initVehicleActionModal() {
  * Personel Araç Zimmet Kartı Modalı (Sevk masasından personel merkezli açılır)
  */
 function openStaffVehicleModal(staffId) {
+  sanitizeStaffVehicleAssignments();
   const person = state.staff.find(s => s.id === staffId);
   if (!person) return;
 
