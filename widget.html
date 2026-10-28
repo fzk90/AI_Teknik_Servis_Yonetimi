@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Müşteri Arıza & Servis Talep Formu | FUNZerviceTech.ai</title>
+  <meta name="description" content="Hızlı ve kolay teknik servis arıza kayıt formu. Cihazınızı kaydedin, anında takip numarası alın.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: rgba(17, 24, 39, 0.95);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --radius: 12px;
+      --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .widget-container {
+      width: 100%;
+      max-width: 680px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+    }
+
+    .widget-header {
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+      padding: 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .widget-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .widget-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .widget-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .widget-body {
+      padding: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .col-span-2 {
+      grid-column: span 2;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .form-label .req {
+      color: #f43f5e;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #ffffff;
+      font-size: 0.88rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .form-select option {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .urgency-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .urgency-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .urgency-card input {
+      display: none;
+    }
+
+    .urgency-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .urgency-card.active-normal {
+      border-color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+    }
+
+    .urgency-card.active-high {
+      border-color: var(--accent-amber);
+      background: rgba(245, 158, 11, 0.15);
+      color: #fde68a;
+    }
+
+    .urgency-card.active-critical {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.18);
+      color: #fca5a5;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 20px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+
+    .btn-submit:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:active {
+      transform: translateY(1px);
+    }
+
+    /* Başarılı Ekranı */
+    .success-view {
+      display: none;
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .success-icon-wrap {
+      width: 72px;
+      height: 72px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid rgba(16, 185, 129, 0.4);
+      color: var(--accent-emerald);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      margin: 0 auto 20px;
+    }
+
+    .ticket-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px dashed rgba(59, 130, 246, 0.4);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+      display: inline-block;
+      width: 100%;
+      max-width: 440px;
+      text-align: left;
+    }
+
+    .ticket-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .ticket-code {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      margin: 4px 0 12px 0;
+    }
+
+    .ticket-meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      padding: 6px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .ticket-meta-row strong {
+      color: #ffffff;
+    }
+
+    .btn-new-ticket {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-new-ticket:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .widget-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 14px 24px;
+      text-align: center;
+      font-size: 0.74rem;
+      color: var(--text-dim);
+    }
+
+    @media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .col-span-2 {
+        grid-column: span 1;
+      }
+      .urgency-selector {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="widget-container" id="widget-app">
+    <!-- Header -->
+    <div class="widget-header">
+      <div class="widget-badge">
+        <span>⚡ 7/24 Teknik Servis Kabul Hattı</span>
+      </div>
+      <h1 class="widget-title">Arıza & Servis Talep Formu</h1>
+      <p class="widget-subtitle">Cihaz bilgilerinizi ve arıza belirtilerini girin; teknik ekibimiz anında sevk programına alsın.</p>
+    </div>
+
+    <!-- Form Body -->
+    <div class="widget-body" id="form-container">
+      <form id="public-service-form">
+        <div class="form-grid">
+          <!-- Müşteri / Firma Adı -->
+          <div class="form-group col-span-2">
+            <label class="form-label">
+              <span>Firma / Müşteri Adı</span>
+              <span class="req">* Zorunlu</span>
+            </label>
+            <input type="text" id="cust-name" class="form-input" placeholder="Örn: Akın Tekstil Sanayi A.Ş. veya Ahmet Yılmaz" required>
+          </div>
+
+          <!-- Yetkili Kişi & Telefon -->
+          <div class="form-group">
+            <label class="form-label">
+              <span>İlgili Yetkili Kişi</span>
+              <span class="req">*</span>
+            </label>
+            <input type="text" id="cust-contact" class="form-input" placeholder="Ad Soyad" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>İletişim Telefonu</span>
+              <span class="req">*</span>
+            </label>
+            <input type="tel" id="cust-phone" class="form-input" placeholder="05XX XXX XX XX" required>
+          </div>
+
+          <!-- Şehir / İlçe ve Adres -->
+          <div class="form-group">
+            <label class="form-label">
+              <span>İl / İlçe</span>
+              <span class="req">*</span>
+            </label>
+            <input type="text" id="cust-city" class="form-input" placeholder="Örn: İstanbul / İkitelli OSB" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>E-Posta (Opsiyonel)</span>
+            </label>
+            <input type="email" id="cust-email" class="form-input" placeholder="yetkili@firma.com">
+          </div>
+
+          <div class="form-group col-span-2">
+            <label class="form-label">
+              <span>Müdahale Adresi / Tesis Bilgisi</span>
+              <span class="req">*</span>
+            </label>
+            <input type="text" id="cust-address" class="form-input" placeholder="Örn: Organize Sanayi Bölgesi 4. Cadde No: 12 Kat: 2" required>
+          </div>
+
+          <!-- Cihaz Kategorisi ve Marka/Model -->
+          <div class="form-group">
+            <label class="form-label">
+              <span>Cihaz Kategorisi</span>
+              <span class="req">*</span>
+            </label>
+            <select id="device-category" class="form-select" required>
+              <option value="İnvertör / AC Sürücü">⚡ İnvertör / AC Motor Sürücü (VFD)</option>
+              <option value="PLC & Otomasyon Kartı">🧠 PLC & Endüstriyel Otomasyon Kartı</option>
+              <option value="Elektrik Motoru / Pompa">🔄 Elektrik Motoru / Santrifüj Pompa</option>
+              <option value="İklimlendirme / Soğutma">❄️ İklimlendirme / VRV / Chiller</option>
+              <option value="Güç Kaynağı / SMPS / UPS">🔋 Güç Kaynağı / SMPS Devresi / UPS</option>
+              <option value="Medikal & Laboratuvar Cihazı">🔬 Medikal & Laboratuvar Cihazı</option>
+              <option value="Diğer Endüstriyel Ekipman">⚙️ Diğer Endüstriyel Ekipman</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>Cihaz Marka & Modeli</span>
+              <span class="req">*</span>
+            </label>
+            <input type="text" id="device-model" class="form-input" placeholder="Örn: Delta VFD-M 11kW veya Siemens S7-1200" required>
+          </div>
+
+          <!-- Seri Numarası (Varsa) -->
+          <div class="form-group col-span-2">
+            <label class="form-label">
+              <span>Cihaz Seri Numarası (S/N)</span>
+              <span style="color: var(--text-dim); font-size: 0.72rem;">Etiketteki seri no (Geçmiş takibi için önerilir)</span>
+            </label>
+            <input type="text" id="device-serial" class="form-input" placeholder="Örn: DLT-2024-99823 veya Bilinmiyor" style="font-family: var(--font-mono);">
+          </div>
+
+          <!-- Arıza Belirtisi / Şikayet -->
+          <div class="form-group col-span-2">
+            <label class="form-label">
+              <span>Arıza Belirtisi ve Detaylı Şikayet</span>
+              <span class="req">*</span>
+            </label>
+            <textarea id="fault-description" class="form-textarea" placeholder="Cihazda görülen arıza belirtileri, paneldeki hata kodları (OC-A, Err-04 vb.), sigorta attırma veya aşırı ısınma durumunu açıklayın..." required></textarea>
+          </div>
+
+          <!-- Aciliyet Durumu -->
+          <div class="form-group col-span-2">
+            <label class="form-label">
+              <span>Müdahale Aciliyet Seviyesi</span>
+            </label>
+            <div class="urgency-selector">
+              <label class="urgency-card active-normal" id="card-urgency-normal">
+                <input type="radio" name="urgency" value="Normal" checked>
+                <span>🟢 Normal Bakım</span>
+              </label>
+              <label class="urgency-card" id="card-urgency-high">
+                <input type="radio" name="urgency" value="Yüksek">
+                <span>🟡 Yüksek Öncelik</span>
+              </label>
+              <label class="urgency-card" id="card-urgency-critical">
+                <input type="radio" name="urgency" value="Kritik">
+                <span>🔴 Acil Duruş (Üretim Durdu)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btn-submit-form">
+          <span>🚀 Arıza Kaydını Oluştur & Takip Numarası Al</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Success Ticket View -->
+    <div class="success-view" id="success-view">
+      <div class="success-icon-wrap">✓</div>
+      <h2 style="font-size: 1.5rem; font-weight: 800; color: #ffffff;">Servis Talebiniz Başarıyla Alındı!</h2>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 6px;">
+        Teknik servis merkezimiz kaydınızı teslim aldı. Saha teknisyenimiz en kısa sürede sizinle irtibata geçecektir.
+      </p>
+
+      <div class="ticket-box">
+        <div class="ticket-label">Servis Takip & Referans Numarası</div>
+        <div class="ticket-code" id="res-ticket-no">SRV-WEB-2026-901</div>
+
+        <div class="ticket-meta-row">
+          <span>Kayıtlı Müşteri:</span>
+          <strong id="res-cust-name">-</strong>
+        </div>
+        <div class="ticket-meta-row">
+          <span>Bildirilen Cihaz:</span>
+          <strong id="res-device">-</strong>
+        </div>
+        <div class="ticket-meta-row">
+          <span>Cihaz Seri No:</span>
+          <strong id="res-serial" style="font-family: var(--font-mono);">-</strong>
+        </div>
+        <div class="ticket-meta-row">
+          <span>Kayıt Zamanı:</span>
+          <strong id="res-date">-</strong>
+        </div>
+        <div class="ticket-meta-row">
+          <span>Durum:</span>
+          <strong style="color: var(--accent-cyan);">⚡ Sevk Masasında Bekliyor</strong>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" class="btn-new-ticket" id="btn-new-ticket">
+          <span>➕ Yeni Bir Arıza Kaydı Daha Aç</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="widget-footer">
+      🔒 FUNZerviceTech.ai Güvenli Teknik Servis Altyapısı ile korunmaktadır • Anlık Sevk Masası Entegre
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Urgency card toggling
+      const urgencyCards = document.querySelectorAll('.urgency-card');
+      urgencyCards.forEach(card => {
+        card.addEventListener('click', () => {
+          urgencyCards.forEach(c => {
+            c.classList.remove('active-normal', 'active-high', 'active-critical');
+          });
+          const val = card.querySelector('input').value;
+          if (val === 'Normal') card.classList.add('active-normal');
+          else if (val === 'Yüksek') card.classList.add('active-high');
+          else if (val === 'Kritik') card.classList.add('active-critical');
+        });
+      });
+
+      const form = document.getElementById('public-service-form');
+      const formContainer = document.getElementById('form-container');
+      const successView = document.getElementById('success-view');
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const custName = document.getElementById('cust-name').value.trim();
+        const custContact = document.getElementById('cust-contact').value.trim();
+        const custPhone = document.getElementById('cust-phone').value.trim();
+        const custCity = document.getElementById('cust-city').value.trim();
+        const custEmail = document.getElementById('cust-email').value.trim();
+        const custAddress = document.getElementById('cust-address').value.trim();
+        const deviceCategory = document.getElementById('device-category').value;
+        const deviceModel = document.getElementById('device-model').value.trim();
+        const deviceSerial = document.getElementById('device-serial').value.trim() || 'SN-BELİRSİZ';
+        const faultDesc = document.getElementById('fault-description').value.trim();
+        const urgency = document.querySelector('input[name="urgency"]:checked')?.value || 'Normal';
+
+        const orderNum = Math.floor(100 + Math.random() * 900);
+        const trackingNo = `SRV-WEB-2026-${orderNum}`;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        const newOrder = {
+          id: trackingNo,
+          customer_name: custName,
+          contact_person: custContact,
+          phone: custPhone,
+          email: custEmail,
+          city: custCity,
+          address: `${custCity} - ${custAddress}`,
+          device_brand: deviceModel.split(' ')[0] || 'Genel',
+          device_model: deviceModel,
+          device_type: deviceCategory,
+          device_serial: deviceSerial,
+          symptom: faultDesc,
+          status: 'Yeni',
+          channel: 'web_form',
+          channel_badge: '🌐 Web Sitesi / Sosyal Medya',
+          urgency: urgency,
+          created_at: now.toISOString(),
+          assigned_tech: null,
+          estimated_cost: 600
+        };
+
+        // 1. Ana uygulamanın localStorage'ına kaydet
+        try {
+          const stored = localStorage.getItem('servisai_work_orders');
+          let orders = stored ? JSON.parse(stored) : [];
+          orders.unshift(newOrder);
+          localStorage.setItem('servisai_work_orders', JSON.stringify(orders));
+        } catch (err) {
+          console.warn('LocalStorage save error:', err);
+        }
+
+        // 2. Parent window varsa postMessage gönder (Iframe içi çalışma için)
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'SERVISAI_NEW_INTAKE',
+            order: newOrder
+          }, '*');
+        }
+
+        // 3. Başarılı ekranını göster
+        document.getElementById('res-ticket-no').textContent = trackingNo;
+        document.getElementById('res-cust-name').textContent = custName;
+        document.getElementById('res-device').textContent = `${deviceModel} (${deviceCategory})`;
+        document.getElementById('res-serial').textContent = deviceSerial;
+        document.getElementById('res-date').textContent = dateStr;
+
+        formContainer.style.display = 'none';
+        successView.style.display = 'block';
+      });
+
+      document.getElementById('btn-new-ticket').addEventListener('click', function() {
+        form.reset();
+        successView.style.display = 'none';
+        formContainer.style.display = 'block';
+      });
+    })();
+  </script>
+</body>
+</html>

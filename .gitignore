@@ -1,0 +1,47 @@
+# ==========================================
+# FUNZerviceTech.ai - Git Yoksayma Kuralları (.gitignore)
+# ==========================================
+
+# Python / FastAPI
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Ortam Değişkenleri & Gizli Anahtarlar
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Veritabanı Geçici Günlükleri
+*.sqlite3-journal
+*.db-journal
+
+# İşletim Sistemi ve IDE Dosyaları
+.DS_Store
+Thumbs.db
+ehthumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+
+# Paket Yöneticisi Logları
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
