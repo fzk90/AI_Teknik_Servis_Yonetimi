@@ -479,6 +479,20 @@ const state = {
 
 // ==================== DOM Elements ====================
 document.addEventListener('DOMContentLoaded', () => {
+  const appMode = localStorage.getItem('servisai_app_mode');
+  const initialProfile = getStoredCompanyProfile();
+  applyCompanyProfile(initialProfile);
+
+  if (appMode === 'clean') {
+    state.staffJobs = {};
+    const savedOrders = localStorage.getItem('servisai_work_orders');
+    if (savedOrders) {
+      try { state.workOrders = JSON.parse(savedOrders) || []; } catch(e) { state.workOrders = []; }
+    } else {
+      state.workOrders = [];
+    }
+  }
+
   loadWorkOrdersFromLocalStorage();
   consolidateAllWorkOrders();
   loadServiceKnowledgeBaseFromLocalStorage();
@@ -539,6 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMultiTenantSaaSEngine();
   initCompanyBillingCardEngine();
   initOnboardingWizardEngine();
+  initWelcomeModal();
   syncInitialDataFromBackend();
 });
 
@@ -939,6 +954,10 @@ function updateTechJourneyUI(order) {
 
 function consolidateAllWorkOrders() {
   if (!state.workOrders) state.workOrders = [];
+  const appMode = localStorage.getItem('servisai_app_mode');
+  if (appMode === 'clean') {
+    return;
+  }
 
   if (state.staffJobs) {
     for (const sId in state.staffJobs) {
@@ -5938,13 +5957,414 @@ function renderServiceRatesSettings() {
   });
 }
 
+// ==================== 1. Şirket Profili & Ayarlar Formu Senkronu ====================
+function loadCompanyProfileToSettingsForm() {
+  const p = state.companyProfile || getStoredCompanyProfile();
+  if (!p) return;
+  const setEl = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+  };
+
+  setEl('setting-company-name', p.legalName || p.name || '');
+  setEl('setting-company-short', p.name || '');
+  setEl('setting-company-sector', p.industry || '');
+  setEl('setting-company-tax-office', p.taxOffice || '');
+  setEl('setting-company-tax-number', p.taxId || '');
+  setEl('setting-company-mersis', p.mersisNo || '');
+  setEl('setting-company-trade-reg', p.tradeRegNo || '');
+  setEl('setting-company-address', p.billingAddress || '');
+  setEl('setting-company-city', p.city || '');
+  setEl('setting-company-phone', p.phone || '');
+  setEl('setting-company-email', p.email || '');
+  setEl('setting-company-web', p.website || '');
+  setEl('setting-company-iban', p.iban || 'TR92 0006 2000 0001 2948 1029 48 - Garanti BBVA (TL Hesabı)');
+}
+
+// ==================== 2. Personel & Kadro Yönetimi (Ayarlar Tab 2) ====================
+function renderSettingsStaff() {
+  const container = document.getElementById('settings-staff-cards-container');
+  const countBadge = document.getElementById('settings-staff-total-badge');
+  const navBadge = document.getElementById('badge-settings-staff-count');
+  const staffList = state.staff || [];
+
+  if (countBadge) countBadge.textContent = `${staffList.length} Aktif Personel`;
+  if (navBadge) navBadge.textContent = `${staffList.length} Uzman`;
+  if (!container) return;
+
+  if (staffList.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 28px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed var(--border-color); color: var(--text-dim);">
+        <div style="font-size: 1.8rem; margin-bottom: 6px;">👥</div>
+        <strong style="color: var(--text-main);">Kayıtlı Teknisyen Bulunmuyor</strong>
+        <p style="margin: 4px 0 0; font-size: 0.8rem;">Aşağıdaki formu kullanarak kadronuza ilk teknisyeni ekleyebilirsiniz.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = staffList.map(s => {
+    const avatar = s.avatar || (s.name ? s.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : 'TK');
+    const plate = s.vehiclePlate || 'Zimmetsiz';
+    const location = s.location || s.baseAddress || 'Bölge Belirtilmedi';
+    const phone = s.phone || '05xx xxx xx xx';
+    const pin = s.pin || '1234';
+    const specialty = s.specialty || 'Genel Bakım & Onarım';
+
+    return `
+      <div class="settings-staff-card" data-staff-id="${s.id}">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 38px; height: 38px; border-radius: 8px; background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(99,102,241,0.2)); border: 1px solid rgba(56,189,248,0.3); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; color: #38bdf8;">
+              ${escapeHtml(avatar)}
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.92rem; color: #f8fafc;">${escapeHtml(s.name)}</div>
+              <span class="badge badge-purple" style="font-size: 0.7rem; padding: 2px 6px;">${escapeHtml(s.role || 'Teknisyen')}</span>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-danger btn-xs" onclick="deleteSettingsStaff(${s.id})" title="${escapeHtml(s.name)} personelini kadrodan sil" style="padding: 2px 6px; font-size: 0.72rem;">
+            🗑️ Sil
+          </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; color: #cbd5e1; margin-top: 6px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="color: #94a3b8;">🎯 Uzmanlık:</span>
+            <span style="font-weight: 500;">${escapeHtml(specialty)}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="color: #94a3b8;">📍 Bölge / Çıkış:</span>
+            <span style="color: #38bdf8;">${escapeHtml(location)}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="color: #94a3b8;">📞 Tel:</span>
+            <span>${escapeHtml(phone)}</span>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.74rem;">
+          <span style="color: #94a3b8;">🚗 ${escapeHtml(plate)}</span>
+          <span class="badge badge-secondary" style="font-family: monospace; font-size: 0.7rem;">PIN: ${escapeHtml(pin)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function deleteSettingsStaff(staffId) {
+  const staffMember = (state.staff || []).find(s => s.id === staffId);
+  const name = staffMember ? staffMember.name : "Personel";
+  if (!confirm(`⚠️ "${name}" isimli personeli kadrodan silmek istediğinize emin misiniz?`)) {
+    return;
+  }
+
+  state.staff = (state.staff || []).filter(s => s.id !== staffId);
+
+  try {
+    const terminated = JSON.parse(localStorage.getItem('servisai_staff_terminated') || '[]');
+    if (!terminated.includes(staffId)) {
+      terminated.push(staffId);
+      localStorage.setItem('servisai_staff_terminated', JSON.stringify(terminated));
+    }
+  } catch (e) {}
+
+  saveStaffToLocalStorage();
+  renderStaffList();
+  renderSettingsStaff();
+  populateActiveTechDropdown();
+  showToast(`🗑️ "${name}" personeli kadrodan kaldırıldı.`);
+}
+window.deleteSettingsStaff = deleteSettingsStaff;
+
+// ==================== 3. Cihaz Türleri & Hizmet Kapsamı (Ayarlar Tab 3) ====================
+const defaultDeviceScopes = [
+  { id: "dev-1", name: "Endüstriyel AC & DC Sürücüler (VFD / Invertör)", brands: "Delta, Danfoss, ABB, Siemens, Schneider", scope: "Kart Onarımı, IGBT Değişimi, Parametre Ayarı", warranty: "12 Ay Parça & İşçilik", duration: "2-4 Saat", icon: "⚡" },
+  { id: "dev-2", name: "Güneş Enerjisi (GES) Santral İnvertörleri", brands: "Huawei, SMA, Fronius, Sungrow, GoodWe", scope: "MPPT Arıza Giderme, İzolasyon Testi, Güç Bloğu", warranty: "12 Ay Parça & İşçilik", duration: "3-5 Saat", icon: "☀️" },
+  { id: "dev-3", name: "PLC, HMI Panel & Endüstriyel PC", brands: "Siemens S7-1200/1500, Omron, Mitsubishi, Weintek", scope: "Program Yükleme, İletişim Hat Onarımı, Ekran Değişimi", warranty: "12 Ay Parça & İşçilik", duration: "1-3 Saat", icon: "💾" },
+  { id: "dev-4", name: "Servo Motor & Servo Sürücüler", brands: "Yaskawa, Panasonic, Delta, Mitsubishi, Fanuc", scope: "Enkoder Ayarı, Rulman & Sargı Yenileme, Test", warranty: "6 Ay Servis Garantisi", duration: "4-6 Saat", icon: "🖥️" },
+  { id: "dev-5", name: "Endüstriyel Soğutma, Chiller & VRF Sistemleri", brands: "Daikin, Carrier, Trane, York, Alarko", scope: "Kompresör İnvertörü, Gaz & Basınç Devresi, Pano", warranty: "12 Ay Parça & İşçilik", duration: "3-6 Saat", icon: "❄️" },
+  { id: "dev-6", name: "Robotik Kollar & Mekatronik Hatlar", brands: "KUKA, ABB, Fanuc, Universal Robots", scope: "Eksen Motorları, Güç Kartları, Teach Pendant Tamiri", warranty: "12 Ay Parça & İşçilik", duration: "4-8 Saat", icon: "🤖" },
+  { id: "dev-7", name: "Kesintisiz Güç Kaynakları (Endüstriyel UPS)", brands: "Inform, Makelsan, Schneider, Riello, Socomec", scope: "Akü Grubu Revizyonu, Doğrultucu / Evirici Katı", warranty: "12 Ay Parça & İşçilik", duration: "2-4 Saat", icon: "🔋" },
+  { id: "dev-8", name: "Endüstriyel Pompa & Hidrolik Güç Üniteleri", brands: "Grundfos, Wilo, Bosch Rexroth, Parker", scope: "Sürücü Entegrasyonu, Basınç Sensörleri, Pano Revizyonu", warranty: "6 Ay Servis Garantisi", duration: "2-5 Saat", icon: "⚙️" }
+];
+
+function loadDeviceScopesFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem('servisai_device_scopes');
+    if (raw) {
+      state.deviceScopes = JSON.parse(raw);
+      return;
+    }
+  } catch (e) {}
+  state.deviceScopes = defaultDeviceScopes;
+}
+
+function saveDeviceScopesToLocalStorage() {
+  try {
+    localStorage.setItem('servisai_device_scopes', JSON.stringify(state.deviceScopes || []));
+  } catch (e) {}
+}
+
+function renderSettingsDevices() {
+  if (!state.deviceScopes) loadDeviceScopesFromLocalStorage();
+  const container = document.getElementById('settings-device-cards-container');
+  const countBadge = document.getElementById('settings-device-total-badge');
+  const navBadge = document.getElementById('badge-settings-device-count');
+  const list = state.deviceScopes || [];
+
+  if (countBadge) countBadge.textContent = `${list.length} Kategori Aktif`;
+  if (navBadge) navBadge.textContent = `${list.length} Kategori`;
+  if (!container) return;
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 28px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed var(--border-color); color: var(--text-dim);">
+        <div style="font-size: 1.8rem; margin-bottom: 6px;">🏷️</div>
+        <strong style="color: var(--text-main);">Kayıtlı Cihaz Grubu Bulunmuyor</strong>
+        <p style="margin: 4px 0 0; font-size: 0.8rem;">Aşağıdaki formu kullanarak servis verdiğiniz ilk cihaz kategorisini tanımlayabilirsiniz.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(d => {
+    return `
+      <div class="settings-device-card" data-device-id="${d.id}">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.4rem;">${d.icon || '⚡'}</span>
+            <div style="font-weight: 700; font-size: 0.9rem; color: #f8fafc;">${escapeHtml(d.name)}</div>
+          </div>
+          <button type="button" class="btn btn-outline-danger btn-xs" onclick="deleteSettingsDeviceScope('${d.id}')" title="Bu kapsamı kaldır" style="padding: 2px 6px; font-size: 0.72rem;">
+            🗑️ Sil
+          </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; margin-top: 6px;">
+          <div><strong style="color: #94a3b8;">Markalar:</strong> <span style="color: #cbd5e1;">${escapeHtml(d.brands || '')}</span></div>
+          <div><strong style="color: #94a3b8;">Müdahale:</strong> <span style="color: #e2e8f0;">${escapeHtml(d.scope || '')}</span></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.72rem;">
+          <span class="badge badge-success" style="font-size: 0.7rem;">${escapeHtml(d.warranty || '12 Ay')}</span>
+          <span class="badge badge-secondary" style="font-size: 0.7rem;">⏱️ ${escapeHtml(d.duration || '2-4 Saat')}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function deleteSettingsDeviceScope(devId) {
+  const target = (state.deviceScopes || []).find(d => d.id === devId);
+  const name = target ? target.name : "Cihaz kategorisi";
+  if (!confirm(`⚠️ "${name}" kategorisini hizmet kapsamından çıkarmak istediğinize emin misiniz?`)) {
+    return;
+  }
+  state.deviceScopes = (state.deviceScopes || []).filter(d => d.id !== devId);
+  saveDeviceScopesToLocalStorage();
+  renderSettingsDevices();
+  showToast(`🗑️ "${name}" kategorisi kaldırıldı.`);
+}
+window.deleteSettingsDeviceScope = deleteSettingsDeviceScope;
+
+// ==================== 4. e-Fatura & Sanal POS Ayarları (Ayarlar Tab 5) ====================
+function loadIntegrationsSettings() {
+  try {
+    const raw = localStorage.getItem('servisai_integrations_settings');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    const setEl = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val !== undefined && val !== null ? val : '';
+    };
+    const setChk = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.checked = Boolean(val);
+    };
+
+    if (s.efatura) {
+      setEl('setting-efatura-provider', s.efatura.provider);
+      setEl('setting-efatura-key', s.efatura.key);
+      setEl('setting-efatura-secret', s.efatura.secret);
+      setEl('setting-efatura-prefix', s.efatura.prefix);
+      setChk('setting-efatura-sandbox', s.efatura.sandbox);
+      setChk('setting-efatura-auto-sync', s.efatura.autoSync);
+    }
+    if (s.pos) {
+      setEl('setting-pos-provider', s.pos.provider);
+      setEl('setting-pos-merchant-id', s.pos.merchantId);
+      setEl('setting-pos-merchant-key', s.pos.merchantKey);
+      setEl('setting-pos-merchant-salt', s.pos.merchantSalt);
+      setChk('setting-pos-sandbox', s.pos.sandbox);
+      setChk('setting-pos-installments', s.pos.installments);
+    }
+  } catch (e) {}
+}
+
+function saveIntegrationsSettings() {
+  try {
+    const s = {
+      efatura: {
+        provider: document.getElementById('setting-efatura-provider')?.value || 'parasut',
+        key: document.getElementById('setting-efatura-key')?.value || '',
+        secret: document.getElementById('setting-efatura-secret')?.value || '',
+        prefix: (document.getElementById('setting-efatura-prefix')?.value || 'GIB').toUpperCase(),
+        sandbox: document.getElementById('setting-efatura-sandbox')?.checked ?? true,
+        autoSync: document.getElementById('setting-efatura-auto-sync')?.checked ?? true
+      },
+      pos: {
+        provider: document.getElementById('setting-pos-provider')?.value || 'paytr',
+        merchantId: document.getElementById('setting-pos-merchant-id')?.value || '',
+        merchantKey: document.getElementById('setting-pos-merchant-key')?.value || '',
+        merchantSalt: document.getElementById('setting-pos-merchant-salt')?.value || '',
+        sandbox: document.getElementById('setting-pos-sandbox')?.checked ?? true,
+        installments: document.getElementById('setting-pos-installments')?.checked ?? true
+      }
+    };
+    localStorage.setItem('servisai_integrations_settings', JSON.stringify(s));
+  } catch (e) {}
+}
+
+// ==================== 5. Temiz Başlangıç (Clean Slate) & Demo Motoru ====================
+function startCleanSlateService() {
+  localStorage.setItem('servisai_app_mode', 'clean');
+
+  const cleanProfile = {
+    name: "Yeni Teknik Servis",
+    legalName: "Yeni Teknik Servis Ltd. Şti.",
+    industry: "Endüstriyel Elektronik & Otomasyon",
+    sectorKey: "endustriyel_otomasyon",
+    taxOffice: "",
+    taxId: "",
+    billingAddress: "",
+    city: "İstanbul",
+    phone: "",
+    email: "",
+    website: "",
+    tradeRegNo: "",
+    mersisNo: "",
+    efaturaScenario: "Ticari Fatura (UBL-TR 2.1)",
+    managerName: "Servis Yöneticisi",
+    managerTitle: "Firma Sahibi / Yetkili",
+    managerPhone: "",
+    managerEmail: "",
+    managerPin: "1234",
+    mainWarehouse: "Merkez Depo",
+    mainWorkshop: "Merkez Atölye"
+  };
+
+  state.companyProfile = cleanProfile;
+  saveStoredCompanyProfile(cleanProfile);
+
+  state.workOrders = [];
+  state.staffJobs = {};
+  state.activeOrder = null;
+  state.technicianExpenses = [];
+  state.stockMovements = [];
+
+  saveWorkOrdersToLocalStorage();
+  saveTechnicianExpensesToLocalStorage();
+  try {
+    localStorage.setItem('servisai_staff_jobs', JSON.stringify({}));
+  } catch (e) {}
+
+  applyCompanyProfile(cleanProfile);
+
+  const welcomeModal = document.getElementById('welcome-setup-modal');
+  if (welcomeModal) welcomeModal.style.display = 'none';
+
+  renderIncomingCalls();
+  renderTechJobs();
+  renderTechExpenses();
+  updateFleetKPI();
+  updateActiveOrdersKPI();
+
+  openOnboardingWizard(1);
+  showToast("🚀 Yeni servisiniz için sıfırdan kurulum modu başlatıldı! Bilgilerinizi 3 adımlı sihirbazdan doldurabilirsiniz.", "success");
+}
+window.startCleanSlateService = startCleanSlateService;
+
+function loadSampleDemoData(forceReload = false) {
+  localStorage.setItem('servisai_app_mode', 'demo');
+  localStorage.removeItem('servisai_work_orders');
+  localStorage.removeItem('servisai_staff_jobs');
+  localStorage.removeItem('servisai_company_profile');
+  localStorage.removeItem('servisai_technician_expenses');
+  localStorage.removeItem('servisai_staff_terminated');
+
+  if (forceReload) {
+    window.location.reload();
+    return;
+  }
+
+  const welcomeModal = document.getElementById('welcome-setup-modal');
+  if (welcomeModal) welcomeModal.style.display = 'none';
+
+  applyCompanyProfile(defaultCompanyProfile);
+  showToast("⚡ Örnek demo servisi (Koçaş Teknik) başarıyla yüklendi!", "info");
+}
+window.loadSampleDemoData = loadSampleDemoData;
+
+function initWelcomeModal() {
+  const modal = document.getElementById('welcome-setup-modal');
+  const btnClose = document.getElementById('btn-close-welcome-modal');
+  const cardClean = document.getElementById('card-welcome-clean');
+  const cardDemo = document.getElementById('card-welcome-demo');
+
+  if (!modal) return;
+
+  const appMode = localStorage.getItem('servisai_app_mode');
+  if (!appMode) {
+    modal.style.display = 'flex';
+  }
+
+  if (cardClean) {
+    cardClean.addEventListener('click', () => {
+      startCleanSlateService();
+    });
+  }
+
+  if (cardDemo) {
+    cardDemo.addEventListener('click', () => {
+      loadSampleDemoData(false);
+    });
+  }
+
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      modal.style.display = 'none';
+      if (!localStorage.getItem('servisai_app_mode')) {
+        localStorage.setItem('servisai_app_mode', 'demo');
+      }
+    });
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      if (!localStorage.getItem('servisai_app_mode')) {
+        localStorage.setItem('servisai_app_mode', 'demo');
+      }
+    }
+  });
+}
+window.initWelcomeModal = initWelcomeModal;
+
+// ==================== 6. Ayarlar Modalı Açılış & Olay Yöneticisi ====================
 function openSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (!modal) return;
+
+  loadCompanyProfileToSettingsForm();
+  renderSettingsStaff();
+  renderSettingsDevices();
   loadServiceRatesFromLocalStorage();
   loadExchangeRatesFromLocalStorage();
   renderServiceRatesSettings();
   renderExchangeRatesInSettings();
+  loadIntegrationsSettings();
+
   modal.style.display = 'flex';
 }
 
@@ -5964,6 +6384,227 @@ function initSettingsActions() {
   const btnResetDefaults = document.getElementById('btn-reset-default-rates');
   const formNewRate = document.getElementById('form-new-service-rate');
   const btnRefreshTcmb = document.getElementById('btn-refresh-tcmb-rates');
+
+  // Hızlı Aksiyon Butonları & Formlar
+  const btnStartWizard = document.getElementById('btn-start-onboarding-wizard');
+  const btnCleanSlate = document.getElementById('btn-settings-clean-slate');
+  const btnLoadDemo = document.getElementById('btn-settings-load-demo');
+  const btnLoadSampleCo = document.getElementById('btn-load-sample-company');
+  const formCompany = document.getElementById('form-company-profile');
+  const formStaff = document.getElementById('form-new-staff');
+  const formDevice = document.getElementById('form-new-device-scope');
+  const btnSaveEfatura = document.getElementById('btn-save-efatura-settings');
+  const btnSavePos = document.getElementById('btn-save-pos-settings');
+
+  // Ayarlar Sekme Gezintisi (.settings-tab-btn)
+  const tabBtns = document.querySelectorAll('.settings-tab-btn');
+  const tabPanes = document.querySelectorAll('.settings-tab-pane');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTabId = btn.getAttribute('data-tab');
+      if (!targetTabId) return;
+
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      tabPanes.forEach(pane => {
+        pane.classList.remove('active');
+        pane.style.display = 'none';
+      });
+
+      const activePane = document.getElementById(targetTabId);
+      if (activePane) {
+        activePane.classList.add('active');
+        activePane.style.display = 'block';
+      }
+
+      if (targetTabId === 'tab-settings-company') {
+        loadCompanyProfileToSettingsForm();
+      } else if (targetTabId === 'tab-settings-staff') {
+        renderSettingsStaff();
+      } else if (targetTabId === 'tab-settings-devices') {
+        renderSettingsDevices();
+      } else if (targetTabId === 'tab-settings-rates') {
+        renderServiceRatesSettings();
+        renderExchangeRatesInSettings();
+      } else if (targetTabId === 'tab-settings-integrations') {
+        loadIntegrationsSettings();
+      }
+    });
+  });
+
+  // Firma Kimlik Bilgilerini Kaydet Butonu / Formu (Tab 1)
+  if (formCompany) {
+    formCompany.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const current = state.companyProfile || getStoredCompanyProfile() || {};
+      const updatedProfile = {
+        ...current,
+        legalName: (document.getElementById('setting-company-name')?.value || '').trim(),
+        name: (document.getElementById('setting-company-short')?.value || '').trim() || (document.getElementById('setting-company-name')?.value || '').trim(),
+        industry: (document.getElementById('setting-company-sector')?.value || '').trim(),
+        taxOffice: (document.getElementById('setting-company-tax-office')?.value || '').trim(),
+        taxId: (document.getElementById('setting-company-tax-number')?.value || '').trim(),
+        mersisNo: (document.getElementById('setting-company-mersis')?.value || '').trim(),
+        tradeRegNo: (document.getElementById('setting-company-trade-reg')?.value || '').trim(),
+        billingAddress: (document.getElementById('setting-company-address')?.value || '').trim(),
+        city: (document.getElementById('setting-company-city')?.value || '').trim(),
+        phone: (document.getElementById('setting-company-phone')?.value || '').trim(),
+        email: (document.getElementById('setting-company-email')?.value || '').trim(),
+        website: (document.getElementById('setting-company-web')?.value || '').trim(),
+        iban: (document.getElementById('setting-company-iban')?.value || '').trim()
+      };
+
+      applyCompanyProfile(updatedProfile);
+      showToast(`🏢 "${updatedProfile.name || updatedProfile.legalName}" firma kimlik bilgileri başarıyla kaydedildi ve tüm belgelere uygulandı!`, 'success');
+    });
+  }
+
+  // Örnek Firma Verisi Yükle
+  if (btnLoadSampleCo) {
+    btnLoadSampleCo.addEventListener('click', () => {
+      const tmpl = SECTOR_TEMPLATES.endustriyel_otomasyon || defaultCompanyProfile;
+      const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+      setEl('setting-company-name', tmpl.legalName);
+      setEl('setting-company-short', tmpl.name);
+      setEl('setting-company-sector', tmpl.industry);
+      setEl('setting-company-tax-office', tmpl.taxOffice);
+      setEl('setting-company-tax-number', tmpl.taxId);
+      setEl('setting-company-mersis', tmpl.mersisNo || '0576012984100018');
+      setEl('setting-company-trade-reg', tmpl.tradeRegNo || 'Bursa Tic. Sicil #98241');
+      setEl('setting-company-address', tmpl.billingAddress);
+      setEl('setting-company-city', tmpl.city);
+      setEl('setting-company-phone', tmpl.phone);
+      setEl('setting-company-email', tmpl.email);
+      setEl('setting-company-web', tmpl.website || 'https://kocasteknik.com');
+      setEl('setting-company-iban', 'TR92 0006 2000 0001 2948 1029 48 - Garanti BBVA (TL Hesabı)');
+      showToast("⚡ Örnek Koçaş Teknik firma bilgileri forma yüklendi. 'Kaydet' butonuna basarak onaylayabilirsiniz.", "info");
+    });
+  }
+
+  // Hızlı Kurulum Sihirbazı Butonu
+  if (btnStartWizard) {
+    btnStartWizard.addEventListener('click', () => {
+      closeSettingsModal();
+      openOnboardingWizard(1);
+    });
+  }
+
+  // Sıfırdan Başla Butonu (Clean Slate)
+  if (btnCleanSlate) {
+    btnCleanSlate.addEventListener('click', () => {
+      if (confirm("🗑️ Tüm demo servis kayıtları temizlenecek ve sistem sıfırdan kendi firmanızı kurabileceğiniz boş moda geçecektir. Devam etmek istiyor musunuz?")) {
+        closeSettingsModal();
+        startCleanSlateService();
+      }
+    });
+  }
+
+  // Demo Yükle Butonu
+  if (btnLoadDemo) {
+    btnLoadDemo.addEventListener('click', () => {
+      if (confirm("⚡ Örnek Koçaş Teknik demo verileri, çağrıları ve teknisyen kadrosu yüklensin mi?")) {
+        closeSettingsModal();
+        loadSampleDemoData(true);
+      }
+    });
+  }
+
+  // Yeni Teknisyen Ekleme Formu (Tab 2)
+  if (formStaff) {
+    formStaff.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = (document.getElementById('setting-new-staff-name')?.value || '').trim();
+      const role = document.getElementById('setting-new-staff-role')?.value || 'Saha Mühendisi (Elektronik)';
+      const specialty = (document.getElementById('setting-new-staff-specialty')?.value || '').trim() || 'Genel Bakım & Onarım';
+      const address = (document.getElementById('setting-new-staff-address')?.value || '').trim();
+      const phone = (document.getElementById('setting-new-staff-phone')?.value || '').trim();
+      const email = (document.getElementById('setting-new-staff-email')?.value || '').trim();
+      const tc = (document.getElementById('setting-new-staff-tc')?.value || '').trim();
+      const sgk = (document.getElementById('setting-new-staff-sgk')?.value || '').trim();
+      const plate = (document.getElementById('setting-new-staff-plate')?.value || '').trim().toUpperCase() || 'Zimmetsiz';
+      const pin = (document.getElementById('setting-new-staff-pin')?.value || '').trim() || '1234';
+
+      if (!name) return;
+
+      const newId = Date.now();
+      const avatar = name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+
+      if (!state.staff) state.staff = [];
+      state.staff.push({
+        id: newId,
+        name: name,
+        role: role,
+        specialty: specialty,
+        location: address,
+        baseAddress: address,
+        phone: phone,
+        email: email,
+        tc: tc,
+        sgk: sgk,
+        vehiclePlate: plate,
+        pin: pin,
+        avatar: avatar,
+        status: "Müsait",
+        distanceKm: 5.0
+      });
+
+      saveStaffToLocalStorage();
+      renderStaffList();
+      renderSettingsStaff();
+      populateActiveTechDropdown();
+      formStaff.reset();
+      showToast(`👥 "${name}" (${role}) başarıyla kadroya eklendi!`, 'success');
+    });
+  }
+
+  // Yeni Cihaz Kapsamı Ekleme Formu (Tab 3)
+  if (formDevice) {
+    formDevice.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const cat = (document.getElementById('setting-new-device-cat')?.value || '').trim();
+      const brands = (document.getElementById('setting-new-device-brands')?.value || '').trim();
+      const scope = (document.getElementById('setting-new-device-scope')?.value || '').trim() || 'Kart onarımı, test ve bakım';
+      const warranty = document.getElementById('setting-new-device-warranty')?.value || '12 Ay Parça & İşçilik';
+      const duration = (document.getElementById('setting-new-device-duration')?.value || '2-4 Saat').trim();
+      const icon = document.getElementById('setting-new-device-icon')?.value || '⚡';
+
+      if (!cat) return;
+
+      if (!state.deviceScopes) state.deviceScopes = defaultDeviceScopes;
+      state.deviceScopes.push({
+        id: `dev-${Date.now()}`,
+        name: cat,
+        brands: brands,
+        scope: scope,
+        warranty: warranty,
+        duration: duration,
+        icon: icon
+      });
+
+      saveDeviceScopesToLocalStorage();
+      renderSettingsDevices();
+      formDevice.reset();
+      showToast(`🏷️ "${cat}" cihaz kategorisi başarıyla hizmet kataloğuna eklendi!`, 'success');
+    });
+  }
+
+  // e-Fatura Ayarlarını Kaydet (Tab 5)
+  if (btnSaveEfatura) {
+    btnSaveEfatura.addEventListener('click', () => {
+      saveIntegrationsSettings();
+      showToast("🧾 e-Fatura & Bulut Muhasebe API ayarları başarıyla kaydedildi!", "success");
+    });
+  }
+
+  // Sanal POS Ayarlarını Kaydet (Tab 5)
+  if (btnSavePos) {
+    btnSavePos.addEventListener('click', () => {
+      saveIntegrationsSettings();
+      showToast("💳 Sanal POS ve 3D Secure tahsilat ayarları başarıyla kaydedildi!", "success");
+    });
+  }
 
   if (btnHeaderSettings) btnHeaderSettings.addEventListener('click', openSettingsModal);
   if (btnOpenSettings) btnOpenSettings.addEventListener('click', openSettingsModal);
@@ -11434,8 +12075,15 @@ function getVehicleIcon(type) {
 
 function loadStaffFromLocalStorage() {
   try {
+    const appMode = localStorage.getItem('servisai_app_mode');
     const saved = localStorage.getItem('servisai_staff');
     const terminated = JSON.parse(localStorage.getItem('servisai_staff_terminated') || '[]');
+    if (appMode === 'clean') {
+      if (saved) {
+        state.staff = JSON.parse(saved) || [];
+      }
+      return;
+    }
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -11504,7 +12152,16 @@ function saveVehiclesToLocalStorage() {
 
 function loadWorkOrdersFromLocalStorage() {
   try {
+    const appMode = localStorage.getItem('servisai_app_mode');
     const saved = localStorage.getItem('servisai_work_orders');
+    if (appMode === 'clean') {
+      if (saved) {
+        state.workOrders = JSON.parse(saved) || [];
+      } else {
+        state.workOrders = [];
+      }
+      return;
+    }
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -15437,8 +16094,13 @@ function saveStoredCompanyProfile(profile) {
 }
 
 function applyCompanyProfile(profile) {
+  if (!profile) return;
   state.companyProfile = profile;
   saveStoredCompanyProfile(profile);
+
+  if (profile.name || profile.legalName) {
+    document.title = `${profile.name || profile.legalName} | Yapay Zeka Destekli Teknik Servis`;
+  }
 
   // 1. Header Şirket ve Yönetici İsimleri
   const elHdrTenant = document.getElementById('header-tenant-name');

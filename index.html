@@ -2864,6 +2864,12 @@
           <button type="button" class="btn btn-warning-glow btn-xs" id="btn-start-onboarding-wizard" title="Yeni servis için 3 adımlı hızlı kurulum sihirbazını başlat">
             <span>🚀 Hızlı Kurulum Sihirbazı</span>
           </button>
+          <button type="button" class="btn btn-outline-danger btn-xs" id="btn-settings-clean-slate" title="Tüm demo çağrılarını temizle ve sıfırdan kendi servisini başlat">
+            <span>🗑️ Sıfırdan Başla</span>
+          </button>
+          <button type="button" class="btn btn-outline-cyan btn-xs" id="btn-settings-load-demo" title="Örnek Koçaş Teknik demo verilerini geri yükle">
+            <span>⚡ Demo Yükle</span>
+          </button>
           <button class="modal-close-btn" id="btn-close-settings-modal">&times;</button>
         </div>
       </div>
@@ -4532,7 +4538,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261027_1745"></script>
+  <script src="app.js?v=20261028_1530"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">
@@ -5027,6 +5033,71 @@
           <button type="button" class="btn btn-success btn-sm" id="btn-wizard-finish" style="display: none; background: #10b981; border-color: #10b981; font-weight: 700; padding: 6px 18px;">
             🚀 Kurulumu Tamamla ve Servisimi Başlat
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==================== 0. HOŞ GELDİNİZ & KURULUM TERCİHİ MODALI ==================== -->
+  <div class="modal-backdrop" id="welcome-setup-modal" style="display: none; z-index: 10000; align-items: center; justify-content: center;">
+    <div class="modal-card" style="max-width: 660px; border: 2px solid rgba(56, 189, 248, 0.4); box-shadow: 0 25px 70px rgba(0,0,0,0.9), 0 0 40px rgba(56, 189, 248, 0.25);">
+      <div class="modal-header" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 2rem;">🌟</span>
+          <div>
+            <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem; font-weight: 800;">
+              FUNZerviceTech<span style="color: #38bdf8;">.ai</span>'a Hoş Geldiniz!
+            </h3>
+            <p style="margin: 4px 0 0; font-size: 0.82rem; color: #94a3b8;">
+              Yapay Zeka Destekli Teknik Servis & Saha Operasyon Yönetim Sistemi
+            </p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" id="btn-close-welcome-modal">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+        <p style="font-size: 0.92rem; color: #cbd5e1; line-height: 1.5; margin: 0;">
+          Lütfen sistemde çalışmak istediğiniz başlangıç modunu seçiniz:
+        </p>
+
+        <!-- Seçenek Kartları Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;" class="welcome-choice-grid">
+          
+          <!-- Kart 1: Temiz Kurulum (Kendi Firmamı Kur) -->
+          <div id="card-welcome-clean" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(30, 41, 59, 0.7) 100%); border: 2px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 18px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 2.2rem; margin-bottom: 8px;">🚀</div>
+              <strong style="color: #34d399; font-size: 1.05rem; display: block; margin-bottom: 6px;">Kendi Servisimi Kur (Boş / Sıfırdan Başla)</strong>
+              <p style="font-size: 0.8rem; color: #94a3b8; line-height: 1.45; margin: 0;">
+                Demo iş emirlerini temizler. Kurulum sihirbazını açarak kendi firma adınızı, teknisyenlerinizi ve parçalarınızı tanımlamanızı sağlar.
+              </p>
+            </div>
+            <button type="button" class="btn btn-success btn-sm mt-3" style="width: 100%; font-weight: 700; background: #10b981; border-color: #10b981;">
+              ✨ Kendi Servisimi Kur
+            </button>
+          </div>
+
+          <!-- Kart 2: Örnek Demo Servisiyle Keşfet -->
+          <div id="card-welcome-demo" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(30, 41, 59, 0.7) 100%); border: 2px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 18px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 2.2rem; margin-bottom: 8px;">⚡</div>
+              <strong style="color: #38bdf8; font-size: 1.05rem; display: block; margin-bottom: 6px;">Örnek Demo ile İncele (Koçaş Teknik)</strong>
+              <p style="font-size: 0.8rem; color: #94a3b8; line-height: 1.45; margin: 0;">
+                22 revizyonlu hazır iş emirleri, Delta VFD sürücü onarımı, harita rotası, muhasebe makbuzları ve canlı döviz kurlarıyla sistemi keşfedin.
+              </p>
+            </div>
+            <button type="button" class="btn btn-outline-cyan btn-sm mt-3" style="width: 100%; font-weight: 700;">
+              👀 Demo Verileriyle Başlat
+            </button>
+          </div>
+
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 14px; font-size: 0.78rem; color: #94a3b8; display: flex; align-items: center; gap: 8px;">
+          <span>💡</span>
+          <span>Dilediğiniz zaman üst menüdeki <strong>[🏢 Şirket Değiştir]</strong> veya <strong>[⚙️ Ayarlar]</strong> menüsünden modlar arasında tek tıkla geçiş yapabilirsiniz.</span>
         </div>
       </div>
     </div>
