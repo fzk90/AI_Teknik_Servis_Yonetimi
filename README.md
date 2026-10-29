@@ -299,7 +299,7 @@ python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
         - Silme işlemi `servisai_stock` anahtarıyla tarayıcının `localStorage` kalıcı hafızasına kaydedilir, KPI özet sayaçları, kategori sayıları ve parça seçim açılır kutuları anında dinamik olarak güncellenir.
       - **Lokasyon & Depo Kayan Bandı (`#stock-location-pills`):**
         - Kategori kayan bandının hemen altına, tıpkı kategoriler gibi yatayda kaydırılabilir (`overflow-x: auto`) yeni bir **Lokasyon & Depo Kayan Bandı** eklendi.
-        - Bu bantta `[📍 TÜM LOKASYONLAR]`, `[🏢 MERKEZ DEPO]`, `[🔬 MERKEZ ATÖLYE / LAB]`, `[🚐 TÜM SAHA ARAÇLARI]` ve filodaki tüm araçlar (`[🚐 ARAÇ (34 ABC 101 - MURAT)]`, `[🚐 ARAÇ (34 DEF 202 - CANER)]`, `[🚐 ARAÇ (33 EKS 18 - LEVENT)]`, `[🚐 ARAÇ (06 TUS 01 - BURAK)]` vb.) dinamik olarak listelenir.
+        - Bu bantta `[📍 TÜM LOKASYONLAR]`, `[🏢 MERKEZ DEPO]`, `[🔬 MERKEZ ATÖLYE / LAB]`, `[🚐 TÜM SAHA ARAÇLARI]` ve filodaki tüm araçlar (`[🚐 ARAÇ (34 ABC 101 - MURAT)]`, `[🚐 ARAÇ (34 DEF 202 - CANER)]`, `[🚐 ARAÇ (34 NK 0023 - LEVENT)]`, `[🚐 ARAÇ (06 TUS 01 - BURAK)]` vb.) dinamik olarak listelenir.
         - Kayan banttaki herhangi bir lokasyona tıklandığında hem üstteki açılır menü (`#stock-location-view-filter`) senkronize olur hem de tablo görünümü doğrudan o lokasyonun stoklarına odaklanır.
       - **Tüm Lokasyonlar Popup Menüsünün Dinamik Hale Getirilmesi:**
         - Üst filtre araç çubuğundaki *"Tüm Lokasyonlar"* açılır kutusunda yer alan eski ve sabit *"Yalnızca Saha Araçları (Murat & Caner)"* ibaresi kaldırıldı.

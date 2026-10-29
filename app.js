@@ -137,7 +137,7 @@ const state = {
       status: "Görevde",
       location: "İstanbul (Maslak & Kağıthane)",
       baseAddress: "Kağıthane Merkez Mah. Ayazma Cad. No: 18, Kağıthane / İstanbul",
-      vehiclePlate: "33 EKS 18",
+      vehiclePlate: "34 NK 0023",
       avatar: "Lİ",
       distanceKm: 14.5
     }
@@ -156,7 +156,7 @@ const state = {
     { id: 9, plate: "07 ANT 07", model: "Volkswagen Caddy (2024)", type: "Akdeniz İklimlendirme Aracı", driverId: 11, driverName: "Kerem Demir", status: "Merkezde Hazır" },
     { id: 10, plate: "THY-TK2320 (Uçak)", model: "Boeing 737-800 / THY Seferi", type: "Hava Yolu Seyahati", driverId: 4, driverName: "Selin Kaya", status: "Uçuşta (Havada)" },
     { id: 11, plate: "YHT-9102 (Hızlı Tren)", model: "Siemens Velaro TCDD Hızlı Tren", type: "Yüksek Hızlı Demiryolu", driverId: 5, driverName: "Emre Yıldız", status: "Seyir Halinde" },
-    { id: 12, plate: "33 EKS 18", model: "Ford Transit Custom (2024)", type: "Mobil Servis & Teşhis Aracı", driverId: 12, driverName: "Levent İmekci", status: "Sahada Aktif" }
+    { id: 12, plate: "34 NK 0023", model: "Ford Transit Custom (2024)", type: "Mobil Servis & Teşhis Aracı", driverId: 12, driverName: "Levent İmekci", status: "Sahada Aktif" }
   ],
 
   // Sistem Yöneticileri & Profil Bilgileri
@@ -1642,7 +1642,7 @@ function openAccountingReceiptModal(code) {
   const serialNo = order.serial_number || order.serialNo || "SCH-2024-9912";
   const techName = order.assigned_tech || (state.staff.find(s => s.id == (order.assigned_user_id || state.activeTechId)) || {}).name || "Levent İmekci";
   const curTechObj = (state.staff || []).find(s => s.name === techName || s.id == (order.assigned_user_id || state.activeTechId));
-  const techPlate = curTechObj ? (curTechObj.vehiclePlate || "33 EKS 18") : "33 EKS 18";
+  const techPlate = curTechObj ? (curTechObj.vehiclePlate || "34 NK 0023") : "34 NK 0023";
 
   const elDevName = document.getElementById('rcpt-device-name');
   if (elDevName) elDevName.textContent = deviceName;
@@ -2010,7 +2010,7 @@ function updateDispatchBanner(order, assignedTech) {
 
   if (order && !assignedTech) {
     if (order.assigned_tech) {
-      assignedTech = (state.staff || []).find(s => s.name === order.assigned_tech) || { name: order.assigned_tech, vehiclePlate: order.assigned_tech_plate || '33 EKS 18' };
+      assignedTech = (state.staff || []).find(s => s.name === order.assigned_tech) || { name: order.assigned_tech, vehiclePlate: order.assigned_tech_plate || '34 NK 0023' };
     } else if (order.assigned_user_id) {
       assignedTech = (state.staff || []).find(s => s.id == order.assigned_user_id) || null;
     }
@@ -2048,7 +2048,7 @@ function updateDispatchBanner(order, assignedTech) {
     const repairM = order.repair_duration_minutes || order.repairDurationMinutes || 45;
     const totalM = order.total_duration_minutes || order.totalDurationMinutes || (travelM + repairM);
     const techName = assignedTech ? assignedTech.name : (order.assigned_tech || 'Saha Ekibi');
-    const techPlate = assignedTech ? assignedTech.vehiclePlate : (order.assigned_tech_plate || '33 EKS 18');
+    const techPlate = assignedTech ? assignedTech.vehiclePlate : (order.assigned_tech_plate || '34 NK 0023');
 
     banner.innerHTML = `
       <!-- 1. Üst Satır: Başlık & Tamamlandı Durumu -->
@@ -5944,7 +5944,7 @@ function generateOfficialServiceReport(order) {
   const currentTech = (state.staff || []).find(s => s.id == currentTechId);
   const techName = currentOrder.assigned_tech || currentOrder.assignedTech || (currentTech ? currentTech.name : "Levent İmekci");
   const assignedStaff = (state.staff || []).find(s => s.name === techName || (currentOrder.assigned_user_id && s.id === currentOrder.assigned_user_id)) || currentTech;
-  const techPlate = currentOrder.assigned_tech_plate || (assignedStaff ? assignedStaff.vehiclePlate : "33 EKS 18") || "33 EKS 18";
+  const techPlate = currentOrder.assigned_tech_plate || (assignedStaff ? assignedStaff.vehiclePlate : "34 NK 0023") || "34 NK 0023";
 
   // 1. Sorunun Tespiti
   const findingsInput = document.getElementById('tech-findings-input');
@@ -12127,17 +12127,75 @@ function renderFleetCards() {
 // ==================== Veri Bütünlüğü: Personel & Araç Zimmet Senkronu ====================
 function sanitizeStaffVehicleAssignments() {
   if (!state.staff || !Array.isArray(state.staff)) return;
+
+  // Otomatik Plaka Migrasyonu: Eski "33 EKS 18" plakası varsa yeni "34 NK 0023" plakasına güncelle
+  let changedStaff = false;
+  let changedVehicles = false;
+
+  (state.vehicles || []).forEach(v => {
+    if (v.plate === "33 EKS 18") {
+      v.plate = "34 NK 0023";
+      changedVehicles = true;
+    }
+  });
+
+  state.staff.forEach(s => {
+    if (s.vehiclePlate === "33 EKS 18") {
+      s.vehiclePlate = "34 NK 0023";
+      changedStaff = true;
+    }
+    if (s.name && s.name.includes("Levent") && (s.vehiclePlate === "33 EKS 18" || !s.vehiclePlate || s.vehiclePlate === "Zimmetsiz")) {
+      const v34 = (state.vehicles || []).find(v => v.plate === "34 NK 0023");
+      if (v34) {
+        s.vehiclePlate = "34 NK 0023";
+        v34.driverId = s.id;
+        v34.driverName = s.name;
+        changedStaff = true;
+        changedVehicles = true;
+      }
+    }
+  });
+
+  // İş emirlerindeki eski plaka ve yedek parça kaynaklarını da güncelle
+  if (state.workOrders && Array.isArray(state.workOrders)) {
+    let changedOrders = false;
+    state.workOrders.forEach(o => {
+      if (o.assigned_tech_plate === "33 EKS 18") {
+        o.assigned_tech_plate = "34 NK 0023";
+        changedOrders = true;
+      }
+      if (o.used_parts && Array.isArray(o.used_parts)) {
+        o.used_parts.forEach(p => {
+          if (p.source && p.source.includes("33 EKS 18")) {
+            p.source = p.source.replace("33 EKS 18", "34 NK 0023");
+            changedOrders = true;
+          }
+        });
+      }
+      if (o.usedParts && Array.isArray(o.usedParts)) {
+        o.usedParts.forEach(p => {
+          if (p.source && p.source.includes("33 EKS 18")) {
+            p.source = p.source.replace("33 EKS 18", "34 NK 0023");
+            changedOrders = true;
+          }
+        });
+      }
+    });
+    if (changedOrders && typeof saveWorkOrdersToLocalStorage === 'function') {
+      saveWorkOrdersToLocalStorage();
+    }
+  }
+
   const existingPlates = new Set((state.vehicles || []).map(v => v.plate));
-  let changed = false;
   state.staff.forEach(s => {
     if (s.vehiclePlate && s.vehiclePlate !== "Zimmetsiz" && !existingPlates.has(s.vehiclePlate)) {
       s.vehiclePlate = "Zimmetsiz";
-      changed = true;
+      changedStaff = true;
     }
   });
-  if (changed) {
-    saveStaffToLocalStorage();
-  }
+
+  if (changedStaff && typeof saveStaffToLocalStorage === 'function') saveStaffToLocalStorage();
+  if (changedVehicles && typeof saveVehiclesToLocalStorage === 'function') saveVehiclesToLocalStorage();
 }
 window.sanitizeStaffVehicleAssignments = sanitizeStaffVehicleAssignments;
 
@@ -14633,7 +14691,7 @@ function getDefaultEquipmentRegistry() {
       commissioning_date: "2024-06-10",
       warranty_status: "Garanti Dışı",
       warranty_end_date: "2026-06-10",
-      current_location: "🚐 Mobil Servis Aracında (33 EKS 18 - Levent İmekci)",
+      current_location: "🚐 Mobil Servis Aracında (34 NK 0023 - Levent İmekci)",
       current_location_type: "vehicle",
       location_detail: "Yerinde salmastra montajı için adrese intikalde",
       service_count: 2,
