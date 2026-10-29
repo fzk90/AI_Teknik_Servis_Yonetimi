@@ -1,10 +1,33 @@
 /**
- * ServisAI - Modern Interactive Prototype Logic
- * Multi-role: Admin / Technician / Customer
+ * ================================================================================
+ *   FUNZerviceTech.ai - Yapay Zeka Destekli Endüstriyel Teknik Servis Yönetimi
+ *   Copyright (c) 2026 Zafer Koçaş. Tüm Hakları Saklıdır. (All Rights Reserved).
+ * ================================================================================
+ *   FİKRİ MÜLKİYET VE TİCARİ KULLANIM UYARISI:
+ *   Bu yazılımın kaynak kodları, mimarisi, veri modelleri, yapay zeka arıza
+ *   teşhis algoritmaları ve arayüz tasarımları 5846 sayılı Fikir ve Sanat Eserleri
+ *   Kanunu (FSEK) ve uluslararası telif hakkı mevzuatı uyarınca tescillidir.
+ *   Hak sahibinin yazılı izni olmaksızın kopyalanması, çoğaltılması, dağıtılması,
+ *   ticari amaçla kullanılması veya tersine mühendisliğe tabi tutulması yasaktır.
+ *   Ayrıntılar için kök dizindeki LICENSE ve TELIF_HAKKI.md belgelerine bakınız.
+ * ================================================================================
  */
 
 // ==================== Backend API URL ====================
 const API_BASE_URL = "http://127.0.0.1:8000";
+
+// ==================== Fikri Mülkiyet & Telif Bildirimi (Console Watermark) ====================
+if (typeof console !== 'undefined' && console.log) {
+  console.log(
+    '%c FUNZerviceTech.ai %c © 2026 Zafer Koçaş - Tüm Hakları Saklıdır ',
+    'background: #2563eb; color: #ffffff; font-weight: 800; font-size: 13px; padding: 4px 8px; border-radius: 4px 0 0 4px;',
+    'background: #0f172a; color: #38bdf8; font-weight: 700; font-size: 13px; padding: 4px 8px; border-radius: 0 4px 4px 0; border: 1px solid #2563eb;'
+  );
+  console.log(
+    '%c 🛡️ TİCARİ MÜLKİYET UYARISI: Bu yazılımın kaynak kodları, mimarisi ve AI teşhis motoru 5846 sayılı FSEK kapsamında korunmaktadır. Yetkisiz kopyalama, ticari kullanım ve tersine mühendislik hukuki/cezai takibata tabidir.',
+    'color: #f87171; font-size: 11px; margin-top: 2px;'
+  );
+}
 
 // ==================== Global Utility Functions ====================
 function escapeHtml(str) {

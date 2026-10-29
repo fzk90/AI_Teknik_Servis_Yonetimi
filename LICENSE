@@ -1,0 +1,42 @@
+PROPRIETARY COMMERCIAL SOFTWARE LICENSE
+ALL RIGHTS RESERVED (TÜM HAKLARI SAKLIDIR)
+
+Copyright (c) 2026 Zafer Koçaş. All Rights Reserved.
+FUNZerviceTech.ai - Yapay Zeka Destekli Endüstriyel Teknik Servis Yönetim Sistemi
+
+--------------------------------------------------------------------------------
+1. MÜLKİYET VE KAPSAM (OWNERSHIP & SCOPE)
+Bu yazılım, kaynak kodları, yazılım mimarisi, kullanıcı arayüzü tasarımları, 
+iş akışları, yapay zeka arıza teşhis kuralları, veri modelleri ve ilgili tüm 
+belgeler ("Yazılım") münhasıran Zafer Koçaş'a ("Hak Sahibi") aittir. 
+Yazılım, 5846 sayılı Fikir ve Sanat Eserleri Kanunu (FSEK), Türk Ticaret Kanunu, 
+Türk Ceza Kanunu ve Bern Sözleşmesi dahil ilgili uluslararası telif hakkı 
+sözleşmeleri kapsamında tescilli ve korunmaktadır.
+
+2. KULLANIM VE İNCELEME İZNİ (EVALUATION & DEMO PERMISSION)
+Hak Sahibi tarafından açıkça yetkilendirilmiş üçüncü kişilere bu Yazılım'a 
+erişim sağlanması; yalnızca Yazılım'ın teknik yeteneklerini test etme, inceleme 
+ve değerlendirme amacıyla sınırlıdır. Bu erişim, kullanıcılara Yazılım üzerinde 
+herhangi bir mülkiyet, lisans, dağıtım veya ticarileştirme hakkı devretmez.
+
+3. KISITLAMALAR VE YASAKLAR (RESTRICTIONS)
+Yazılı izin olmaksızın aşağıdaki eylemler kesinlikle yasaktır:
+a) Kaynak kodların, arayüz bileşenlerinin veya algoritmaların tamamının ya da 
+   herhangi bir bölümünün kopyalanması, çoğaltılması veya klonlanması;
+b) Yazılım'ın üçüncü şahıslara satılması, kiralanması, alt lisanslanması (sublicense), 
+   dağıtılması veya herhangi bir ticari faaliyette kullanılması;
+c) Kaynak kodlara tersine mühendislik (reverse engineering) uygulanması, 
+   dekompile edilmesi veya kaynak koda dönüştürülmesi;
+d) Yazılım kaynak kodlarından veya mimarisinden türetilmiş çalışmalar üretilmesi;
+e) Telif hakkı, marka veya mülkiyet bildirimlerinin kaldırılması veya değiştirilmesi.
+
+4. HUKUKİ VE CEZAİ YAPTIRIMLAR (LEGAL ENFORCEMENT)
+Bu koşulların ihlali durumunda, Hak Sahibi 5846 sayılı FSEK Madde 66-71 ve 
+ilgili mevzuat uyarınca; tecavüzün men'i, maddi ve manevi tazminat davaları ile 
+cezai kovuşturma başlatma hakkını saklı tutar.
+
+5. İLETİŞİM VE TİCARİ LİSANSLAMA (COMMERCIAL INQUIRIES)
+Yazılım'ın ticari lisansı, kurumsal kurulumları ve entegrasyon talepleri için:
+Hak Sahibi: Zafer Koçaş
+E-Posta: zafer@kocasteknik.com
+Proje: FUNZerviceTech.ai

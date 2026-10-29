@@ -741,3 +741,15 @@ python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 
 
 
+
+
+---
+
+## ⚖️ Fikri Mülkiyet, Telif Hakkı ve Lisans (Proprietary & All Rights Reserved)
+
+* **Telif Sahibi:** Zafer Koçaş (Elektronik ve Haberleşme Mühendisi, Emekli)
+* **Marka:** FUNZerviceTech.ai
+* **Yasal Durum:** © 2026 Zafer Koçaş. Tüm Hakları Saklıdır (All Rights Reserved).
+* **Mevzuat:** 5846 sayılı Fikir ve Sanat Eserleri Kanunu (FSEK), Türk Ticaret Kanunu, Bern Sözleşmesi ve WIPO Telif Hakları Anlaşması kapsamında korunmaktadır.
+* **Kullanım Kapsamı:** Bu depoda yer alan kaynak kodlar, arayüz tasarımları, veri modelleri, yapay zeka arıza teşhis kuralları ve algoritmalar **açık kaynaklı (open source) değildir**. Yetkili kişilerce yalnızca teknik değerlendirme, test ve inceleme amacıyla görüntülenebilir. Hak sahibinin yazılı izni olmaksızın kopyalanamaz, çoğaltılamaz, alt lisanslanamaz, ticari amaçla işletilemez veya tersine mühendisliğe tabi tutulamaz.
+* **Ayrıntılı Hukuki Metinler:** [LICENSE](./LICENSE) ve [TELIF_HAKKI.md](./TELIF_HAKKI.md) belgelerinde belirtilmiştir.
