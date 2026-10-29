@@ -914,8 +914,13 @@ function updateTechJourneyUI(order) {
     }
   }
 
-  // 1. Durum: Kabul Edildi / Henüz Yola Çıkılmadı
-  if (status === 'Kabul Edildi' || status === 'İncelemede' || !order.departedAt) {
+  // 1. Durum: Kabul Edildi / Henüz Yola Çıkılmadı / Henüz Tezgâha Alınmadı
+  const isFreshState = status === 'Kabul Edildi' || 
+                       status === 'Kabul Edildi (Atölyede)' || 
+                       status === 'İncelemede' || 
+                       (status !== 'Yolda' && status !== 'Onarımda' && status !== 'Atölyeye Alındı / Lab Onarımında' && status !== 'Parça Bekliyor' && status !== 'Beklemede' && status !== 'Tamamlandı');
+
+  if (isFreshState) {
     setStepStyle(nodeAccepted, 'active');
     setStepStyle(nodeOnTheWay, 'inactive');
     setStepStyle(nodeRepair, 'inactive');
@@ -937,7 +942,7 @@ function updateTechJourneyUI(order) {
     if (btnWorkshopBanner) btnWorkshopBanner.style.display = 'none';
     if (btnResumeBanner) btnResumeBanner.style.display = 'none';
     if (btnViewReportBanner) btnViewReportBanner.style.display = 'none';
-    if (btnResetLifecycle) btnResetLifecycle.style.display = 'none';
+    if (btnResetLifecycle) btnResetLifecycle.style.display = 'inline-flex';
     if (durationBadge) durationBadge.style.display = 'none';
     if (pulse) pulse.style.background = isWorkshopOrder ? '#0891b2' : '#64748B';
     if (durationText) durationText.textContent = isWorkshopOrder ? '• 🔬 Tezgâh Onarımı Bekleniyor' : '';
@@ -4839,20 +4844,43 @@ function deductTechVehicleStock(part, techId, qty) {
 
 function updateVehiclePartDropdown() {
   const select = document.getElementById('vehicle-part-select');
+  const tabVehicle = document.getElementById('tab-btn-vehicle-stock');
+  const vehSubtitle = document.getElementById('vehicle-part-subtitle');
   if (!select) return;
 
   const currentTechId = state.activeTechId || 2;
+  const curTech = (state.staff || []).find(s => s.id == currentTechId);
+  const curOrder = state.activeOrder;
+  const isWorkshop = (curOrder && (curOrder.repair_location === 'workshop' || curOrder.channel === 'Elden Teslim' || (curOrder.status && curOrder.status.includes('Atölye')))) ||
+                     (curTech && (curTech.staffType === 'workshop' || (curTech.role && curTech.role.includes('Atölye'))));
+
+  if (tabVehicle) {
+    tabVehicle.innerHTML = isWorkshop 
+      ? '🏢 Merkez Atölye & Ana Depo Stoğundan Kullan' 
+      : '🚐 Servis Aracı Stoğundan Kullan';
+  }
+  if (vehSubtitle) {
+    vehSubtitle.textContent = isWorkshop
+      ? 'Merkez atölye ve ana depo stoğundaki yedek parçaları kullanabilir veya harici tedarik faturasını belgeleyebilirsiniz.'
+      : `Araç stoğunuzdan (${curTech ? curTech.vehiclePlate || 'Zimmetsiz' : 'Zimmetsiz'}) seçtiğiniz parça anında iş emrine eklenir ve araç stoğundan düşülür.`;
+  }
+
   const parts = state.stock || [];
-  select.innerHTML = '<option value="">-- Araçtan Kullanılacak Parçayı Seçin --</option>' +
+  const placeholderText = isWorkshop 
+    ? '-- 🏢 Merkez Atölye & Ana Depodan Parça Seçin --'
+    : '-- 🚐 Araçtan Kullanılacak Parçayı Seçin --';
+
+  select.innerHTML = `<option value="">${placeholderText}</option>` +
     parts.map(p => {
-      const qty = getTechVehicleStock(p, currentTechId);
+      const qty = isWorkshop ? (p.qty || 0) : getTechVehicleStock(p, currentTechId);
       const isAvailable = qty > 0;
       let currencyInfo = '';
       if (p.currency && p.currency !== 'TRY' && p.originalPrice) {
         const symbol = p.currency === 'USD' ? '$' : '€';
         currencyInfo = ` [İthal: ${symbol}${p.originalPrice} @ ${(p.exchangeRate || 0).toFixed(2)} ₺]`;
       }
-      return `<option value="${p.code}" ${!isAvailable ? 'disabled' : ''}>${p.name} (${p.code}) - Araçta: ${qty} adet - ${p.price} ₺${currencyInfo}</option>`;
+      const stockLabel = isWorkshop ? `Atölye Deposu: ${qty} adet` : `Araçta: ${qty} adet`;
+      return `<option value="${p.code}" ${!isAvailable ? 'disabled' : ''}>${p.name} (${p.code}) - ${stockLabel} - ${p.price} ₺${currencyInfo}</option>`;
     }).join('');
 }
 
@@ -5983,9 +6011,14 @@ function removeUsedPart(index) {
 
   const currentTechId = state.activeTechId || 2;
 
-  // Eğer araç stoğundan kullanılmış bir parça ise stoğu araca iade et
+  // Eğer araç veya atölye stoğundan kullanılmış bir parça ise stoğa iade et
   if (!removed.isLocalPurchase && removed.code) {
-    returnTechVehicleStock(removed.code, currentTechId, removed.qty || 1);
+    if (removed.source && (removed.source.includes('Merkez Atölye') || removed.source.includes('Ana Depo'))) {
+      const p = (state.stock || []).find(item => item.code === removed.code);
+      if (p) p.qty = (p.qty || 0) + (removed.qty || 1);
+    } else {
+      returnTechVehicleStock(removed.code, currentTechId, removed.qty || 1);
+    }
     renderStockTable();
     updateVehiclePartDropdown();
   }
@@ -7548,36 +7581,49 @@ function initTechActions() {
     });
   }
 
-  // 5. Araç Stoğundan Parça Kullanma
+  // 5. Yedek Parça Kullanma (Atölye Deposu veya Araç Stoğu)
   const btnAddPart = document.getElementById('btn-add-part-to-job');
   const partSelect = document.getElementById('vehicle-part-select');
 
   if (btnAddPart && partSelect) {
     btnAddPart.addEventListener('click', async () => {
       const selectedCode = partSelect.value;
+      if (!selectedCode) {
+        showToast("⚠️ Lütfen kullanılacak yedek parçayı seçin.", "warning");
+        return;
+      }
       const part = state.stock.find(p => p.code === selectedCode);
       const currentTechId = state.activeTechId || 2;
+      const curTech = (state.staff || []).find(s => s.id == currentTechId);
+      const currentCode = state.activeOrder ? (state.activeOrder.code || state.activeOrder.tracking_code) : "SRV-2026-104";
+      const curOrder = state.activeOrder || (state.workOrders || []).find(o => (o.tracking_code || o.code) === currentCode);
+
+      const isWorkshop = (curOrder && (curOrder.repair_location === 'workshop' || curOrder.channel === 'Elden Teslim' || (curOrder.status && curOrder.status.includes('Atölye')))) ||
+                         (curTech && (curTech.staffType === 'workshop' || (curTech.role && curTech.role.includes('Atölye'))));
 
       if (part) {
-        const availableQty = getTechVehicleStock(part, currentTechId);
-        if (availableQty <= 0) {
-          showToast(`❌ Araç stoğunuzda ${part.name} kalmadı! Merkez depodan ikmal isteyin.`);
-          return;
+        let availableQty = 0;
+        let partSourceLabel = '';
+
+        if (isWorkshop) {
+          availableQty = part.qty !== undefined ? part.qty : 0;
+          if (availableQty <= 0) {
+            showToast(`❌ Merkez Atölye / Ana Depoda "${part.name}" kalmadı! Satın alma veya tedarik işlemi açılmalı.`, "warning");
+            return;
+          }
+          partSourceLabel = "Merkez Atölye Stoğu";
+          part.qty = Math.max(0, (part.qty || 0) - 1);
+        } else {
+          availableQty = getTechVehicleStock(part, currentTechId);
+          if (availableQty <= 0) {
+            showToast(`❌ Araç stoğunuzda ${part.name} kalmadı! Merkez depodan ikmal isteyin.`, "warning");
+            return;
+          }
+          const plate = curTech ? (curTech.vehiclePlate || '34 ABC 101') : '34 ABC 101';
+          partSourceLabel = `Mobil Araç Stoğu (${plate})`;
+          deductTechVehicleStock(part, currentTechId, 1);
         }
 
-        const currentCode = state.activeOrder ? (state.activeOrder.code || state.activeOrder.tracking_code) : "SRV-2026-104";
-        const curTech = (state.staff || []).find(s => s.id == currentTechId);
-        const plate = curTech ? (curTech.vehiclePlate || '34 ABC 101') : '34 ABC 101';
-
-        // Backend API'ye canlı yaz
-        try {
-          await fetch(`${API_BASE_URL}/api/work-orders/${currentCode}/use-part?part_code=${selectedCode}&vehicle_plate=${encodeURIComponent(plate)}`, {
-            method: 'POST'
-          });
-        } catch (e) {}
-
-        // Araç stoğundan düş
-        deductTechVehicleStock(part, currentTechId, 1);
         renderStockTable();
         updateVehiclePartDropdown();
 
@@ -7592,7 +7638,7 @@ function initTechActions() {
           currency: part.currency || 'TRY',
           originalPrice: part.originalPrice || part.price,
           exchangeRate: part.exchangeRate || 1,
-          source: `Mobil Araç Stoğu (${plate})`,
+          source: partSourceLabel,
           warranty: part.warranty ? `${part.warranty} Parça Garantisi` : "12 Ay Parça Garantisi",
           isLocalPurchase: false
         });
@@ -7618,7 +7664,7 @@ function initTechActions() {
             exchange_rate: part.exchangeRate || 1,
             exchangeRate: part.exchangeRate || 1,
             warranty: part.warranty ? `${part.warranty} Parça Garantisi` : "12 Ay Parça Garantisi",
-            source: `Mobil Araç Stoğu (${plate})`,
+            source: partSourceLabel,
             isLocalPurchase: false
           };
           matchingOrder.used_parts.push(partEntry);
@@ -7632,7 +7678,12 @@ function initTechActions() {
         saveStockToLocalStorage();
 
         renderUsedParts();
-        showToast(`✅ ${part.name} araç stoğundan (${plate}) düşüldü ve #${currentCode} fişine işlendi!`);
+        if (isWorkshop) {
+          showToast(`✅ ${part.name} merkez atölye stoğundan düşüldü ve #${currentCode} fişine işlendi!`);
+        } else {
+          const plate = curTech ? (curTech.vehiclePlate || '34 ABC 101') : '34 ABC 101';
+          showToast(`✅ ${part.name} araç stoğundan (${plate}) düşüldü ve #${currentCode} fişine işlendi!`);
+        }
       }
     });
   }
@@ -13009,6 +13060,17 @@ function loadWorkOrdersFromLocalStorage() {
       } else {
         state.workOrders = [];
       }
+      // Migrate Elden Teslim & SRV-2026-284
+      (state.workOrders || []).forEach(o => {
+        if (o.channel === 'Elden Teslim' || (o.tracking_code === 'SRV-2026-284' || o.code === 'SRV-2026-284')) {
+          o.channel = 'Elden Teslim';
+          o.repair_location = 'workshop';
+          if (!o.device_current_location) o.device_current_location = "🏢 Merkez Servis Atölyesi / Laboratuvar";
+          if (!o.delivery_address && o.customer_address && !o.customer_address.includes('Merkez Servis Atölyesi')) {
+            o.delivery_address = o.customer_address;
+          }
+        }
+      });
       return;
     }
     if (saved) {
@@ -13020,6 +13082,16 @@ function loadWorkOrdersFromLocalStorage() {
           const defCode = defO.tracking_code || defO.code;
           if (!merged.some(o => (o.tracking_code || o.code) === defCode)) {
             merged.push(defO);
+          }
+        });
+        (merged || []).forEach(o => {
+          if (o.channel === 'Elden Teslim' || (o.tracking_code === 'SRV-2026-284' || o.code === 'SRV-2026-284')) {
+            o.channel = 'Elden Teslim';
+            o.repair_location = 'workshop';
+            if (!o.device_current_location) o.device_current_location = "🏢 Merkez Servis Atölyesi / Laboratuvar";
+            if (!o.delivery_address && o.customer_address && !o.customer_address.includes('Merkez Servis Atölyesi')) {
+              o.delivery_address = o.customer_address;
+            }
           }
         });
         state.workOrders = merged;
@@ -13600,7 +13672,13 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
   }
 
   if (custEl) custEl.textContent = custName;
-  if (addrEl) addrEl.textContent = `📍 ${custAddr}`;
+  if (addrEl) {
+    if (isWorkshopJob) {
+      addrEl.innerHTML = `🏢 <strong>Merkez Servis Atölyesi (Tezgâhta Onarım)</strong> <span style="color:#94a3b8; font-size:0.75rem;">• Teslimat Adresi: ${escapeHtml(custAddr)}</span>`;
+    } else {
+      addrEl.textContent = `📍 ${custAddr}`;
+    }
+  }
   if (devEl) devEl.textContent = `${devBrand} ${devModel}`.trim() || (order.device || "Endüstriyel Cihaz");
   if (snEl) snEl.textContent = `Seri No: ${serialNo}`;
   if (compEl) compEl.textContent = complaint;
@@ -13674,7 +13752,7 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
         distance = 0.0;
         liveLoc = { distanceKm: 0.0, locationLabel: "Merkez Atölye Tezgâhı" };
       } else {
-        liveLoc = getStaffLiveLocationAndDistance(s, custAddr);
+        liveLoc = getStaffLiveLocationAndDistance(s, "🏢 Merkez Servis Atölyesi / Laboratuvar");
         distance = liveLoc.distanceKm;
       }
     } else {
@@ -14234,6 +14312,87 @@ function initSendToWorkshopModal() {
   if (btnWorkshopBanner) {
     btnWorkshopBanner.addEventListener('click', () => {
       openSendToWorkshopModal(state.activeOrder);
+    });
+  }
+
+  // Başa Sar (Reset Lifecycle) Butonu Dinleyicisi
+  const btnReset = document.getElementById('btn-tech-reset-lifecycle');
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      const currentOrder = state.activeOrder;
+      if (!currentOrder) {
+        showToast("⚠️ Başa sarmak için aktif bir iş emri bulunamadı.", "warning");
+        return;
+      }
+      const code = currentOrder.tracking_code || currentOrder.code;
+      const isWorkshop = (currentOrder.repair_location === 'workshop') || 
+                         (currentOrder.channel === 'Elden Teslim') || 
+                         (currentOrder.status && currentOrder.status.includes('Atölye')) ||
+                         (currentOrder.device_current_location && currentOrder.device_current_location.includes('Atölye'));
+
+      const initialStatus = isWorkshop ? "Kabul Edildi (Atölyede)" : "Kabul Edildi";
+
+      // Yaşam döngüsü zaman damgalarını ve sayaçları sıfırla
+      currentOrder.status = initialStatus;
+      currentOrder.departedAt = null;
+      currentOrder.departed_at = null;
+      currentOrder.arrivedAt = null;
+      currentOrder.arrived_at = null;
+      currentOrder.travel_start_time = null;
+      currentOrder.work_start_time = null;
+      currentOrder.travel_duration_minutes = isWorkshop ? 0 : null;
+      currentOrder.travelDurationMinutes = isWorkshop ? 0 : null;
+      currentOrder.repair_duration_minutes = null;
+      currentOrder.repairDurationMinutes = null;
+      currentOrder.total_duration_minutes = null;
+      currentOrder.totalDurationMinutes = null;
+      currentOrder.accountingSettled = false;
+      currentOrder.customer_signature = null;
+
+      // state.workOrders güncelle
+      const matchingOrder = (state.workOrders || []).find(o => (o.tracking_code || o.code) === code);
+      if (matchingOrder) {
+        matchingOrder.status = initialStatus;
+        matchingOrder.departedAt = null;
+        matchingOrder.departed_at = null;
+        matchingOrder.arrivedAt = null;
+        matchingOrder.arrived_at = null;
+        matchingOrder.travel_start_time = null;
+        matchingOrder.work_start_time = null;
+        matchingOrder.travel_duration_minutes = isWorkshop ? 0 : null;
+        matchingOrder.travelDurationMinutes = isWorkshop ? 0 : null;
+        matchingOrder.repair_duration_minutes = null;
+        matchingOrder.repairDurationMinutes = null;
+        matchingOrder.total_duration_minutes = null;
+        matchingOrder.totalDurationMinutes = null;
+        matchingOrder.accountingSettled = false;
+        matchingOrder.customer_signature = null;
+      }
+
+      // state.staffJobs güncelle
+      if (state.staffJobs) {
+        for (const sId in state.staffJobs) {
+          const so = state.staffJobs[sId].find(o => (o.tracking_code || o.code) === code);
+          if (so) {
+            so.status = initialStatus;
+            so.departed_at = null;
+            so.arrived_at = null;
+            so.travel_duration_minutes = isWorkshop ? 0 : null;
+            so.repair_duration_minutes = null;
+          }
+        }
+      }
+
+      saveWorkOrdersToLocalStorage();
+      updateTechJourneyUI(currentOrder);
+      renderIncomingCalls();
+      renderTechJobs();
+      updateActiveOrdersKPI();
+      if (typeof updateDispatchBanner === 'function') {
+        updateDispatchBanner(currentOrder);
+      }
+
+      showToast(`🔄 #${code} adımları başa sarıldı (${initialStatus} aşamasına döndürüldü). Simülasyonu baştan test edebilirsiniz!`, "success");
     });
   }
 

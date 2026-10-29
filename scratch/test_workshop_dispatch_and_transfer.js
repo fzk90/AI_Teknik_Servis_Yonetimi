@@ -167,3 +167,4 @@ console.log(`  ✓ Atölye Tezgâhında İnceleme Başlatıldı: Durum: "${field
 console.log('================================================================================');
 console.log('   🎉 TÜM ATÖLYE SEVK & TRANSFER TESTLERİ BAŞARIYLA GEÇTİ!');
 console.log('================================================================================');
+
