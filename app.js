@@ -1679,10 +1679,56 @@ function openAccountingReceiptModal(code) {
 
   // 1. Müşteri Tahsilat Tablosu (Gelir Kalemleri)
   const laborCost = parseFloat(order.laborCost || order.labor_cost || 600);
-  const usedParts = (order.usedParts && order.usedParts.length > 0) ? order.usedParts : 
-                    (state.activeOrder && state.activeOrder.usedParts && state.activeOrder.usedParts.length > 0 ? state.activeOrder.usedParts : [
-                      { name: "IGBT-600V-40A Güç Transistörü", qty: 1, price: 450, isLocalPurchase: false, origin: "🚐 Mobil Araç Stoğu" }
-                    ]);
+  let rawRcptParts = [];
+  if (order.usedParts && Array.isArray(order.usedParts) && order.usedParts.length > 0) {
+    rawRcptParts = order.usedParts;
+  } else if (order.used_parts && Array.isArray(order.used_parts) && order.used_parts.length > 0) {
+    rawRcptParts = order.used_parts;
+  } else if (state.activeOrder && (state.activeOrder.code === currentCode || state.activeOrder.tracking_code === currentCode)) {
+    if (state.activeOrder.usedParts && state.activeOrder.usedParts.length > 0) {
+      rawRcptParts = state.activeOrder.usedParts;
+    } else if (state.activeOrder.used_parts && state.activeOrder.used_parts.length > 0) {
+      rawRcptParts = state.activeOrder.used_parts;
+    }
+  }
+
+  if (rawRcptParts.length === 0 && state.workOrders) {
+    const fo = state.workOrders.find(o => (o.tracking_code || o.code) === currentCode);
+    if (fo) {
+      if (fo.usedParts && fo.usedParts.length > 0) rawRcptParts = fo.usedParts;
+      else if (fo.used_parts && fo.used_parts.length > 0) rawRcptParts = fo.used_parts;
+    }
+  }
+
+  if (rawRcptParts.length === 0 && (!order || (order.code === "SRV-2026-104" || order.tracking_code === "SRV-2026-104"))) {
+    rawRcptParts = [
+      { name: "Semikron 1200V 50A IGBT Güç Modülü (İthal)", qty: 1, price: 1732.50, isLocalPurchase: false, currency: "USD", originalPrice: 45, exchangeRate: 38.50 }
+    ];
+  }
+
+  const usedParts = rawRcptParts.map(p => {
+    const pName = p.name || p.part_name || p.partName || 'Yedek Parça';
+    const pCode = p.code || p.part_code || p.partCode || '';
+    const pQty = parseInt(p.qty || p.quantity || 1) || 1;
+    const unitPrice = parseFloat(p.unitPrice !== undefined ? p.unitPrice : (p.unit_price !== undefined ? p.unit_price : (p.price !== undefined ? p.price / pQty : 0))) || 0;
+    const totalPrice = parseFloat(p.price !== undefined ? p.price : (unitPrice * pQty)) || (unitPrice * pQty);
+    const isLocal = !!(p.isLocalPurchase || p.is_local_purchase || (p.source && p.source.toLowerCase().includes('yerel')));
+    return {
+      name: pName,
+      code: pCode,
+      qty: pQty,
+      unitPrice: unitPrice,
+      price: totalPrice,
+      isLocalPurchase: isLocal,
+      currency: p.currency || 'TRY',
+      originalPrice: p.originalPrice || p.original_price,
+      exchangeRate: p.exchangeRate || p.exchange_rate,
+      warranty: p.warranty || '12 Ay Garanti',
+      source: p.source || (isLocal ? 'Yerel Dış Tedarik' : 'Mobil Araç Stoğu'),
+      supplierDoc: p.supplierDoc || p.supplier_doc || '',
+      movementId: p.movementId || p.movement_id || ''
+    };
+  });
 
   const tbody = document.getElementById('rcpt-items-tbody');
   if (tbody) {
@@ -5896,8 +5942,9 @@ function generateOfficialServiceReport(order) {
   
   const currentTechId = state.activeTechId || 2;
   const currentTech = (state.staff || []).find(s => s.id == currentTechId);
-  const techName = currentOrder.assignedTech || (currentTech ? currentTech.name : "Levent İmekci");
-  const techPlate = currentTech ? (currentTech.vehiclePlate || "33 EKS 18") : "33 EKS 18";
+  const techName = currentOrder.assigned_tech || currentOrder.assignedTech || (currentTech ? currentTech.name : "Levent İmekci");
+  const assignedStaff = (state.staff || []).find(s => s.name === techName || (currentOrder.assigned_user_id && s.id === currentOrder.assigned_user_id)) || currentTech;
+  const techPlate = currentOrder.assigned_tech_plate || (assignedStaff ? assignedStaff.vehiclePlate : "33 EKS 18") || "33 EKS 18";
 
   // 1. Sorunun Tespiti
   const findingsInput = document.getElementById('tech-findings-input');
@@ -5922,7 +5969,51 @@ function generateOfficialServiceReport(order) {
   }
 
   // 4. Parçalar (Araç Stoğu ve Yerel Dış Tedarik)
-  const usedParts = currentOrder.usedParts || [];
+  let rawParts = [];
+  if (currentOrder.usedParts && Array.isArray(currentOrder.usedParts) && currentOrder.usedParts.length > 0) {
+    rawParts = currentOrder.usedParts;
+  } else if (currentOrder.used_parts && Array.isArray(currentOrder.used_parts) && currentOrder.used_parts.length > 0) {
+    rawParts = currentOrder.used_parts;
+  } else if (state.activeOrder && (state.activeOrder.code === code || state.activeOrder.tracking_code === code)) {
+    if (state.activeOrder.usedParts && state.activeOrder.usedParts.length > 0) {
+      rawParts = state.activeOrder.usedParts;
+    } else if (state.activeOrder.used_parts && state.activeOrder.used_parts.length > 0) {
+      rawParts = state.activeOrder.used_parts;
+    }
+  }
+
+  if (rawParts.length === 0 && state.workOrders) {
+    const foundOrder = state.workOrders.find(o => (o.tracking_code || o.code) === code);
+    if (foundOrder) {
+      if (foundOrder.usedParts && foundOrder.usedParts.length > 0) rawParts = foundOrder.usedParts;
+      else if (foundOrder.used_parts && foundOrder.used_parts.length > 0) rawParts = foundOrder.used_parts;
+    }
+  }
+
+  const usedParts = rawParts.map(p => {
+    const pName = p.name || p.part_name || p.partName || 'Yedek Parça';
+    const pCode = p.code || p.part_code || p.partCode || '';
+    const pQty = parseInt(p.qty || p.quantity || 1) || 1;
+    const unitPrice = parseFloat(p.unitPrice !== undefined ? p.unitPrice : (p.unit_price !== undefined ? p.unit_price : (p.price !== undefined ? p.price / pQty : 0))) || 0;
+    const totalPrice = parseFloat(p.price !== undefined ? p.price : (unitPrice * pQty)) || (unitPrice * pQty);
+    const isLocal = !!(p.isLocalPurchase || p.is_local_purchase || (p.source && p.source.toLowerCase().includes('yerel')));
+    return {
+      name: pName,
+      code: pCode,
+      qty: pQty,
+      unitPrice: unitPrice,
+      price: totalPrice,
+      isLocalPurchase: isLocal,
+      currency: p.currency || 'TRY',
+      originalPrice: p.originalPrice || p.original_price,
+      exchangeRate: p.exchangeRate || p.exchange_rate,
+      warranty: p.warranty || '12 Ay Garanti',
+      source: p.source || (isLocal ? 'Yerel Dış Tedarik' : `Mobil Araç Stoğu (${techPlate})`),
+      supplierDoc: p.supplierDoc || p.supplier_doc || '',
+      movementId: p.movementId || p.movement_id || ''
+    };
+  });
+
   const vehicleParts = usedParts.filter(p => !p.isLocalPurchase);
   const localParts = usedParts.filter(p => !!p.isLocalPurchase);
 
@@ -7404,20 +7495,32 @@ function initTechActions() {
         const matchingOrder = (state.workOrders || []).find(o => (o.tracking_code || o.code) === currentCode);
         if (matchingOrder) {
           if (!matchingOrder.used_parts) matchingOrder.used_parts = [];
-          matchingOrder.used_parts.push({
+          if (!matchingOrder.usedParts) matchingOrder.usedParts = [];
+          const partEntry = {
             part_code: part.code,
+            code: part.code,
             part_name: part.name,
+            name: part.name,
             quantity: 1,
+            qty: 1,
             unit_price: part.price,
+            unitPrice: part.price,
+            price: part.price,
             currency: part.currency || 'TRY',
             original_price: part.originalPrice || part.price,
+            originalPrice: part.originalPrice || part.price,
             exchange_rate: part.exchangeRate || 1,
-            warranty: part.warranty || "12 Ay",
+            exchangeRate: part.exchangeRate || 1,
+            warranty: part.warranty ? `${part.warranty} Parça Garantisi` : "12 Ay Parça Garantisi",
             source: `Mobil Araç Stoğu (${plate})`,
             isLocalPurchase: false
-          });
+          };
+          matchingOrder.used_parts.push(partEntry);
+          matchingOrder.usedParts.push(partEntry);
           matchingOrder.parts_cost = (matchingOrder.parts_cost || 0) + part.price;
+          matchingOrder.partsCost = matchingOrder.parts_cost;
           matchingOrder.total_cost = (matchingOrder.labor_cost || 600) + matchingOrder.parts_cost;
+          matchingOrder.totalCost = matchingOrder.total_cost;
         }
         saveWorkOrdersToLocalStorage();
         saveStockToLocalStorage();
@@ -7857,6 +7960,16 @@ function initTechActions() {
         matchingOrder.travel_duration_minutes = travelM;
         matchingOrder.repair_duration_minutes = repairM;
         matchingOrder.total_duration_minutes = totalM;
+        if (state.activeOrder.usedParts && state.activeOrder.usedParts.length > 0) {
+          matchingOrder.usedParts = JSON.parse(JSON.stringify(state.activeOrder.usedParts));
+          matchingOrder.used_parts = JSON.parse(JSON.stringify(state.activeOrder.usedParts));
+          matchingOrder.partsCost = state.activeOrder.usedParts.reduce((s, p) => s + (parseFloat(p.price) || 0), 0);
+          matchingOrder.parts_cost = matchingOrder.partsCost;
+        }
+        if (state.activeOrder.laborCost) {
+          matchingOrder.laborCost = state.activeOrder.laborCost;
+          matchingOrder.labor_cost = state.activeOrder.laborCost;
+        }
       }
       if (state.staffJobs) {
         for (const sId in state.staffJobs) {
