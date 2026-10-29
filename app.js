@@ -9589,7 +9589,11 @@ function getTechRoute(person) {
 
   // 4. Mesafe, seyahat modu ve waypoint rotası hesapla
   let distanceKm = getHaversineDistanceKm(startGeo.coords, destGeo.coords);
-  if (distanceKm < 2) distanceKm = 4; // minimum rota mesafesi
+  if (startGeo.city === destGeo.city && startGeo.district === destGeo.district) {
+    if (distanceKm < 1 || distanceKm > 6) distanceKm = 1.0; // Aynı ilçe içi intikal
+  } else if (distanceKm < 1) {
+    distanceKm = 1.0;
+  }
 
   const travelMode = resolveTravelMode(person, startGeo, destGeo, distanceKm);
   const waypoints = generateTurkeyWaypoints(startGeo.coords, destGeo.coords, travelMode.type, 24);
@@ -12829,6 +12833,71 @@ function renderManagerCards() {
 }
 
 // ==================== 16. Çağrı Sevk & Saha Uzmanı Seçim Modalı ====================
+// Personelin anlık saha konumunu (aktif işi veya en son tamamlanan işi) ve hedef adrese gerçek mesafesini çözer
+function getStaffLiveLocationAndDistance(staff, targetAddress) {
+  if (!staff) return { distanceKm: 5.0, locationText: "İstanbul", locationLabel: "Merkez" };
+
+  let locText = staff.baseAddress || staff.address || staff.location || "İstanbul";
+  let locLabel = "İkamet / Merkez";
+
+  // Personelin işlerini tara
+  const allOrders = state.workOrders || [];
+  const staffJobs = (state.staffJobs && state.staffJobs[staff.id]) ? state.staffJobs[staff.id] : [];
+
+  const techOrders = allOrders.filter(o => 
+    (o.assigned_tech === staff.name || o.assigned_user_id === staff.id || staffJobs.some(j => (j.tracking_code || j.code) === (o.tracking_code || o.code)))
+  );
+
+  // 1. Aktif görevde mi? (Onarımda / Yolda / Parça Bekliyor)
+  const activeJob = techOrders.find(o => o.status === 'Onarımda' || o.status === 'Yolda' || o.status === 'Parça Bekliyor');
+  if (activeJob && (activeJob.customer_address || activeJob.customerAddress)) {
+    locText = activeJob.customer_address || activeJob.customerAddress;
+    const cName = activeJob.customer_name || activeJob.customer || 'Saha Görevi';
+    locLabel = `Aktif Görev: ${cName}`;
+  } else {
+    // 2. En son tamamlanan işi var mı?
+    const completedJobs = techOrders.filter(o => o.status && (o.status.startsWith('Tamamlandı') || o.status === 'Teslim Edildi'));
+    if (completedJobs.length > 0) {
+      const lastJob = completedJobs[completedJobs.length - 1];
+      if (lastJob.customer_address || lastJob.customerAddress) {
+        locText = lastJob.customer_address || lastJob.customerAddress;
+        const cName = lastJob.customer_name || lastJob.customer || 'Önceki Müşteri';
+        locLabel = `Önceki Servis: ${cName}`;
+      }
+    }
+  }
+
+  // Hedef adrese göre gerçek mesafeyi hesapla
+  if (targetAddress && typeof geocodeTurkishAddress === 'function' && typeof getHaversineDistanceKm === 'function') {
+    try {
+      const startGeo = geocodeTurkishAddress(locText, [40.9800, 28.7200]);
+      const destGeo = geocodeTurkishAddress(targetAddress, [41.0550, 29.0050]);
+      let dist = getHaversineDistanceKm(startGeo.coords, destGeo.coords);
+
+      // Aynı ilçe veya aynı semtteyse gerçek yakın mesafe
+      if (startGeo.city && destGeo.city && startGeo.city.toLowerCase() === destGeo.city.toLowerCase()) {
+        if (startGeo.district && destGeo.district && startGeo.district.toLowerCase() === destGeo.district.toLowerCase()) {
+          // İki adres aynı ilçedeyse (örn: Kadıköy - Kadıköy)
+          dist = Math.min(dist, 1.2);
+          if (dist < 0.8) dist = 1.0;
+        }
+      }
+      return {
+        distanceKm: Math.max(0.8, parseFloat(dist.toFixed(1))),
+        locationText: locText,
+        locationLabel: locLabel
+      };
+    } catch (e) {}
+  }
+
+  return {
+    distanceKm: staff.distanceKm || 3.5,
+    locationText: locText,
+    locationLabel: locLabel
+  };
+}
+window.getStaffLiveLocationAndDistance = getStaffLiveLocationAndDistance;
+
 let currentAssignOrderCode = null;
 let currentAssignSourceStaffId = null;
 let selectedAssignTechId = null;
@@ -12956,13 +13025,18 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
   // Yapay Zeka Tavsiye Hesabı:
   let bestCandidate = null;
   let minScore = Infinity;
+  const staffDistances = new Map();
 
   availableStaff.forEach(s => {
     if (sourceStaffId && s.id === sourceStaffId) return; // Kaynak personele geri devretmeyi ilk tercih yapma
 
     const assignedJobs = (state.staffJobs && state.staffJobs[s.id]) ? state.staffJobs[s.id].filter(j => j.status !== 'Tamamlandı') : [];
     const jobCount = assignedJobs.length;
-    const distance = s.distanceKm || 5;
+    
+    // Canlı konum ve hedef çağrı adresine göre dinamik mesafe hesabı:
+    const liveLoc = getStaffLiveLocationAndDistance(s, custAddr);
+    staffDistances.set(s.id, liveLoc);
+    const distance = liveLoc.distanceKm;
 
     let score = (s.status === 'Müsait' ? 0 : s.status === 'Görevde' ? 10 : 15) + (jobCount * 5) + distance;
     if (score < minScore) {
@@ -12985,6 +13059,9 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
     const assignedJobs = (state.staffJobs && state.staffJobs[s.id]) ? state.staffJobs[s.id].filter(j => j.status !== 'Tamamlandı') : [];
     const activeJobCount = assignedJobs.length;
 
+    const liveLoc = staffDistances.get(s.id) || getStaffLiveLocationAndDistance(s, custAddr);
+    const distText = liveLoc.distanceKm.toFixed(1);
+
     const statusBadge = s.status === 'Müsait' ? 'badge-success' :
                         s.status === 'Görevde' ? 'badge-primary' : 'badge-warning';
 
@@ -13000,7 +13077,7 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
               ${isSource ? '<span class="badge badge-secondary" style="font-size: 0.7rem;">(Mevcut Görevli - Devrediliyor)</span>' : ''}
               <span class="badge ${statusBadge}">${s.status}</span>
             </div>
-            <span class="assign-tech-sub">${s.role} (${s.specialty || 'Saha'}) • 🚗 ${s.vehiclePlate || 'Zimmetsiz'} • 📍 ${s.distanceKm || 2.5} km uzakta</span>
+            <span class="assign-tech-sub">${s.role} (${s.specialty || 'Saha'}) • 🚗 ${s.vehiclePlate || 'Zimmetsiz'} • 📍 <strong>${distText} km</strong> uzakta <em style="color:#94a3b8; font-size:0.75rem;">(${liveLoc.locationLabel})</em></span>
           </div>
         </div>
         <div class="assign-tech-right">
