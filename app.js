@@ -6591,6 +6591,10 @@ function loadCompanyProfileToSettingsForm() {
   setEl('setting-company-address', p.billingAddress || '');
   setEl('setting-company-city', p.city || '');
   setEl('setting-company-district', p.district || '');
+  setEl('setting-workshop-address', p.workshopAddress || 'Alaaddinbey Mah. 632. Sok. Otomasyon Center No: 8 Nilüfer / BURSA');
+  setEl('setting-workshop-unit', p.workshopUnit || p.mainWorkshop || 'Elektronik Kart & BGA Rework Laboratuvarı');
+  setEl('setting-warehouse-address', p.warehouseAddress || 'Demirtaş Organize Sanayi Bölgesi (DOSAB) Lojistik Depo No: 14 Osmangazi / BURSA');
+  setEl('setting-warehouse-contact', p.warehouseContact || 'Hasan Usta (Dahili: 104) • depo@kocasteknik.com');
   setEl('setting-company-phone', p.phone || '');
   setEl('setting-company-gsm', p.gsm || p.phone || '');
   setEl('setting-company-email', p.email || '');
@@ -7108,6 +7112,12 @@ function initSettingsActions() {
         billingAddress: (document.getElementById('setting-company-address')?.value || '').trim(),
         city: (document.getElementById('setting-company-city')?.value || '').trim(),
         district: (document.getElementById('setting-company-district')?.value || '').trim(),
+        workshopAddress: (document.getElementById('setting-workshop-address')?.value || '').trim(),
+        workshopUnit: (document.getElementById('setting-workshop-unit')?.value || '').trim(),
+        mainWorkshop: (document.getElementById('setting-workshop-unit')?.value || '').trim() || current.mainWorkshop || 'Merkez Servis Atölyesi',
+        warehouseAddress: (document.getElementById('setting-warehouse-address')?.value || '').trim(),
+        warehouseContact: (document.getElementById('setting-warehouse-contact')?.value || '').trim(),
+        mainWarehouse: current.mainWarehouse || 'Merkez Depo',
         phone: (document.getElementById('setting-company-phone')?.value || '').trim(),
         gsm: (document.getElementById('setting-company-gsm')?.value || '').trim(),
         email: (document.getElementById('setting-company-email')?.value || '').trim(),
@@ -7119,7 +7129,41 @@ function initSettingsActions() {
       };
 
       applyCompanyProfile(updatedProfile);
-      showToast(`🏢 "${updatedProfile.name || updatedProfile.legalName}" firma ve yönetici bilgileri başarıyla kaydedildi ve tüm sisteme uygulandı!`, 'success');
+      showToast(`🏢 "${updatedProfile.name || updatedProfile.legalName}" firma, atölye ve depo adresleri başarıyla kaydedildi!`, 'success');
+    });
+  }
+
+  // Genel Merkez Adresini Atölyeye Kopyala
+  const btnCopyHqToWorkshop = document.getElementById('btn-copy-hq-to-workshop');
+  if (btnCopyHqToWorkshop) {
+    btnCopyHqToWorkshop.addEventListener('click', () => {
+      const hqAddr = (document.getElementById('setting-company-address')?.value || '').trim();
+      const hqCity = (document.getElementById('setting-company-city')?.value || '').trim();
+      const hqDist = (document.getElementById('setting-company-district')?.value || '').trim();
+      const parts = [hqAddr, hqDist, hqCity].filter(Boolean);
+      const combined = parts.join(' ');
+      const wsInput = document.getElementById('setting-workshop-address');
+      if (wsInput && combined) {
+        wsInput.value = combined;
+        showToast('📋 Genel Merkez adresi Merkez Atölye adresi olarak kopyalandı.', 'info');
+      }
+    });
+  }
+
+  // Genel Merkez Adresini Depoya Kopyala
+  const btnCopyHqToWarehouse = document.getElementById('btn-copy-hq-to-warehouse');
+  if (btnCopyHqToWarehouse) {
+    btnCopyHqToWarehouse.addEventListener('click', () => {
+      const hqAddr = (document.getElementById('setting-company-address')?.value || '').trim();
+      const hqCity = (document.getElementById('setting-company-city')?.value || '').trim();
+      const hqDist = (document.getElementById('setting-company-district')?.value || '').trim();
+      const parts = [hqAddr, hqDist, hqCity].filter(Boolean);
+      const combined = parts.join(' ');
+      const whInput = document.getElementById('setting-warehouse-address');
+      if (whInput && combined) {
+        whInput.value = combined;
+        showToast('📋 Genel Merkez adresi Yedek Parça Depo adresi olarak kopyalandı.', 'info');
+      }
     });
   }
 
@@ -7152,7 +7196,12 @@ function initSettingsActions() {
       setEl('setting-company-mersis', tmpl.mersisNo || '0576012984100018');
       setEl('setting-company-trade-reg', tmpl.tradeRegNo || 'Bursa Tic. Sicil #98241');
       setEl('setting-company-address', tmpl.billingAddress);
-      setEl('setting-company-city', tmpl.city);
+      setEl('setting-company-city', tmpl.city || 'Bursa');
+      setEl('setting-company-district', tmpl.district || 'Osmangazi');
+      setEl('setting-workshop-address', tmpl.workshopAddress || 'Alaaddinbey Mah. 632. Sok. Otomasyon Center No: 8 Nilüfer / BURSA');
+      setEl('setting-workshop-unit', tmpl.workshopUnit || tmpl.mainWorkshop || 'Elektronik Kart & BGA Rework Laboratuvarı');
+      setEl('setting-warehouse-address', tmpl.warehouseAddress || 'Demirtaş Organize Sanayi Bölgesi (DOSAB) Lojistik Depo No: 14 Osmangazi / BURSA');
+      setEl('setting-warehouse-contact', tmpl.warehouseContact || 'Hasan Usta (Dahili: 104) • depo@kocasteknik.com');
       setEl('setting-company-phone', tmpl.phone);
       setEl('setting-company-email', tmpl.email);
       setEl('setting-company-web', tmpl.website || 'https://kocasteknik.com');
@@ -17580,8 +17629,9 @@ const defaultCompanyProfile = {
   sectorKey: "endustriyel_otomasyon",
   taxOffice: "Nilüfer Vergi Dairesi",
   taxId: "5760129841",
-  billingAddress: "Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14 Osmangazi / BURSA",
-  city: "Bursa / Nilüfer",
+  billingAddress: "Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14",
+  city: "Bursa",
+  district: "Osmangazi",
   phone: "+90 224 441 00 24",
   email: "muhasebe@kocasteknik.com",
   website: "https://kocasteknik.com",
@@ -17594,7 +17644,11 @@ const defaultCompanyProfile = {
   managerEmail: "zafer@kocasteknik.com",
   managerPin: "1234",
   mainWarehouse: "Bursa Merkez Depo (DOSAB)",
-  mainWorkshop: "Elektronik ve Kart Test Laboratuvarı"
+  mainWorkshop: "Elektronik ve Kart Test Laboratuvarı",
+  workshopAddress: "Alaaddinbey Mah. 632. Sok. Otomasyon Center No: 8 Nilüfer / BURSA",
+  workshopUnit: "Elektronik Kart & BGA Rework Laboratuvarı",
+  warehouseAddress: "Demirtaş Organize Sanayi Bölgesi (DOSAB) Lojistik Depo No: 14 Osmangazi / BURSA",
+  warehouseContact: "Hasan Usta (Dahili: 104) • depo@kocasteknik.com"
 };
 
 const SECTOR_TEMPLATES = {
@@ -17860,6 +17914,12 @@ function applyCompanyProfile(profile) {
 
   const elBillAddr = document.getElementById('billing-card-address');
   if (elBillAddr) elBillAddr.textContent = profile.billingAddress || profile.city || '—';
+
+  const elBillWorkshop = document.getElementById('billing-card-workshop-address');
+  if (elBillWorkshop) elBillWorkshop.textContent = profile.workshopAddress || 'Alaaddinbey Mah. 632. Sok. Otomasyon Center No: 8 Nilüfer / BURSA';
+
+  const elBillWarehouse = document.getElementById('billing-card-warehouse-address');
+  if (elBillWarehouse) elBillWarehouse.textContent = profile.warehouseAddress || 'DOSAB Lojistik Depo No: 14 Osmangazi / BURSA';
 
   const elBillEmail = document.getElementById('billing-card-email');
   if (elBillEmail) elBillEmail.textContent = profile.email || '—';

@@ -3091,20 +3091,90 @@
                 <input type="text" id="setting-company-registry" class="form-input form-input-sm" value="Ticaret Sicil: 102948 • Mersis: 0576012984100001" placeholder="Örn: Sicil: 102948-5">
               </div>
 
-              <!-- 3. Adres ve Lokasyon Bilgileri -->
-              <div class="form-group" style="grid-column: 1 / -1;">
-                <label class="form-label" for="setting-company-address">Merkez Servis Atölyesi Açık Adresi *</label>
-                <input type="text" id="setting-company-address" class="form-input form-input-sm" value="Alaaddinbey Mah. 632. Sok. Otomasyon Center No:8" placeholder="Örn: Dudullu OSB 1. Cadde No:8" required>
+              <!-- 3. Adres ve Lokasyon Bilgileri (Merkez, Atölye, Ana Depo) -->
+              <div style="grid-column: 1 / -1; margin-top: 10px; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
+                  <span style="font-weight: 700; font-size: 0.95rem; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
+                    📍 Şirket Lokasyonları ve Tesis Adresleri
+                  </span>
+                  <span style="font-size: 0.72rem; color: var(--text-dim);">
+                    Genel Merkez, Atölye ve Ana Depo adresleri ayrı ayrı yönetilir
+                  </span>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label" for="setting-company-city">İl *</label>
-                <input type="text" id="setting-company-city" class="form-input form-input-sm" value="Bursa" placeholder="Örn: Bursa, İstanbul, İzmir" required>
+              <!-- 3.1. Şirket Genel Merkez & Fatura Adresi -->
+              <div style="grid-column: 1 / -1; background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 14px; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                  <strong style="color: #38bdf8; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                    🏢 1. Şirket Genel Merkez & Resmi Fatura Adresi
+                  </strong>
+                  <span class="badge badge-blue" style="font-size: 0.68rem;">Resmi Belgeler & Fatura</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px;">
+                  <div>
+                    <label class="form-label" for="setting-company-address">Genel Merkez Açık Adresi *</label>
+                    <input type="text" id="setting-company-address" class="form-input form-input-sm" value="Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14" placeholder="Örn: DOSAB Yasemin Sk. No: 14" required>
+                  </div>
+                  <div>
+                    <label class="form-label" for="setting-company-city">İl *</label>
+                    <input type="text" id="setting-company-city" class="form-input form-input-sm" value="Bursa" placeholder="Örn: Bursa" required>
+                  </div>
+                  <div>
+                    <label class="form-label" for="setting-company-district">İlçe *</label>
+                    <input type="text" id="setting-company-district" class="form-input form-input-sm" value="Osmangazi" placeholder="Örn: Osmangazi" required>
+                  </div>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label" for="setting-company-district">İlçe *</label>
-                <input type="text" id="setting-company-district" class="form-input form-input-sm" value="Nilüfer" placeholder="Örn: Nilüfer, Ümraniye, Bornova" required>
+              <!-- 3.2. Merkez Servis Atölyesi & Laboratuvar Adresi -->
+              <div style="grid-column: 1 / -1; background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 8px; padding: 14px; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                  <strong style="color: #c084fc; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                    🔬 2. Merkez Servis Atölyesi & Laboratuvar Adresi
+                  </strong>
+                  <button type="button" id="btn-copy-hq-to-workshop" class="btn btn-outline btn-xs" style="font-size: 0.72rem; padding: 3px 8px; border-color: #8b5cf6; color: #d8b4fe;" title="Genel merkez adres bilgilerini atölye adresine kopyalar">
+                    📋 Genel Merkez ile Aynı Yap
+                  </button>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                  <div>
+                    <label class="form-label" for="setting-workshop-address">Atölye Açık Adresi (Cihaz Kabul & Tezgâh Lokasyonu) *</label>
+                    <input type="text" id="setting-workshop-address" class="form-input form-input-sm" value="Alaaddinbey Mah. 632. Sok. Otomasyon Center No: 8 Nilüfer / BURSA" placeholder="Örn: Alaaddinbey Mah. 632. Sok. No: 8 Nilüfer / BURSA" required>
+                  </div>
+                  <div>
+                    <label class="form-label" for="setting-workshop-unit">Birim / Laboratuvar Tanımı</label>
+                    <input type="text" id="setting-workshop-unit" class="form-input form-input-sm" value="Elektronik Kart & BGA Rework Laboratuvarı" placeholder="Örn: Elektronik & Test Laboratuvarı">
+                  </div>
+                </div>
+                <div class="text-xs text-muted" style="margin-top: 6px;">
+                  ℹ️ Elden teslim alınan ve sahada çözülemeyip atölyeye sevk edilen cihazların kabul/onarım noktasıdır. Saha teknisyenleri atölye görevine yönlendirilirken bu adres baz alınır.
+                </div>
+              </div>
+
+              <!-- 3.3. Yedek Parça Ana Depo & Sevkiyat Adresi -->
+              <div style="grid-column: 1 / -1; background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 14px; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                  <strong style="color: #34d399; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                    📦 3. Yedek Parça Ana Depo & Lojistik Sevkiyat Adresi
+                  </strong>
+                  <button type="button" id="btn-copy-hq-to-warehouse" class="btn btn-outline btn-xs" style="font-size: 0.72rem; padding: 3px 8px; border-color: #10b981; color: #a7f3d0;" title="Genel merkez adres bilgilerini ana depo adresine kopyalar">
+                    📋 Genel Merkez ile Aynı Yap
+                  </button>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                  <div>
+                    <label class="form-label" for="setting-warehouse-address">Ana Depo Açık Adresi (Tedarikçi Teslimat & İkmal) *</label>
+                    <input type="text" id="setting-warehouse-address" class="form-input form-input-sm" value="Demirtaş Organize Sanayi Bölgesi (DOSAB) Lojistik Depo No: 14 Osmangazi / BURSA" placeholder="Örn: DOSAB Lojistik Depo No: 14 Osmangazi / BURSA" required>
+                  </div>
+                  <div>
+                    <label class="form-label" for="setting-warehouse-contact">Depo Sorumlusu & İletişim</label>
+                    <input type="text" id="setting-warehouse-contact" class="form-input form-input-sm" value="Hasan Usta (Dahili: 104) • depo@kocasteknik.com" placeholder="Örn: Hasan Usta (Dahili: 104)">
+                  </div>
+                </div>
+                <div class="text-xs text-muted" style="margin-top: 6px;">
+                  ℹ️ Satın alınan yedek parçaların kabul edildiği, araç stok ikmallerinin yapıldığı ve atölye sarf malzemelerinin sevk edildiği ana lojistik merkezidir.
+                </div>
               </div>
 
               <!-- 4. İletişim Kanalları -->
@@ -4694,7 +4764,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261029_1430"></script>
+  <script src="app.js?v=20261029_1530"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">
@@ -4743,12 +4813,27 @@
             </div>
           </div>
 
-          <!-- Fatura Adresi -->
-          <div class="billing-card-address-box">
-            <span class="billing-card-tax-label">📍 Resmi Fatura Adresi</span>
-            <p class="billing-card-address-text" id="billing-card-address">
+          <!-- Şirket Lokasyonları (Fatura, Atölye, Depo) -->
+          <div class="billing-card-address-box" style="margin-bottom: 8px;">
+            <span class="billing-card-tax-label">🏢 Resmi Genel Merkez & Fatura Adresi</span>
+            <p class="billing-card-address-text" id="billing-card-address" style="margin: 0;">
               Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14 Osmangazi / BURSA
             </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+            <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 6px; padding: 8px 10px;">
+              <div style="font-size: 0.72rem; color: #c084fc; font-weight: 700; margin-bottom: 3px;">🔬 Merkez Servis Atölyesi</div>
+              <div id="billing-card-workshop-address" style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.3;">
+                Alaaddinbey Mah. 632. Sok. Otomasyon Center No: 8 Nilüfer / BURSA
+              </div>
+            </div>
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; padding: 8px 10px;">
+              <div style="font-size: 0.72rem; color: #34d399; font-weight: 700; margin-bottom: 3px;">📦 Yedek Parça Ana Depo</div>
+              <div id="billing-card-warehouse-address" style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.3;">
+                DOSAB Lojistik Depo No: 14 Osmangazi / BURSA
+              </div>
+            </div>
           </div>
 
           <!-- İletişim & e-Fatura Detayı -->
