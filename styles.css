@@ -3312,20 +3312,58 @@ body {
     page-break-inside: avoid;
   }
 
+  body.printing-expert-report * {
+    visibility: hidden;
+  }
+  body.printing-expert-report #report-modal,
+  body.printing-expert-report #report-modal * {
+    visibility: visible;
+  }
   body.printing-expert-report #report-modal {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    height: auto;
     display: block !important;
-    background: transparent !important;
+    background: #ffffff !important;
+    padding: 0 !important;
   }
   body.printing-expert-report #report-modal .modal-box {
     box-shadow: none !important;
     border: none !important;
-    background: transparent !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     padding: 0 !important;
     max-width: 100% !important;
+  }
+  body.printing-expert-report #report-modal .modal-close-btn,
+  body.printing-expert-report #report-modal .modal-footer,
+  body.printing-expert-report #btn-report-open-signature {
+    display: none !important;
+  }
+  body.printing-expert-report #report-pre-text {
+    color: #111827 !important;
+    background: #ffffff !important;
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    font-size: 8.5pt !important;
+    border: none !important;
+    font-family: "Courier New", Courier, monospace !important;
+  }
+  body.printing-expert-report #report-signatures-card {
+    background: #ffffff !important;
+    border: 1px solid #64748b !important;
+    color: #000000 !important;
+    page-break-inside: avoid;
+    margin-top: 15px !important;
+  }
+  body.printing-expert-report #report-signatures-card * {
+    color: #000000 !important;
+  }
+  body.printing-expert-report #report-signatures-card div {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
   }
 }
 

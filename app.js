@@ -603,6 +603,7 @@ function initTabs() {
         renderTechJobs();
       } else if (targetId === 'admin-view') {
         renderIncomingCalls();
+        if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
         updateFleetKPI();
         updateActiveOrdersKPI();
       } else if (targetId === 'reports-view') {
@@ -1159,18 +1160,21 @@ function renderIncomingCalls() {
     trayActiveBtn.onclick = () => {
       state.dispatchTray = 'active';
       renderIncomingCalls();
+      if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     };
   }
   if (trayOnHoldBtn) {
     trayOnHoldBtn.onclick = () => {
       state.dispatchTray = 'onhold';
       renderIncomingCalls();
+      if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     };
   }
   if (trayCompletedBtn) {
     trayCompletedBtn.onclick = () => {
       state.dispatchTray = 'completed';
       renderIncomingCalls();
+      if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     };
   }
 
@@ -1377,6 +1381,23 @@ function renderIncomingCalls() {
     });
   });
 
+  // 0-C. Kartın Kendisine Tıklanınca (Biten işlerde raporu aç, aktifte afişi odakla)
+  container.querySelectorAll('.incoming-call-item').forEach(card => {
+    card.addEventListener('click', () => {
+      const code = card.getAttribute('data-code');
+      const order = (state.workOrders || []).find(o => (o.tracking_code || o.code) === code);
+      if (!order) return;
+      const isCompleted = order.status && (order.status.startsWith('Tamamlandı') || order.status === 'Teslim Edildi');
+      const assignedTech = (state.staff || []).find(s => s.name === order.assigned_tech || (order.assigned_user_id && s.id === order.assigned_user_id));
+      if (typeof updateDispatchBanner === 'function') {
+        updateDispatchBanner(order, assignedTech);
+      }
+      if (isCompleted) {
+        openServiceReportModal(code);
+      }
+    });
+  });
+
   // 1. Servis Raporunu Gör (Biten İşler)
   container.querySelectorAll('.btn-call-view-report').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -1528,11 +1549,63 @@ function openServiceReportModal(code) {
   const reportPreText = document.getElementById('report-pre-text');
   if (!reportModal || !reportPreText) return;
 
+  const currentCode = order.tracking_code || order.code || code || "SRV-2026-104";
+  reportModal.setAttribute('data-active-code', currentCode);
+
   const formalReport = generateOfficialServiceReport(order);
   reportPreText.textContent = formalReport;
+
+  // Teknisyen ve Müşteri Künyesi Doldurma
+  const techName = order.assigned_tech || order.assignedTech || 'Levent İmekci';
+  const sigTechEl = document.getElementById('report-sig-tech-name');
+  if (sigTechEl) sigTechEl.textContent = techName;
+
+  const sigTechDate = document.getElementById('report-sig-tech-date');
+  if (sigTechDate) sigTechDate.textContent = `Tarih: ${new Date().toLocaleDateString('tr-TR')}`;
+
+  const custName = order.customer_name || order.customer || 'Müşteri Yetkilisi';
+  const sigCustEl = document.getElementById('report-sig-customer-name');
+  if (sigCustEl) sigCustEl.textContent = custName;
+
+  const sigImg = document.getElementById('report-sig-customer-img');
+  const sigPlaceholder = document.getElementById('report-sig-empty-placeholder');
+  const sigBadge = document.getElementById('report-signature-status-badge');
+  const btnReportSig = document.getElementById('btn-report-open-signature');
+
+  if (order.customer_signature) {
+    if (sigImg) {
+      sigImg.src = order.customer_signature;
+      sigImg.style.display = 'inline-block';
+    }
+    if (sigPlaceholder) sigPlaceholder.style.display = 'none';
+    if (sigBadge) {
+      sigBadge.className = 'badge badge-success';
+      sigBadge.textContent = '✅ Müşteri İmzası Alındı';
+    }
+    if (btnReportSig) btnReportSig.textContent = '✍️ Müşteri İmzasını Güncelle';
+  } else {
+    if (sigImg) sigImg.style.display = 'none';
+    if (sigPlaceholder) sigPlaceholder.style.display = 'inline-block';
+    if (sigBadge) {
+      sigBadge.className = 'badge badge-warning';
+      sigBadge.textContent = '⏳ Müşteri İmzası Bekliyor';
+    }
+    if (btnReportSig) btnReportSig.textContent = '✍️ Müşteri İmzası Ekle';
+  }
+
+  if (btnReportSig) {
+    btnReportSig.onclick = () => {
+      const activeCode = reportModal.getAttribute('data-active-code') || currentCode;
+      if (typeof openCustomerSignatureModal === 'function') {
+        openCustomerSignatureModal(activeCode);
+      }
+    };
+  }
+
   reportModal.style.display = 'flex';
-  showToast(`📄 #${code} için Teknisyen Saha Müdahale ve Ekspertiz Raporu açıldı.`);
+  showToast(`📄 #${currentCode} için Teknisyen Saha Müdahale ve Ekspertiz Raporu açıldı.`);
 }
+
 
 // ==================== Biten İşler: Resmi Muhasebe & Tahsilat Fişi Modalı ====================
 function openAccountingReceiptModal(code) {
@@ -1871,13 +1944,39 @@ function updateDispatchBanner(order, assignedTech) {
   const banner = document.getElementById('dispatch-banner-container');
   if (!banner) return;
 
+  const isCompletedOrder = o => o && o.status && (o.status.startsWith('Tamamlandı') || o.status === 'Teslim Edildi');
+  const isOnHoldOrder = o => o && o.status && (o.status === 'Parça Bekliyor' || o.status === 'Beklemede' || o.status.includes('Parça Bekliyor') || o.status === 'Parça Geldi - Sevke Hazır');
+
+  if (!order) {
+    if (state.dispatchTray === 'completed') {
+      order = (state.workOrders || []).filter(o => isCompletedOrder(o)).slice(-1)[0];
+    } else if (state.dispatchTray === 'onhold') {
+      order = (state.workOrders || []).filter(o => isOnHoldOrder(o))[0];
+    } else {
+      order = (state.workOrders || []).find(o => !isCompletedOrder(o) && !isOnHoldOrder(o) && !o.assigned_tech)
+           || (state.workOrders || []).find(o => !isCompletedOrder(o) && !isOnHoldOrder(o));
+    }
+    if (!order) {
+      order = (state.workOrders || []).filter(o => isCompletedOrder(o)).slice(-1)[0]
+           || (state.workOrders && state.workOrders[0]) || null;
+    }
+  }
+
+  if (order && !assignedTech) {
+    if (order.assigned_tech) {
+      assignedTech = (state.staff || []).find(s => s.name === order.assigned_tech) || { name: order.assigned_tech, vehiclePlate: order.assigned_tech_plate || '33 EKS 18' };
+    } else if (order.assigned_user_id) {
+      assignedTech = (state.staff || []).find(s => s.id == order.assigned_user_id) || null;
+    }
+  }
+
   const code = order ? (order.tracking_code || order.code) : "SRV-2026-106";
-  const custName = order ? (order.customer_name || "ABC Lojistik") : "ABC Lojistik";
-  const custAddr = order ? (order.customer_address || "Kadıköy, İstanbul") : "Kadıköy, İstanbul";
-  const devBrand = order ? (order.device_brand || "Schneider") : "Schneider";
-  const devModel = order ? (order.device_model || "3-Faz İnverter") : "3-Faz İnverter";
-  const devSn = order ? (order.serial_number || "SCH-2025-1104") : "SCH-2025-1104";
-  const complaint = order ? (order.customer_complaint || 'Arıza belirtilmedi') : "Cihaz aşırı ısınıyor ve aşırı akım çekip korumaya geçiyor.";
+  const custName = order ? (order.customer_name || order.customer || "ABC Lojistik") : "ABC Lojistik";
+  const custAddr = order ? (order.customer_address || order.customerAddress || "Kadıköy, İstanbul") : "Kadıköy, İstanbul";
+  const devBrand = order ? (order.device_brand || order.device || "Schneider") : "Schneider";
+  const devModel = order ? (order.device_model || "") : "3-Faz İnverter";
+  const devSn = order ? (order.serial_number || order.serialNo || "SCH-2025-1104") : "SCH-2025-1104";
+  const complaint = order ? (order.customer_complaint || order.complaint || 'Arıza belirtilmedi') : "Cihaz aşırı ısınıyor ve aşırı akım çekip korumaya geçiyor.";
   const priority = order ? (order.priority || "Normal") : "Normal";
   const channel = order ? (order.channel || "Telefon") : "Telefon";
 
@@ -1896,7 +1995,77 @@ function updateDispatchBanner(order, assignedTech) {
                       channel === 'E-posta' ? '✉️ E-posta Talebi' :
                       channel === 'Elden Teslim' ? '🏢 Elden Teslim' : '📞 Telefon Çağrısı';
 
-  if (assignedTech) {
+  const isCompleted = isCompletedOrder(order);
+
+  if (isCompleted) {
+    const travelM = order.travel_duration_minutes || order.travelDurationMinutes || 25;
+    const repairM = order.repair_duration_minutes || order.repairDurationMinutes || 45;
+    const totalM = order.total_duration_minutes || order.totalDurationMinutes || (travelM + repairM);
+    const techName = assignedTech ? assignedTech.name : (order.assigned_tech || 'Saha Ekibi');
+    const techPlate = assignedTech ? assignedTech.vehiclePlate : (order.assigned_tech_plate || '33 EKS 18');
+
+    banner.innerHTML = `
+      <!-- 1. Üst Satır: Başlık & Tamamlandı Durumu -->
+      <div class="dispatch-banner-header">
+        <div class="dispatch-banner-title-group" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span class="dispatch-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4);">
+            ✓ Onarım Tamamlandı & Kapatıldı #${code}
+          </span>
+          <span class="badge badge-success">🎉 Cihaz Teslim Edildi</span>
+          ${order.accountingSettled 
+            ? `<span class="badge badge-success" style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid rgba(16,185,129,0.3);">💳 Tahsilat Alındı (${order.paymentMethod || 'Tamamlandı'})</span>` 
+            : `<span class="badge badge-warning">⏳ Muhasebe Tahsilatı Bekliyor</span>`}
+          ${order.customer_signature 
+            ? `<span class="badge badge-success" style="background: rgba(6, 182, 212, 0.2); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.4);">✍️ Müşteri İmzalı</span>` 
+            : `<span class="badge badge-secondary" style="color: #94a3b8; border: 1px solid #475569;">✍️ Teslim İmzası Bekliyor</span>`}
+          ${approvedBadge}
+        </div>
+        <span class="dispatch-channel-tag">${channelIcon}</span>
+      </div>
+
+      <!-- 2. Orta Detay Bölümü: Müşteri, Cihaz, Tamamlayan Teknisyen -->
+      <div class="dispatch-banner-body">
+        <div class="dispatch-info-grid">
+          <div class="dispatch-info-item">
+            <span class="dispatch-info-label">🏢 MÜŞTERİ & LOKASYON:</span>
+            <strong class="dispatch-info-value">${custName}</strong>
+            <span class="dispatch-info-sub">📍 ${custAddr}</span>
+          </div>
+          <div class="dispatch-info-item">
+            <span class="dispatch-info-label">👨‍🔧 TAMAMLAYAN SAHA UZMANI:</span>
+            <strong class="dispatch-info-value" style="color: var(--accent-cyan);">${techName}</strong>
+            <span class="dispatch-info-sub">🚗 Araç: <strong>${techPlate}</strong> (İş Tamamlandı / Müsait)</span>
+          </div>
+        </div>
+        <div class="dispatch-complaint-box">
+          <span class="dispatch-info-label">⚙️ CİHAZ VE OPERASYON ÖZETİ:</span>
+          <div class="dispatch-complaint-text">
+            <strong>${devBrand} ${devModel}</strong> (Seri No: ${devSn}) • ${order.action || order.technician_action || complaint}
+          </div>
+          <div class="mt-1" style="font-size: 0.76rem; color: var(--accent-cyan); display: flex; gap: 8px; flex-wrap: wrap;">
+            <span>🚗 İntikal: <strong>${travelM} dk</strong></span>
+            <span>•</span>
+            <span>🛠️ Onarım: <strong>${repairM} dk</strong></span>
+            <span>•</span>
+            <span>⏳ Toplam: <strong>${formatDurationMinutes(totalM)}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Alt Buton Şeridi: Rapor ve Makbuz Aksiyonları -->
+      <div class="dispatch-banner-footer">
+        <button class="btn btn-primary btn-sm" id="btn-banner-view-report" data-code="${code}" title="Teknisyen müdahale ve resmi ekspertiz servis raporunu aç ve incele/yazdır">
+          📄 Servis Raporunu İncele & Yazdır
+        </button>
+        <button class="btn btn-success btn-sm" id="btn-banner-view-receipt" data-code="${code}" style="background: #059669; border-color: #059669; color: #fff;" title="Müşteri tahsilat ve teknisyen masraf mutabakat fişini aç">
+          🧾 Muhasebe Fişi
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-banner-print-label" data-code="${code}" title="Cihaza yapıştırılacak QR barkodlu kimlik fişini görüntüler ve yazdırır">
+          🏷️ Cihaz Servis Etiketi (QR Fiş)
+        </button>
+      </div>
+    `;
+  } else if (assignedTech) {
     banner.innerHTML = `
       <!-- 1. Üst Satır: Başlık & Sevk Durumu -->
       <div class="dispatch-banner-header">
@@ -1904,7 +2073,7 @@ function updateDispatchBanner(order, assignedTech) {
           <span class="dispatch-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4);">
             ✓ Göreve Sevk Edildi #${code}
           </span>
-          <span class="badge badge-success">✓ Saha Uzmanı Görevlendirildi</span>
+          <span class="badge badge-success">✓ Saha Uzmanı Görevlendirildi (${order && order.status ? order.status : 'Yolda'})</span>
           ${approvedBadge}
         </div>
         <span class="dispatch-channel-tag">${channelIcon}</span>
@@ -2014,7 +2183,24 @@ function updateDispatchBanner(order, assignedTech) {
       if (techTabBtn) techTabBtn.click();
     });
   }
+
+  const btnViewReport = banner.querySelector('#btn-banner-view-report');
+  if (btnViewReport) {
+    btnViewReport.addEventListener('click', () => {
+      const c = btnViewReport.getAttribute('data-code');
+      openServiceReportModal(c);
+    });
+  }
+
+  const btnViewReceipt = banner.querySelector('#btn-banner-view-receipt');
+  if (btnViewReceipt) {
+    btnViewReceipt.addEventListener('click', () => {
+      const c = btnViewReceipt.getAttribute('data-code');
+      openAccountingReceiptModal(c);
+    });
+  }
 }
+
 
 // ==================== Aktif Saha Araçları & Çoklu Depo Yönetimi ====================
 
@@ -7706,6 +7892,7 @@ function initTechActions() {
       updateTechJourneyUI(state.activeOrder);
       renderTechJobs();
       renderIncomingCalls();
+      if (typeof updateDispatchBanner === 'function') updateDispatchBanner(matchingOrder, curTech);
       updateActiveOrdersKPI();
 
       try {
@@ -16109,7 +16296,7 @@ function initCustomerSignatureEngine() {
 
   if (btnTechOpen) {
     btnTechOpen.addEventListener('click', () => {
-      const activeCode = document.getElementById('assigned-order-select')?.value || 'SRV-2026-103';
+      const activeCode = (state.activeOrder && (state.activeOrder.code || state.activeOrder.tracking_code)) || (state.workOrders && state.workOrders.length > 0 ? (state.workOrders[0].tracking_code || state.workOrders[0].code) : 'SRV-2026-104');
       openCustomerSignatureModal(activeCode);
     });
   }
@@ -16209,6 +16396,11 @@ function initCustomerSignatureEngine() {
         saveWorkOrdersToLocalStorage();
       }
 
+      if (state.activeOrder && (state.activeOrder.code === targetCode || state.activeOrder.tracking_code === targetCode)) {
+        state.activeOrder.customer_signature = dataUrl;
+        state.activeOrder.customer_signed_at = new Date().toISOString();
+      }
+
       // Muhasebe fişi açıksa içindeki imza resmini güncelle
       const rcptImg = document.getElementById('rcpt-sig-customer-img');
       const rcptContainer = document.getElementById('rcpt-sig-customer-canvas-container');
@@ -16216,6 +16408,22 @@ function initCustomerSignatureEngine() {
         rcptImg.src = dataUrl;
         rcptContainer.style.display = 'block';
       }
+
+      // Servis Raporu açıksa içindeki imza resmini ve durum rozetini anında güncelle
+      const repImg = document.getElementById('report-sig-customer-img');
+      const repPlaceholder = document.getElementById('report-sig-empty-placeholder');
+      const repBadge = document.getElementById('report-signature-status-badge');
+      const btnReportSig = document.getElementById('btn-report-open-signature');
+      if (repImg) {
+        repImg.src = dataUrl;
+        repImg.style.display = 'inline-block';
+      }
+      if (repPlaceholder) repPlaceholder.style.display = 'none';
+      if (repBadge) {
+        repBadge.className = 'badge badge-success';
+        repBadge.textContent = '✅ Müşteri İmzası Alındı';
+      }
+      if (btnReportSig) btnReportSig.textContent = '✍️ Müşteri İmzasını Güncelle';
 
       // Teknisyen ekranındaki buton rozetini güncelle
       if (btnTechOpen) {
@@ -16290,7 +16498,7 @@ function initSanalPosEngine() {
 
   // 1. TEKNİSYEN MOBİL SAHA EKRANINDAN SANAL POS AÇMA
   function handleTechPosTrigger() {
-    const activeCode = document.getElementById('assigned-order-select')?.value || 'SRV-2026-103';
+    const activeCode = (state.activeOrder && (state.activeOrder.code || state.activeOrder.tracking_code)) || (state.workOrders && state.workOrders.length > 0 ? (state.workOrders[0].tracking_code || state.workOrders[0].code) : 'SRV-2026-104');
     openSanalPosModal(activeCode);
   }
 
