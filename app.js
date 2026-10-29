@@ -7012,7 +7012,55 @@ function initWelcomeModal() {
 window.initWelcomeModal = initWelcomeModal;
 
 // ==================== 6. Ayarlar Modalı Açılış & Olay Yöneticisi ====================
-function openSettingsModal() {
+function switchSettingsTab(targetTabId) {
+  if (!targetTabId) targetTabId = 'tab-settings-company';
+  const tabBtns = document.querySelectorAll('.settings-tab-btn');
+  const tabPanes = document.querySelectorAll('.settings-tab-pane');
+
+  tabBtns.forEach(btn => {
+    if (btn.getAttribute('data-tab') === targetTabId) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  tabPanes.forEach(pane => {
+    if (pane.id === targetTabId) {
+      pane.classList.add('active');
+      pane.style.display = 'block';
+    } else {
+      pane.classList.remove('active');
+      pane.style.display = 'none';
+    }
+  });
+
+  // Footer Buton Yönetimi: Tarifeler sekmesindeyken "Tüm Tarife Fiyatlarını Kaydet" göster, diğer sekmelerde "Tarifelere Git" göster
+  const btnSaveRates = document.getElementById('btn-save-all-rates');
+  const btnFooterRates = document.getElementById('btn-footer-goto-rates');
+  if (btnSaveRates) {
+    btnSaveRates.style.display = (targetTabId === 'tab-settings-rates') ? 'inline-flex' : 'none';
+  }
+  if (btnFooterRates) {
+    btnFooterRates.style.display = (targetTabId !== 'tab-settings-rates') ? 'inline-flex' : 'none';
+  }
+
+  if (targetTabId === 'tab-settings-company') {
+    loadCompanyProfileToSettingsForm();
+  } else if (targetTabId === 'tab-settings-staff') {
+    renderSettingsStaff();
+  } else if (targetTabId === 'tab-settings-devices') {
+    renderSettingsDevices();
+  } else if (targetTabId === 'tab-settings-rates') {
+    renderServiceRatesSettings();
+    renderExchangeRatesInSettings();
+  } else if (targetTabId === 'tab-settings-integrations') {
+    loadIntegrationsSettings();
+  }
+}
+window.switchSettingsTab = switchSettingsTab;
+
+function openSettingsModal(targetTabId = null) {
   const modal = document.getElementById('settings-modal');
   if (!modal) return;
 
@@ -7025,8 +7073,17 @@ function openSettingsModal() {
   renderExchangeRatesInSettings();
   loadIntegrationsSettings();
 
+  if (targetTabId) {
+    switchSettingsTab(targetTabId);
+  } else {
+    const currentActiveBtn = document.querySelector('.settings-tab-btn.active');
+    const tabToOpen = currentActiveBtn ? currentActiveBtn.getAttribute('data-tab') : 'tab-settings-company';
+    switchSettingsTab(tabToOpen);
+  }
+
   modal.style.display = 'flex';
 }
+window.openSettingsModal = openSettingsModal;
 
 function closeSettingsModal() {
   const modal = document.getElementById('settings-modal');
@@ -7058,41 +7115,28 @@ function initSettingsActions() {
 
   // Ayarlar Sekme Gezintisi (.settings-tab-btn)
   const tabBtns = document.querySelectorAll('.settings-tab-btn');
-  const tabPanes = document.querySelectorAll('.settings-tab-pane');
-
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const targetTabId = btn.getAttribute('data-tab');
-      if (!targetTabId) return;
-
-      tabBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      tabPanes.forEach(pane => {
-        pane.classList.remove('active');
-        pane.style.display = 'none';
-      });
-
-      const activePane = document.getElementById(targetTabId);
-      if (activePane) {
-        activePane.classList.add('active');
-        activePane.style.display = 'block';
-      }
-
-      if (targetTabId === 'tab-settings-company') {
-        loadCompanyProfileToSettingsForm();
-      } else if (targetTabId === 'tab-settings-staff') {
-        renderSettingsStaff();
-      } else if (targetTabId === 'tab-settings-devices') {
-        renderSettingsDevices();
-      } else if (targetTabId === 'tab-settings-rates') {
-        renderServiceRatesSettings();
-        renderExchangeRatesInSettings();
-      } else if (targetTabId === 'tab-settings-integrations') {
-        loadIntegrationsSettings();
-      }
+      if (targetTabId) switchSettingsTab(targetTabId);
     });
   });
+
+  // Hızlı Tarifeler Kısayol Butonları (Header, Banner, Footer)
+  const btnQuickToRates = document.getElementById('btn-quick-to-rates');
+  if (btnQuickToRates) {
+    btnQuickToRates.addEventListener('click', () => switchSettingsTab('tab-settings-rates'));
+  }
+
+  const btnBannerToRates = document.getElementById('btn-banner-to-rates');
+  if (btnBannerToRates) {
+    btnBannerToRates.addEventListener('click', () => switchSettingsTab('tab-settings-rates'));
+  }
+
+  const btnFooterGotoRates = document.getElementById('btn-footer-goto-rates');
+  if (btnFooterGotoRates) {
+    btnFooterGotoRates.addEventListener('click', () => switchSettingsTab('tab-settings-rates'));
+  }
 
   // Firma Kimlik Bilgilerini Kaydet Butonu / Formu (Tab 1)
   if (formCompany) {
@@ -7367,8 +7411,8 @@ function initSettingsActions() {
     });
   }
 
-  if (btnHeaderSettings) btnHeaderSettings.addEventListener('click', openSettingsModal);
-  if (btnOpenSettings) btnOpenSettings.addEventListener('click', openSettingsModal);
+  if (btnHeaderSettings) btnHeaderSettings.addEventListener('click', () => openSettingsModal());
+  if (btnOpenSettings) btnOpenSettings.addEventListener('click', () => openSettingsModal('tab-settings-rates'));
   if (btnMgrToSettings) {
     btnMgrToSettings.addEventListener('click', () => {
       const mgrModal = document.getElementById('manager-modal');

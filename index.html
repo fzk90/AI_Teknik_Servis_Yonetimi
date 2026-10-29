@@ -2992,8 +2992,11 @@
           <span class="chip chip-purple">Sistem & Kurulum Yönetimi</span>
           <h3 class="modal-title">⚙️ Servis Kurulumu, Firma Bilgileri & Sistem Ayarları</h3>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <button type="button" class="btn btn-warning-glow btn-xs" id="btn-start-onboarding-wizard" title="Yeni servis için 3 adımlı hızlı kurulum sihirbazını başlat">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-warning-glow btn-xs" id="btn-quick-to-rates" style="border: 1px solid #f59e0b; font-weight: 700;" title="İşçilik ve onarım tarifeleri yönetimine doğrudan geç">
+            <span>💰 Tarifeleri Güncelle</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-xs" id="btn-start-onboarding-wizard" title="Yeni servis için hızlı kurulum sihirbazını başlat">
             <span>🚀 Hızlı Kurulum Sihirbazı</span>
           </button>
           <button type="button" class="btn btn-outline-danger btn-xs" id="btn-settings-clean-slate" title="Tüm demo çağrılarını temizle ve sıfırdan kendi servisini başlat">
@@ -3012,18 +3015,19 @@
       <!-- Ayarlar Sekme Gezinti Çubuğu -->
       <div class="settings-nav-tabs">
         <button type="button" class="settings-tab-btn active" data-tab="tab-settings-company" id="btn-set-tab-company">
-          <span>🏢 1. İlk Ayarlar: Firma & Servis Kimliği</span>
+          <span>🏢 1. Firma & Servis Kimliği</span>
         </button>
         <button type="button" class="settings-tab-btn" data-tab="tab-settings-staff" id="btn-set-tab-staff">
-          <span>👥 2. Saha Elemanları & Teknisyenler</span>
+          <span>👥 2. Saha Elemanları & Kadro</span>
           <span class="badge badge-purple" id="badge-settings-staff-count">4 Uzman</span>
         </button>
         <button type="button" class="settings-tab-btn" data-tab="tab-settings-devices" id="btn-set-tab-devices">
-          <span>🏷️ 3. Hizmet Verilen Cihazlar & Kapsam</span>
+          <span>🏷️ 3. Hizmet Verilen Cihazlar</span>
           <span class="badge badge-cyan" id="badge-settings-device-count">8 Kategori</span>
         </button>
-        <button type="button" class="settings-tab-btn" data-tab="tab-settings-rates" id="btn-set-tab-rates">
-          <span>💰 4. İşçilik Tarifeleri & TCMB</span>
+        <button type="button" class="settings-tab-btn settings-tab-rates-highlight" data-tab="tab-settings-rates" id="btn-set-tab-rates">
+          <span style="font-weight: 700; color: #fbbf24;">💰 4. İşçilik & Onarım Tarifeleri</span>
+          <span class="badge badge-warning" style="font-size: 0.68rem; margin-left: 4px; padding: 2px 6px;">Fiyat Değiştir</span>
         </button>
         <button type="button" class="settings-tab-btn" data-tab="tab-settings-integrations" id="btn-set-tab-integrations">
           <span>🧾 5. e-Fatura & Sanal POS</span>
@@ -3046,7 +3050,10 @@
                 Aşağıdaki firma ve iletişim bilgileri; <strong>Sevk Masası</strong>, <strong>Yazdırılabilir Muhasebe Makbuzları</strong>, <strong>Resmi e-Fatura / e-Arşiv XML'leri</strong> ve müşterilere giden <strong>WhatsApp bildirimlerinin</strong> antetine otomatik işlenir.
               </p>
             </div>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm btn-warning-glow" id="btn-banner-to-rates" style="font-size: 0.76rem;" title="Doğrudan işçilik ve onarım tarifelerine git">
+                <span>💰 4. Sekme: İşçilik Tarifelerine Git</span>
+              </button>
               <button type="button" class="btn btn-sm btn-outline-cyan" id="btn-load-sample-company" style="font-size: 0.76rem;" title="Örnek bir endüstriyel elektronik servisi bilgilerini doldur">
                 <span>⚡ Örnek Firma Verisi Yükle</span>
               </button>
@@ -3712,7 +3719,10 @@
         <span class="text-xs text-muted" id="settings-save-status">💾 Değişiklikler kaydedildiğinde saha ekranları otomatik güncellenir.</span>
         <div style="display: flex; gap: 8px;">
           <button type="button" class="btn btn-secondary" id="btn-close-settings-footer">Kapat</button>
-          <button type="button" class="btn btn-primary" id="btn-save-all-rates">
+          <button type="button" class="btn btn-warning-glow" id="btn-footer-goto-rates" title="İşçilik ve onarım tarifeleri sekmesine geç">
+            <span>💰 4. Sekme: Tarifelere Git</span>
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-save-all-rates" style="display: none;">
             <span>💾 Tüm Tarife Fiyatlarını Kaydet</span>
           </button>
         </div>
@@ -4764,7 +4774,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261029_1530"></script>
+  <script src="app.js?v=20261029_1550"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">
@@ -5205,7 +5215,7 @@
           </div>
 
           <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #94a3b8;">
-            💡 <em>Bu tarifeleri daha sonra istediğiniz zaman üst menüdeki <strong>⚙️ Ayarlar</strong> bölümünden değiştirebilir veya yeni tarifeler ekleyebilirsiniz.</em>
+            💡 <em>Bu tarifeleri daha sonra istediğiniz zaman üst menüdeki <strong>⚙️ Ayarlar</strong> menüsünden <strong>"💰 4. İşçilik & Onarım Tarifeleri"</strong> sekmesine (veya üstteki <strong>"💰 Tarifeleri Güncelle"</strong> butonuna) tıklayarak anında değiştirebilir veya yeni tarifeler ekleyebilirsiniz.</em>
           </div>
         </div>
 

@@ -6945,10 +6945,10 @@ body {
    ========================================================================== */
 .settings-nav-tabs {
   display: flex;
-  gap: 6px;
-  padding: 10px 16px 0;
-  border-bottom: 1px solid var(--border-color);
-  background: rgba(15, 23, 42, 0.7);
+  gap: 8px;
+  padding: 12px 18px 0;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
   overflow-x: auto;
   white-space: nowrap;
 }
@@ -6958,27 +6958,43 @@ body {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
   color: var(--text-muted);
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-radius: 6px 6px 0 0;
+  border-radius: 8px 8px 0 0;
 }
 
 .settings-tab-btn:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.04);
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .settings-tab-btn.active {
   color: #38bdf8;
-  border-bottom-color: #38bdf8;
-  background: rgba(56, 189, 248, 0.08);
+  background: rgba(15, 23, 42, 1);
+  border-color: rgba(56, 189, 248, 0.5);
+  border-top: 2px solid #38bdf8;
   font-weight: 700;
+  box-shadow: 0 -2px 10px rgba(56, 189, 248, 0.15);
+}
+
+.settings-tab-rates-highlight {
+  border-color: rgba(251, 191, 36, 0.4) !important;
+  background: rgba(251, 191, 36, 0.07) !important;
+}
+
+.settings-tab-rates-highlight.active {
+  border-color: rgba(251, 191, 36, 0.8) !important;
+  border-top: 2px solid #fbbf24 !important;
+  background: rgba(15, 23, 42, 1) !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 -2px 12px rgba(251, 191, 36, 0.2) !important;
 }
 
 .settings-tab-pane {
