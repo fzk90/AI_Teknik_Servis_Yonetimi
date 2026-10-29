@@ -636,6 +636,67 @@ function initTabs() {
   });
 }
 
+// ==================== Yönetici Alt Modül Gezinimi ====================
+function switchToAdminSection(targetId) {
+  if (state.currentUser && state.currentUser.role === 'Teknisyen') {
+    showToast('🔒 Bu ekrana erişim için Şirket Yöneticisi yetkisi gereklidir.');
+    return;
+  }
+
+  const panels = document.querySelectorAll('.view-panel');
+  panels.forEach(p => p.classList.remove('active'));
+
+  const targetPanel = document.getElementById(targetId);
+  if (targetPanel) {
+    targetPanel.classList.add('active');
+  }
+
+  // Header'daki 3 ana rol butonundan Yönetici sekmesini aktif tut
+  const roleButtons = document.querySelectorAll('.role-nav .role-btn');
+  roleButtons.forEach(b => b.classList.remove('active'));
+  const adminTab = document.getElementById('btn-tab-admin');
+  if (adminTab) adminTab.classList.add('active');
+
+  // Subnav butonlarındaki aktiflik durumunu güncelle
+  const subnavBtns = document.querySelectorAll('.admin-subnav-btn');
+  subnavBtns.forEach(sb => {
+    const sbTarget = sb.getAttribute('data-tab');
+    if (sbTarget === targetId || (targetId === 'admin-view' && sb.id === 'btn-admin-sub-dispatch')) {
+      sb.classList.add('active');
+    } else {
+      sb.classList.remove('active');
+    }
+  });
+
+  state.activeTab = targetId;
+  if (targetId === 'admin-view') {
+    renderIncomingCalls();
+    if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
+    updateFleetKPI();
+    updateActiveOrdersKPI();
+  } else if (targetId === 'reports-view') {
+    updateReportStaffDropdown();
+    if (typeof initCustomSelect === 'function') {
+      initCustomSelect(document.getElementById('report-type-select'));
+      initCustomSelect(document.getElementById('report-staff-filter'));
+      initCustomSelect(document.getElementById('report-status-filter'));
+    }
+    executeCustomReport();
+  } else if (targetId === 'equipment-view') {
+    renderEquipmentRegistry();
+  }
+
+  const titles = {
+    'admin-view': 'Sevk Masası & Operasyon',
+    'reports-view': 'Raporlama & Analitik',
+    'equipment-view': 'Cihaz Sicil & Seri No'
+  };
+  if (titles[targetId]) {
+    showToast(`Bölüm: ${titles[targetId]}`);
+  }
+}
+window.switchToAdminSection = switchToAdminSection;
+
 // ==================== 1. Admin / Dispatcher Functions ====================
 function renderStaffList() {
   const container = document.getElementById('staff-container');
@@ -16463,12 +16524,16 @@ window.applySpokenText = applySpokenText;
 
 function initEmbedWidgetActions() {
   const btnOpenEmbed = document.getElementById('btn-open-embed-modal');
+  const btnSettingsOpenEmbed = document.getElementById('btn-settings-open-embed');
   const btnCloseEmbed = document.getElementById('btn-close-embed-modal');
   const btnCloseEmbedFooter = document.getElementById('btn-close-embed-modal-footer');
   const modal = document.getElementById('embed-widget-modal');
 
   if (btnOpenEmbed && modal) {
     btnOpenEmbed.addEventListener('click', () => { modal.style.display = 'flex'; });
+  }
+  if (btnSettingsOpenEmbed && modal) {
+    btnSettingsOpenEmbed.addEventListener('click', () => { modal.style.display = 'flex'; });
   }
   if (btnCloseEmbed && modal) {
     btnCloseEmbed.addEventListener('click', () => { modal.style.display = 'none'; });

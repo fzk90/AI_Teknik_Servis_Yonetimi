@@ -81,3 +81,4 @@ console.log('  ✓ Tek tıkla atölye ve ana depo adresleri merkez adresiyle sen
 console.log('================================================================================');
 console.log('   🎉 TÜM ADRES VE LOKASYON TESTLERİ BAŞARIYLA GEÇTİ (4/4)');
 console.log('================================================================================');
+

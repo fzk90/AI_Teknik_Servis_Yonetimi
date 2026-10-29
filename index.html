@@ -16,7 +16,7 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261029_1615">
+  <link rel="stylesheet" href="styles.css?v=20261029_1635">
 </head>
 <body>
   <!-- Header / Navigation -->
@@ -52,45 +52,19 @@
         <span class="icon">🔍</span>
         <span>Müşteri Cihaz Sorgulama</span>
       </button>
-      <button class="role-btn" data-tab="reports-view" id="btn-tab-reports">
-        <span class="icon">📈</span>
-        <span>Raporlama & Analitik</span>
-      </button>
-      <button class="role-btn" data-tab="equipment-view" id="btn-tab-equipment">
-        <span class="icon">🏷️</span>
-        <span>Cihaz Sicil & Seri No</span>
-        <span class="badge" id="equipment-count-badge">8 Cihaz</span>
-      </button>
     </nav>
 
-    <!-- Header Meta & Status -->
+    <!-- Header Meta & Status (Derli Toplu ve Ferah Eylemler) -->
     <div class="header-actions">
-            <button class="btn btn-gradient-purple btn-sm" id="btn-open-onboarding-wizard" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); border: 1px solid #a78bfa; color: #fff; box-shadow: 0 0 15px rgba(124, 58, 237, 0.35);" title="Yeni Firma Kurulumu, Resmi Şirket Fatura Bilgileri ve Saha Yapılandırma Sihirbazı">
-        <span>🚀 Şirket Kurulum Sihirbazı</span>
-      </button>
-      <button class="btn btn-warning-glow btn-sm" id="btn-open-demo-guide-modal" title="Uzmanlar İçin İnteraktif Canlı Demo Turu & Hızlı Başlangıç Rehberi">
-        <span>🎯 Demo Turu & Rehber</span>
-      </button>
-      <button class="btn btn-outline-cyan btn-sm" id="btn-open-embed-modal" title="Web Sitenize veya Sosyal Medyanıza Arıza Kayıt Formu Ekleyin (Iframe & Link)">
-        <span>🌐 Web Formu & Biyo Linki</span>
-      </button>
-      <button class="btn btn-primary btn-sm" id="btn-open-intake-modal">
+      <button class="btn btn-primary btn-sm" id="btn-open-intake-modal" title="Yeni Müşteri Çağrısı ve Atölye Cihaz Kabulü">
         <span>➕ Yeni Çağrı / Cihaz Kabul</span>
       </button>
-      <div class="system-status">
-        <span class="pulse-dot"></span>
-        <span class="status-label">Saha Senkronize</span>
-      </div>
-      <div class="user-pill" id="btn-open-manager-modal" style="cursor: pointer;" title="Profil ve Yönetici Ayarları">
+      <div class="user-pill" id="btn-open-manager-modal" style="cursor: pointer;" title="Profil ve Yönetici Bilgileri">
         <span class="avatar" id="header-user-avatar">ZK</span>
         <span class="user-name" id="header-user-name">Zafer Koçaş (Yönetici)</span>
       </div>
-      <button class="btn btn-outline btn-sm" id="btn-header-settings" title="Sistem Ayarları & Hızlı Servis Tarifeleri">
+      <button class="btn btn-outline btn-sm" id="btn-header-settings" title="Sistem Ayarları, Şirket Bilgileri & Tarifeler">
         <span>⚙️ Ayarlar</span>
-      </button>
-      <button class="btn btn-outline btn-sm" id="btn-header-auth-action" title="Oturumu Kapat / Giriş Yap">
-        <span id="btn-header-auth-icon">🚪</span>
-        <span id="btn-header-auth-text">Çıkış Yap</span>
       </button>
     </div>
   </header>
@@ -100,6 +74,31 @@
 
     <!-- ==================== 1. YÖNETİCİ & KONTROL PANELİ ==================== -->
     <section id="admin-view" class="view-panel active">
+      <!-- Yönetici & Kontrol Paneli Üst Komuta Çubuğu (Admin Subnav Bar) -->
+      <div class="admin-subnav-bar">
+        <div class="admin-subnav-left">
+          <button type="button" class="admin-subnav-btn active" id="btn-admin-sub-dispatch" onclick="switchToAdminSection('admin-view')">
+            <span class="subnav-icon">📋</span>
+            <span>Sevk Masası & Operasyon</span>
+          </button>
+          <button type="button" class="admin-subnav-btn" id="btn-tab-equipment" data-tab="equipment-view" onclick="switchToAdminSection('equipment-view')" title="Cihaz Sicil Kartları ve Dijital Pasaport Yönetimi">
+            <span class="subnav-icon">🏷️</span>
+            <span>Cihaz Sicil & Seri No</span>
+            <span class="badge" id="equipment-count-badge">8 Cihaz</span>
+          </button>
+          <button type="button" class="admin-subnav-btn" id="btn-tab-reports" data-tab="reports-view" onclick="switchToAdminSection('reports-view')" title="İş Zekası (BI), Personel ve Finans Raporları">
+            <span class="subnav-icon">📈</span>
+            <span>Raporlama & Analitik</span>
+          </button>
+        </div>
+        <div class="admin-subnav-right">
+          <div class="system-status" id="admin-system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
+            <span class="pulse-dot"></span>
+            <span class="status-label">Saha Senkronize</span>
+          </div>
+        </div>
+      </div>
+
       <!-- KPI Cards -->
       <div class="kpi-grid">
         <div class="kpi-card accent-blue">
@@ -1159,6 +1158,33 @@
 
     <!-- ==================== 4. RAPORLAMA & İŞ ZEKASI (BI) ==================== -->
     <section id="reports-view" class="view-panel">
+      <!-- Yönetici Gezinim & Komuta Çubuğu -->
+      <div class="admin-subnav-bar">
+        <div class="admin-subnav-left">
+          <button type="button" class="admin-subnav-btn" onclick="switchToAdminSection('admin-view')">
+            <span class="subnav-icon">📋</span>
+            <span>Sevk Masası & Operasyon</span>
+          </button>
+          <button type="button" class="admin-subnav-btn" onclick="switchToAdminSection('equipment-view')">
+            <span class="subnav-icon">🏷️</span>
+            <span>Cihaz Sicil & Seri No</span>
+          </button>
+          <button type="button" class="admin-subnav-btn active">
+            <span class="subnav-icon">📈</span>
+            <span>Raporlama & Analitik</span>
+          </button>
+        </div>
+        <div class="admin-subnav-right">
+          <div class="system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
+            <span class="pulse-dot"></span>
+            <span class="status-label">Saha Senkronize</span>
+          </div>
+          <button type="button" class="btn btn-outline btn-xs" onclick="switchToAdminSection('admin-view')">
+            <span>← Sevk Masasına Dön</span>
+          </button>
+        </div>
+      </div>
+
       <div class="content-card">
         <div class="card-header reports-header">
           <div>
@@ -1267,6 +1293,33 @@
 
     <!-- ==================== 5. CİHAZ SİCİL & SERİ NO TAKİP SİSTEMİ (YENİ MODÜL) ==================== -->
     <section id="equipment-view" class="view-panel">
+      <!-- Yönetici Gezinim & Komuta Çubuğu -->
+      <div class="admin-subnav-bar">
+        <div class="admin-subnav-left">
+          <button type="button" class="admin-subnav-btn" onclick="switchToAdminSection('admin-view')">
+            <span class="subnav-icon">📋</span>
+            <span>Sevk Masası & Operasyon</span>
+          </button>
+          <button type="button" class="admin-subnav-btn active">
+            <span class="subnav-icon">🏷️</span>
+            <span>Cihaz Sicil & Seri No</span>
+          </button>
+          <button type="button" class="admin-subnav-btn" onclick="switchToAdminSection('reports-view')">
+            <span class="subnav-icon">📈</span>
+            <span>Raporlama & Analitik</span>
+          </button>
+        </div>
+        <div class="admin-subnav-right">
+          <div class="system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
+            <span class="pulse-dot"></span>
+            <span class="status-label">Saha Senkronize</span>
+          </div>
+          <button type="button" class="btn btn-outline btn-xs" onclick="switchToAdminSection('admin-view')">
+            <span>← Sevk Masasına Dön</span>
+          </button>
+        </div>
+      </div>
+
       <div class="equipment-view-header">
         <div class="equipment-header-left">
           <div class="equipment-icon-badge">🏷️</div>
@@ -2404,6 +2457,26 @@
             <textarea id="notif-message-textarea" rows="4" class="form-input w-100 mt-1" style="font-family: inherit; font-size: 0.85rem; line-height: 1.5;"></textarea>
           </div>
 
+        
+          <!-- Web Sitesi & Sosyal Medya Arıza Kayıt Formu (Embed Hub) -->
+          <div class="settings-embed-box" style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 8px; padding: 14px 16px; margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.15rem;">🌐</span>
+                <strong style="font-size: 0.95rem; color: var(--text-main);">Web Sitesi & Sosyal Medya Arıza Kayıt Formu (Embed Hub)</strong>
+                <span class="badge badge-cyan">Canlı Entegrasyon</span>
+              </div>
+              <span class="text-xs text-muted">Iframe Kodu, Direkt URL & WhatsApp Biyo Linki</span>
+            </div>
+            <p style="margin: 0 0 10px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+              Müşterilerinizin firmanızın web sitesinden veya Instagram, TikTok, Facebook ve WhatsApp biyo alanındaki bağlantıya tıklayarak 7/24 doğrudan servis kaydı açmasını sağlayın. Gelen tüm talepler anında <strong>Sevk Masası</strong>'na canlı düşer.
+            </p>
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="button" class="btn btn-outline-cyan btn-sm" id="btn-open-embed-modal" title="Web Formu Iframe ve Link Kodlarını Görüntüle">
+                <span>🌐 Web Formu, Iframe Kodu ve Biyo Linki Sihirbazını Aç</span>
+              </button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -2993,11 +3066,17 @@
           <h3 class="modal-title" style="font-size: 1.12rem; margin: 0;">⚙️ Servis Kurulumu, Firma Bilgileri & Sistem Ayarları</h3>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
-          <button type="button" class="btn btn-warning-glow btn-xs" id="btn-quick-to-rates" style="border: 1px solid #f59e0b; font-weight: 700; padding: 6px 12px; font-size: 0.78rem;" title="İşçilik ve onarım tarifeleri yönetimine doğrudan geç">
+          <button type="button" class="btn btn-warning-glow btn-xs" id="btn-quick-to-rates" style="border: 1px solid #f59e0b; font-weight: 700; padding: 6px 11px; font-size: 0.76rem;" title="İşçilik ve onarım tarifeleri yönetimine doğrudan geç">
             <span>💰 Tarifeleri Güncelle</span>
           </button>
-          <button type="button" class="btn btn-primary btn-xs" id="btn-start-onboarding-wizard" style="padding: 6px 10px; font-size: 0.76rem;" title="Yeni servis için hızlı kurulum sihirbazını başlat">
+          <button type="button" class="btn btn-outline-cyan btn-xs" id="btn-settings-open-embed" style="padding: 6px 9px; font-size: 0.74rem;" title="Web Sitenize veya Sosyal Medyanıza Arıza Kayıt Formu Ekleyin (Iframe & Link)">
+            <span>🌐 Web Formu & Link</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-xs" id="btn-open-onboarding-wizard" style="padding: 6px 9px; font-size: 0.74rem;" title="Yeni servis için hızlı kurulum sihirbazını başlat">
             <span>🚀 Kurulum Sihirbazı</span>
+          </button>
+          <button type="button" class="btn btn-warning-glow btn-xs" id="btn-open-demo-guide-modal" style="padding: 6px 9px; font-size: 0.74rem;" title="İnteraktif Canlı Demo Turu & Hızlı Başlangıç Rehberi">
+            <span>🎯 Demo Turu</span>
           </button>
           <button type="button" class="btn btn-outline-danger btn-xs" id="btn-settings-clean-slate" style="padding: 6px 8px; font-size: 0.74rem;" title="Tüm demo çağrılarını temizle ve sıfırdan kendi servisini başlat">
             <span>🗑️ Sıfırla</span>
@@ -3007,6 +3086,10 @@
           </button>
           <button type="button" class="btn btn-outline-warning btn-xs" id="btn-clear-knowledge-base" style="padding: 6px 8px; font-size: 0.74rem;" title="Öğrenen AI Bilgi Bankasını temizle">
             <span>🧠 AI Hafıza</span>
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-xs" id="btn-header-auth-action" style="border: 1px solid #ef4444; color: #fca5a5; font-weight: 600; padding: 6px 10px; font-size: 0.74rem;" title="Oturumu Kapat / Giriş Yap">
+            <span id="btn-header-auth-icon">🚪</span>
+            <span id="btn-header-auth-text">Çıkış Yap</span>
           </button>
           <button class="modal-close-btn" id="btn-close-settings-modal" style="padding: 0 4px; line-height: 1; margin-left: 4px;">&times;</button>
         </div>
@@ -4779,7 +4862,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261029_1615"></script>
+  <script src="app.js?v=20261029_1635"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">
