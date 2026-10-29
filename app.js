@@ -540,6 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMapTechSelector();
   initStaffJobsModal();
   initDispatchAssignModal();
+  initPartHoldModal();
   initMaintenanceActions();
   initStockTransferModal();
   initStockFilterControls();
@@ -851,6 +852,8 @@ function updateTechJourneyUI(order) {
   const btnOnTheWay = document.getElementById('btn-tech-on-the-way');
   const btnArrived = document.getElementById('btn-tech-arrived');
   const btnCompleteBanner = document.getElementById('btn-tech-complete-banner');
+  const btnHoldBanner = document.getElementById('btn-tech-hold-banner');
+  const btnResumeBanner = document.getElementById('btn-tech-resume-banner');
   const btnViewReportBanner = document.getElementById('btn-tech-view-report-banner');
   const btnResetLifecycle = document.getElementById('btn-tech-reset-lifecycle');
   const durationBadge = document.getElementById('tech-job-duration-badge');
@@ -881,6 +884,11 @@ function updateTechJourneyUI(order) {
       node.style.border = '1px solid #10b981';
       node.style.color = '#34d399';
       node.style.boxShadow = 'none';
+    } else if (stateType === 'onhold') {
+      node.style.background = 'rgba(245, 158, 11, 0.2)';
+      node.style.border = '1px solid #f59e0b';
+      node.style.color = '#fde68a';
+      node.style.boxShadow = '0 0 12px rgba(245, 158, 11, 0.4)';
     } else {
       node.style.background = 'transparent';
       node.style.border = '1px solid transparent';
@@ -899,6 +907,8 @@ function updateTechJourneyUI(order) {
     if (btnOnTheWay) btnOnTheWay.style.display = 'inline-flex';
     if (btnArrived) btnArrived.style.display = 'none';
     if (btnCompleteBanner) btnCompleteBanner.style.display = 'none';
+    if (btnHoldBanner) btnHoldBanner.style.display = 'none';
+    if (btnResumeBanner) btnResumeBanner.style.display = 'none';
     if (btnViewReportBanner) btnViewReportBanner.style.display = 'none';
     if (btnResetLifecycle) btnResetLifecycle.style.display = 'none';
     if (durationBadge) durationBadge.style.display = 'none';
@@ -916,6 +926,8 @@ function updateTechJourneyUI(order) {
     if (btnOnTheWay) btnOnTheWay.style.display = 'none';
     if (btnArrived) btnArrived.style.display = 'inline-flex';
     if (btnCompleteBanner) btnCompleteBanner.style.display = 'none';
+    if (btnHoldBanner) btnHoldBanner.style.display = 'none';
+    if (btnResumeBanner) btnResumeBanner.style.display = 'none';
     if (btnViewReportBanner) btnViewReportBanner.style.display = 'none';
     if (btnResetLifecycle) btnResetLifecycle.style.display = 'inline-flex';
 
@@ -929,16 +941,50 @@ function updateTechJourneyUI(order) {
     if (departedText) departedText.innerHTML = `🚗 Yola Çıkış: <strong>${depTime}</strong>`;
     if (durationText) durationText.innerHTML = `• 📡 Seyahat Sürüyor (Canlı GPS)`;
   }
-  // 3. Durum: Onarımda / Cihaz Başında
-  else if (status === 'Onarımda' || status === 'Onay Bekliyor' || status === 'Parça Bekliyor') {
+  // 3-A. Durum: Parça Bekliyor / Askıya Alındı
+  else if (status === 'Parça Bekliyor' || status === 'Beklemede') {
+    setStepStyle(nodeAccepted, 'completed');
+    setStepStyle(nodeOnTheWay, 'completed');
+    setStepStyle(nodeRepair, 'onhold');
+    if (nodeRepair) {
+      nodeRepair.innerHTML = `<span style="font-size: 0.95rem;">⏸️</span> <span>3. Parça Bekliyor</span>`;
+    }
+    setStepStyle(nodeCompleted, 'inactive');
+
+    if (btnOnTheWay) btnOnTheWay.style.display = 'none';
+    if (btnArrived) btnArrived.style.display = 'none';
+    if (btnCompleteBanner) btnCompleteBanner.style.display = 'none';
+    if (btnHoldBanner) btnHoldBanner.style.display = 'none';
+    if (btnResumeBanner) btnResumeBanner.style.display = 'inline-flex';
+    if (btnViewReportBanner) btnViewReportBanner.style.display = 'none';
+    if (btnResetLifecycle) btnResetLifecycle.style.display = 'inline-flex';
+
+    if (durationBadge) {
+      durationBadge.style.display = 'inline-block';
+      durationBadge.className = 'badge badge-warning';
+      durationBadge.textContent = '⏸️ Parça Beklemesinde';
+    }
+    if (pulse) pulse.style.background = '#F59E0B';
+    const remD = typeof getDaysRemaining === 'function' ? getDaysRemaining(order.estimated_arrival_date) : 7;
+    const estDateFmt = typeof formatDateTR === 'function' ? formatDateTR(order.estimated_arrival_date) : order.estimated_arrival_date;
+    if (departedText) departedText.innerHTML = `📦 Beklenen Parça: <strong>${order.expected_part_name || 'Yedek Parça'}</strong> (Tahmini: <strong>${estDateFmt || '7 Gün'}</strong> - <em>Kalan: ${remD} Gün</em>)`;
+    if (durationText) durationText.innerHTML = `• 🏢 Konum: ${order.hold_device_location || 'Müşteride Bırakıldı'}`;
+  }
+  // 3-B. Durum: Onarımda / Cihaz Başında
+  else if (status === 'Onarımda' || status === 'Onay Bekliyor' || status === 'Parça Geldi - Sevke Hazır') {
     setStepStyle(nodeAccepted, 'completed');
     setStepStyle(nodeOnTheWay, 'completed');
     setStepStyle(nodeRepair, 'active');
+    if (nodeRepair) {
+      nodeRepair.innerHTML = `<span style="font-size: 0.95rem;">🔬</span> <span>3. Cihazda Onarım</span>`;
+    }
     setStepStyle(nodeCompleted, 'inactive');
 
     if (btnOnTheWay) btnOnTheWay.style.display = 'none';
     if (btnArrived) btnArrived.style.display = 'none';
     if (btnCompleteBanner) btnCompleteBanner.style.display = 'inline-flex'; // TEZGAHIN TEPESİNDE BİTİRME BUTONU
+    if (btnHoldBanner) btnHoldBanner.style.display = 'inline-flex'; // PARÇA BEKLEMEYE AL BUTONU
+    if (btnResumeBanner) btnResumeBanner.style.display = 'none';
     if (btnViewReportBanner) btnViewReportBanner.style.display = 'none';
     if (btnResetLifecycle) btnResetLifecycle.style.display = 'inline-flex';
 
@@ -1057,8 +1103,10 @@ function renderIncomingCalls() {
   const container = document.getElementById('incoming-calls-list');
   const countBadge = document.getElementById('incoming-calls-count');
   const trayActiveBtn = document.getElementById('tab-dispatch-active');
+  const trayOnHoldBtn = document.getElementById('tab-dispatch-onhold');
   const trayCompletedBtn = document.getElementById('tab-dispatch-completed');
   const trayActiveCount = document.getElementById('tray-active-count');
+  const trayOnHoldCount = document.getElementById('tray-onhold-count');
   const trayCompletedCount = document.getElementById('tray-completed-count');
   if (!container) return;
 
@@ -1067,16 +1115,24 @@ function renderIncomingCalls() {
   updateActiveOrdersKPI();
 
   const orders = state.workOrders || [];
-  const pendingOrders = orders.filter(o => !o.status || (!o.status.startsWith('Tamamlandı') && o.status !== 'Teslim Edildi'));
-  const completedOrders = orders.filter(o => o.status && (o.status.startsWith('Tamamlandı') || o.status === 'Teslim Edildi'));
+  const isCompletedOrder = o => o.status && (o.status.startsWith('Tamamlandı') || o.status === 'Teslim Edildi');
+  const isOnHoldOrder = o => o.status && (o.status === 'Parça Bekliyor' || o.status === 'Beklemede' || o.status.includes('Parça Bekliyor') || o.status === 'Parça Geldi - Sevke Hazır');
+
+  const pendingOrders = orders.filter(o => !isCompletedOrder(o) && !isOnHoldOrder(o));
+  const onHoldOrders = orders.filter(o => isOnHoldOrder(o));
+  const completedOrders = orders.filter(o => isCompletedOrder(o));
 
   if (trayActiveCount) trayActiveCount.textContent = pendingOrders.length;
+  if (trayOnHoldCount) trayOnHoldCount.textContent = onHoldOrders.length;
   if (trayCompletedCount) trayCompletedCount.textContent = completedOrders.length;
 
   if (countBadge) {
     if (state.dispatchTray === 'completed') {
       countBadge.className = 'badge badge-success';
       countBadge.textContent = `${completedOrders.length} Biten İş`;
+    } else if (state.dispatchTray === 'onhold') {
+      countBadge.className = onHoldOrders.length > 0 ? 'badge badge-warning' : 'badge badge-success';
+      countBadge.textContent = `${onHoldOrders.length} Parça Bekleyen`;
     } else {
       if (pendingOrders.length > 0) {
         countBadge.className = 'badge badge-warning';
@@ -1089,26 +1145,37 @@ function renderIncomingCalls() {
   }
 
   // Tray sekmeleri aktiflik durumu ve tıklama bağlamaları
-  if (trayActiveBtn && trayCompletedBtn) {
-    if (state.dispatchTray === 'completed') {
-      trayCompletedBtn.classList.add('active');
-      trayActiveBtn.classList.remove('active');
+  const allTrayBtns = [trayActiveBtn, trayOnHoldBtn, trayCompletedBtn].filter(Boolean);
+  allTrayBtns.forEach(btn => {
+    const t = btn.getAttribute('data-tray');
+    if (t === state.dispatchTray) {
+      btn.classList.add('active');
     } else {
-      trayActiveBtn.classList.add('active');
-      trayCompletedBtn.classList.remove('active');
+      btn.classList.remove('active');
     }
+  });
 
+  if (trayActiveBtn) {
     trayActiveBtn.onclick = () => {
       state.dispatchTray = 'active';
       renderIncomingCalls();
     };
+  }
+  if (trayOnHoldBtn) {
+    trayOnHoldBtn.onclick = () => {
+      state.dispatchTray = 'onhold';
+      renderIncomingCalls();
+    };
+  }
+  if (trayCompletedBtn) {
     trayCompletedBtn.onclick = () => {
       state.dispatchTray = 'completed';
       renderIncomingCalls();
     };
   }
 
-  const currentDisplayOrders = state.dispatchTray === 'completed' ? completedOrders : pendingOrders;
+  const currentDisplayOrders = state.dispatchTray === 'completed' ? completedOrders :
+                               state.dispatchTray === 'onhold' ? onHoldOrders : pendingOrders;
 
   if (currentDisplayOrders.length === 0) {
     if (state.dispatchTray === 'completed') {
@@ -1121,13 +1188,23 @@ function renderIncomingCalls() {
           </p>
         </div>
       `;
+    } else if (state.dispatchTray === 'onhold') {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 32px 20px; color: var(--text-dim); font-size: 0.85rem; background: rgba(255,255,255,0.01); border-radius: 8px; border: 1px dashed var(--border-color);">
+          <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
+          <strong style="color: var(--text-main); font-size: 0.95rem;">Şu Anda Parça Bekleyen veya Askıda İş Yok</strong>
+          <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
+            Teknisyen sahada arıza tespitini yapıp yedek parça siparişi verdiğinde iş emri burada 7 günlük temin sayacıyla listelenir.
+          </p>
+        </div>
+      `;
     } else {
       container.innerHTML = `
         <div style="text-align: center; padding: 32px 20px; color: var(--text-dim); font-size: 0.85rem; background: rgba(255,255,255,0.01); border-radius: 8px; border: 1px dashed var(--border-color);">
           <div style="font-size: 2rem; margin-bottom: 8px;">🎉</div>
           <strong style="color: var(--text-main); font-size: 0.95rem;">Tüm Servis Çağrıları Başarıyla Sevk Edildi</strong>
           <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
-            Sevk masasında açık bekleyen çağrı kalmadı. Biten işleri ve muhasebe fişlerini incelemek için yukarıdaki <strong>"✅ Biten İşler Tepsisi"</strong> sekmesine geçebilirsiniz.
+            Sevk masasında açık bekleyen çağrı kalmadı. Biten işleri incelemek için <strong>"✅ Biten İşler Tepsisi"</strong>, parça bekleyenleri görmek için <strong>"⏸️ Parça Bekleyenler"</strong> sekmesine geçebilirsiniz.
           </p>
         </div>
       `;
@@ -1198,6 +1275,18 @@ function renderIncomingCalls() {
                 <span>•</span>
                 <span>⏳ Toplam: <strong>${formatDurationMinutes(order.total_duration_minutes || order.totalDurationMinutes || 70)}</strong></span>
               </div>
+            ` : (order.status === 'Parça Bekliyor' || order.status === 'Beklemede' || order.status === 'Parça Geldi - Sevke Hazır') ? `
+              <div class="call-duration-tag mt-1" style="font-size: 0.75rem; color: #f59e0b; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span>📦 Beklenen: <strong>${order.expected_part_name || 'Yedek Parça'}</strong> ${order.expected_part_code ? `(${order.expected_part_code})` : ''}</span>
+                <span>•</span>
+                <span>🏢 ${order.hold_device_location ? order.hold_device_location.slice(0, 30) : 'Müşteride'}</span>
+                <span>•</span>
+                ${(typeof getDaysRemaining === 'function' && getDaysRemaining(order.estimated_arrival_date) <= 0) ? `
+                  <span class="badge badge-danger" style="font-size: 0.72rem; animation: pulse 1.5s infinite;">🚨 Temin Süresi Doldu! Takip Gerek</span>
+                ` : `
+                  <span>⏳ Kalan: <strong>${typeof getDaysRemaining === 'function' ? getDaysRemaining(order.estimated_arrival_date) : 7} Gün</strong> (${typeof formatDateTR === 'function' ? formatDateTR(order.estimated_arrival_date) : order.estimated_arrival_date})</span>
+                `}
+              </div>
             ` : order.status === 'Onarımda' ? `
               <div class="call-duration-tag mt-1" style="font-size: 0.74rem; color: var(--accent-purple); display: flex; align-items: center; gap: 6px;">
                 <span>🚗 İntikal: <strong>${order.travel_duration_minutes || order.travelDurationMinutes || 25} dk</strong></span>
@@ -1211,7 +1300,21 @@ function renderIncomingCalls() {
             ` : ''}
           </div>
           <div class="incoming-call-actions" style="display: flex; gap: 6px; flex-wrap: wrap;">
-            ${isCompleted ? `
+            ${(order.status === 'Parça Bekliyor' || order.status === 'Beklemede' || order.status === 'Parça Geldi - Sevke Hazır') ? `
+              <!-- Parça Bekleyenler Tepsisi Aksiyonları -->
+              <button class="btn btn-success btn-sm btn-call-part-arrived" data-code="${code}" style="padding: 3px 9px; font-size: 0.75rem; background: #059669; border-color: #059669; color: #fff; font-weight: 700;" title="Yedek parça depoya geldi, işi anında aktif onarıma / sevke al">
+                📦 Parça Geldi (Sevke Çıkar)
+              </button>
+              <button class="btn btn-primary btn-sm btn-call-detail" data-code="${code}" style="padding: 3px 8px; font-size: 0.75rem;" title="İş emrini teknisyen tezgâhına yükle">
+                🔧 Tezgâha Al
+              </button>
+              <button class="btn btn-outline btn-sm btn-call-wa" data-code="${code}" style="padding: 3px 8px; font-size: 0.75rem;" title="Müşteriye parça tedarik süreci hakkında WhatsApp bilgilendirmesi gönder">
+                💬 WhatsApp
+              </button>
+              <button class="btn btn-outline btn-sm btn-call-reassign" data-code="${code}" data-source-id="${assignedTechId}" style="padding: 3px 8px; font-size: 0.75rem;" title="Görevi başka bir saha uzmanına aktar / devret">
+                🔄 Uzmana Ata
+              </button>
+            ` : isCompleted ? `
               <!-- Biten İş Aksiyonları (Rapor, Muhasebe Fişi, Harita, Etiket) -->
               <button class="btn btn-primary btn-sm btn-call-view-report" data-code="${code}" style="padding: 3px 9px; font-size: 0.75rem;" title="Teknisyenin arıza teşhisini, adım adım yaptıklarını ve 8 bölümlü resmi ekspertiz raporunu incele">
                 📄 Servis Raporunu Gör
@@ -1256,6 +1359,24 @@ function renderIncomingCalls() {
   }).join('');
 
   // Tıklama olayları bağlama
+  // 0. Parça Geldi Butonu (Parça Bekleyenler Tepsisi)
+  container.querySelectorAll('.btn-call-part-arrived').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const code = btn.getAttribute('data-code');
+      resumeOrderFromHold(code);
+    });
+  });
+
+  // 0-B. WhatsApp Butonu (Parça Bekleyenler Tepsisi)
+  container.querySelectorAll('.btn-call-wa').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const code = btn.getAttribute('data-code');
+      openNotificationModal(code, 'ONAY_TALEBI');
+    });
+  });
+
   // 1. Servis Raporunu Gör (Biten İşler)
   container.querySelectorAll('.btn-call-view-report').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -2747,6 +2868,9 @@ function initAdminActions() {
         }
 
         saveStockToLocalStorage();
+        if (typeof checkStockArrivalForWaitingOrders === 'function') {
+          checkStockArrivalForWaitingOrders(code, name);
+        }
 
         renderStockTable();
         renderStockCategoryPills();
@@ -13101,6 +13225,283 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
 
   modal.style.display = 'flex';
 }
+
+
+// ==================== Yedek Parça Temini & Cihazı Beklemeye Alma (On Hold Lifecycle) ====================
+
+function formatDateTR(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+  } catch (e) {}
+  return dateStr;
+}
+window.formatDateTR = formatDateTR;
+
+function getDaysRemaining(targetDateStr) {
+  if (!targetDateStr) return 7;
+  try {
+    const targetDate = new Date(targetDateStr);
+    const now = new Date();
+    targetDate.setHours(0, 0, 0, 0);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffTime = targetDate - today;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  } catch (e) {
+    return 7;
+  }
+}
+window.getDaysRemaining = getDaysRemaining;
+
+function openPartHoldModal(order) {
+  const currentOrder = order || state.activeOrder;
+  if (!currentOrder) {
+    showToast("⚠️ Beklemeye almak için aktif bir iş emri bulunamadı.", "warning");
+    return;
+  }
+
+  const modal = document.getElementById('part-hold-modal');
+  if (!modal) return;
+
+  const code = currentOrder.tracking_code || currentOrder.code;
+  const cust = currentOrder.customer_name || currentOrder.customer || "Müşteri";
+  const dev = `${currentOrder.device_brand || ''} ${currentOrder.device_model || ''}`.trim() || (currentOrder.device || "Cihaz");
+  const tech = currentOrder.assigned_tech || (state.staff && state.staff[0] ? state.staff[0].name : "Saha Teknisyeni");
+
+  const codeEl = document.getElementById('hold-modal-order-code');
+  const custEl = document.getElementById('hold-modal-customer');
+  const devEl = document.getElementById('hold-modal-device');
+  const techEl = document.getElementById('hold-modal-tech');
+
+  if (codeEl) codeEl.textContent = `#${code}`;
+  if (custEl) custEl.textContent = cust;
+  if (devEl) devEl.textContent = dev;
+  if (techEl) techEl.textContent = tech;
+
+  // Varsayılan temin tarihi: bugünden 7 gün sonra (YYYY-MM-DD)
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  const defDateStr = d.toISOString().split('T')[0];
+
+  const dateInput = document.getElementById('hold-estimated-date');
+  if (dateInput) dateInput.value = defDateStr;
+
+  const nameInput = document.getElementById('hold-part-name');
+  if (nameInput) {
+    if (currentOrder.expected_part_name) {
+      nameInput.value = currentOrder.expected_part_name;
+    } else {
+      const diagStr = (currentOrder.technician_findings || currentOrder.findings || '').toLowerCase();
+      if (diagStr.includes('pin') || diagStr.includes('kafa') || diagStr.includes('iğne')) {
+        nameInput.value = "Nokta Vuruşlu Yazıcı Baskı Kafası Pin/İğne ve Solenoid Takımı";
+      } else if (diagStr.includes('igbt')) {
+        nameInput.value = "Semikron 1200V 50A IGBT Güç Modülü";
+      } else {
+        nameInput.value = "";
+      }
+    }
+  }
+
+  const codeInput = document.getElementById('hold-part-code');
+  if (codeInput) codeInput.value = currentOrder.expected_part_code || "";
+
+  const noteInput = document.getElementById('hold-supplier-note');
+  if (noteInput) {
+    noteInput.value = currentOrder.hold_note || "Distribütörden sipariş geçildi, 1 hafta içinde temin edilecek. Müşteriye bilgi verildi ve cihaz askıya alındı.";
+  }
+
+  modal.style.display = 'flex';
+}
+window.openPartHoldModal = openPartHoldModal;
+
+function closePartHoldModal() {
+  const modal = document.getElementById('part-hold-modal');
+  if (modal) modal.style.display = 'none';
+}
+window.closePartHoldModal = closePartHoldModal;
+
+function submitPartHoldForm(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  const currentOrder = state.activeOrder;
+  if (!currentOrder) return;
+
+  const partName = (document.getElementById('hold-part-name')?.value || '').trim();
+  const partCode = (document.getElementById('hold-part-code')?.value || '').trim();
+  const estDate = document.getElementById('hold-estimated-date')?.value || '';
+  const devLoc = document.getElementById('hold-device-location')?.value || 'Müşteri Adresinde Bırakıldı';
+  const note = (document.getElementById('hold-supplier-note')?.value || '').trim();
+
+  if (!partName) {
+    showToast("⚠️ Lütfen beklenen yedek parça tanımını girin.", "warning");
+    return;
+  }
+
+  const targetCode = currentOrder.tracking_code || currentOrder.code;
+
+  // 1. İş Emrini Güncelle
+  currentOrder.status = "Parça Bekliyor";
+  currentOrder.expected_part_name = partName;
+  currentOrder.expected_part_code = partCode;
+  currentOrder.estimated_arrival_date = estDate;
+  currentOrder.hold_device_location = devLoc;
+  currentOrder.hold_note = note;
+  currentOrder.hold_started_at = new Date().toISOString();
+
+  // state.workOrders içindeki kaydı da güncelle
+  const matchingOrder = (state.workOrders || []).find(o => (o.tracking_code || o.code) === targetCode);
+  if (matchingOrder) {
+    matchingOrder.status = "Parça Bekliyor";
+    matchingOrder.expected_part_name = partName;
+    matchingOrder.expected_part_code = partCode;
+    matchingOrder.estimated_arrival_date = estDate;
+    matchingOrder.hold_device_location = devLoc;
+    matchingOrder.hold_note = note;
+    matchingOrder.hold_started_at = currentOrder.hold_started_at;
+  }
+
+  // 2. Teknisyeni Müsait Duruma Getir
+  const techName = currentOrder.assigned_tech;
+  const techObj = (state.staff || []).find(s => s.name === techName || s.id === currentOrder.assigned_user_id);
+  if (techObj) {
+    techObj.status = "Müsait";
+    saveStaffToLocalStorage();
+  }
+
+  saveWorkOrdersToLocalStorage();
+  closePartHoldModal();
+
+  // 3. UI Güncellemeleri
+  updateTechJourneyUI(currentOrder);
+  renderIncomingCalls();
+  renderStaffList();
+  renderTechJobs();
+
+  showToast(`⏸️ #${targetCode} iş emri parça beklemesine alındı! Sevk Masası'nda "Parça Bekleyenler" tepsisine aktarıldı.`, "success");
+}
+window.submitPartHoldForm = submitPartHoldForm;
+
+function resumeOrderFromHold(orderCode) {
+  const code = orderCode || (state.activeOrder ? (state.activeOrder.tracking_code || state.activeOrder.code) : null);
+  if (!code) return;
+
+  const matchingOrder = (state.workOrders || []).find(o => (o.tracking_code || o.code) === code);
+  if (!matchingOrder) return;
+
+  matchingOrder.status = "Onarımda";
+  matchingOrder.part_arrived = true;
+  matchingOrder.part_arrived_at = new Date().toISOString();
+
+  if (state.activeOrder && (state.activeOrder.tracking_code || state.activeOrder.code) === code) {
+    state.activeOrder.status = "Onarımda";
+    state.activeOrder.part_arrived = true;
+    state.activeOrder.part_arrived_at = matchingOrder.part_arrived_at;
+  }
+
+  // Teknisyeni tekrar görevde yap
+  const techObj = (state.staff || []).find(s => s.name === matchingOrder.assigned_tech || s.id === matchingOrder.assigned_user_id);
+  if (techObj) {
+    techObj.status = "Görevde";
+    saveStaffToLocalStorage();
+  }
+
+  saveWorkOrdersToLocalStorage();
+
+  // Sevk masasında aktif tepsiye geç
+  state.dispatchTray = 'active';
+
+  renderIncomingCalls();
+  renderStaffList();
+  renderTechJobs();
+  if (state.activeOrder && (state.activeOrder.tracking_code || state.activeOrder.code) === code) {
+    updateTechJourneyUI(state.activeOrder);
+  }
+
+  showToast(`▶️ #${code} iş emri için parça temini tamamlandı ve iş tekrar aktif sevke/onarıma alındı!`, "success");
+}
+window.resumeOrderFromHold = resumeOrderFromHold;
+
+function checkStockArrivalForWaitingOrders(itemCode, itemName) {
+  const waitingOrders = (state.workOrders || []).filter(o => o.status === 'Parça Bekliyor');
+  if (waitingOrders.length === 0) return;
+
+  const cleanItemName = (itemName || '').toLowerCase();
+  const cleanItemCode = (itemCode || '').toLowerCase();
+
+  let matchedAny = false;
+
+  waitingOrders.forEach(order => {
+    const expName = (order.expected_part_name || '').toLowerCase();
+    const expCode = (order.expected_part_code || '').toLowerCase();
+
+    let matches = false;
+    if (cleanItemCode && expCode && cleanItemCode === expCode) {
+      matches = true;
+    } else if (cleanItemName && expName) {
+      const words = expName.split(/\s+/).filter(w => w.length >= 3);
+      const matchCount = words.filter(w => cleanItemName.includes(w)).length;
+      if (matchCount >= 2 || cleanItemName.includes(expName) || expName.includes(cleanItemName)) {
+        matches = true;
+      }
+    }
+
+    if (matches) {
+      order.status = "Parça Geldi - Sevke Hazır";
+      order.part_arrived = true;
+      order.part_arrived_at = new Date().toISOString();
+      matchedAny = true;
+      showToast(`🎉 MÜJDE: #${order.tracking_code || order.code} için beklenen "${order.expected_part_name}" stoğa girdi! İş Sevk Masası'nda hazırlandı.`, "success");
+    }
+  });
+
+  if (matchedAny) {
+    saveWorkOrdersToLocalStorage();
+    renderIncomingCalls();
+  }
+}
+window.checkStockArrivalForWaitingOrders = checkStockArrivalForWaitingOrders;
+
+function initPartHoldModal() {
+  const modal = document.getElementById('part-hold-modal');
+  const btnClose = document.getElementById('btn-close-part-hold-modal');
+  const btnCancel = document.getElementById('btn-cancel-part-hold');
+  const form = document.getElementById('form-part-hold');
+
+  if (!modal) return;
+
+  if (btnClose) btnClose.addEventListener('click', closePartHoldModal);
+  if (btnCancel) btnCancel.addEventListener('click', closePartHoldModal);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closePartHoldModal();
+  });
+
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      submitPartHoldForm(e);
+    });
+  }
+
+  // Banner butonları bağlaması
+  const btnHoldBanner = document.getElementById('btn-tech-hold-banner');
+  if (btnHoldBanner) {
+    btnHoldBanner.addEventListener('click', () => {
+      openPartHoldModal(state.activeOrder);
+    });
+  }
+
+  const btnResumeBanner = document.getElementById('btn-tech-resume-banner');
+  if (btnResumeBanner) {
+    btnResumeBanner.addEventListener('click', () => {
+      const code = state.activeOrder ? (state.activeOrder.tracking_code || state.activeOrder.code) : null;
+      resumeOrderFromHold(code);
+    });
+  }
+}
+window.initPartHoldModal = initPartHoldModal;
 
 function initDispatchAssignModal() {
   const modal = document.getElementById('dispatch-assign-modal');

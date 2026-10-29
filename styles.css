@@ -5719,6 +5719,11 @@ body {
   color: #fbbf24;
 }
 
+.tray-pill-warning {
+  background: rgba(245, 158, 11, 0.25) !important;
+  color: #fbbf24 !important;
+}
+
 .tray-pill-success {
   background: rgba(16, 185, 129, 0.2);
   color: #34d399;
