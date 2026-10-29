@@ -2986,51 +2986,56 @@
 
   <!-- ==================== 15-B. Sistem & Servis Kurulum Ayarları Modalı ==================== -->
   <div class="modal-backdrop" id="settings-modal" style="display: none;">
-    <div class="modal-box settings-modal-box" style="max-width: 980px; width: 95%;">
-      <div class="modal-header">
-        <div class="modal-title-row">
-          <span class="chip chip-purple">Sistem & Kurulum Yönetimi</span>
-          <h3 class="modal-title">⚙️ Servis Kurulumu, Firma Bilgileri & Sistem Ayarları</h3>
+    <div class="modal-box settings-modal-box" style="max-width: 1040px; width: 96%;">
+      <div class="modal-header" style="padding: 12px 20px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <div class="modal-title-row" style="gap: 2px;">
+          <span class="chip chip-purple" style="font-size: 0.7rem; padding: 1px 7px; width: fit-content;">Sistem & Kurulum Yönetimi</span>
+          <h3 class="modal-title" style="font-size: 1.12rem; margin: 0;">⚙️ Servis Kurulumu, Firma Bilgileri & Sistem Ayarları</h3>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-warning-glow btn-xs" id="btn-quick-to-rates" style="border: 1px solid #f59e0b; font-weight: 700;" title="İşçilik ve onarım tarifeleri yönetimine doğrudan geç">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+          <button type="button" class="btn btn-warning-glow btn-xs" id="btn-quick-to-rates" style="border: 1px solid #f59e0b; font-weight: 700; padding: 6px 12px; font-size: 0.78rem;" title="İşçilik ve onarım tarifeleri yönetimine doğrudan geç">
             <span>💰 Tarifeleri Güncelle</span>
           </button>
-          <button type="button" class="btn btn-primary btn-xs" id="btn-start-onboarding-wizard" title="Yeni servis için hızlı kurulum sihirbazını başlat">
-            <span>🚀 Hızlı Kurulum Sihirbazı</span>
+          <button type="button" class="btn btn-primary btn-xs" id="btn-start-onboarding-wizard" style="padding: 6px 10px; font-size: 0.76rem;" title="Yeni servis için hızlı kurulum sihirbazını başlat">
+            <span>🚀 Kurulum Sihirbazı</span>
           </button>
-          <button type="button" class="btn btn-outline-danger btn-xs" id="btn-settings-clean-slate" title="Tüm demo çağrılarını temizle ve sıfırdan kendi servisini başlat">
-            <span>🗑️ Sıfırdan Başla</span>
+          <button type="button" class="btn btn-outline-danger btn-xs" id="btn-settings-clean-slate" style="padding: 6px 8px; font-size: 0.74rem;" title="Tüm demo çağrılarını temizle ve sıfırdan kendi servisini başlat">
+            <span>🗑️ Sıfırla</span>
           </button>
-          <button type="button" class="btn btn-outline-cyan btn-xs" id="btn-settings-load-demo" title="Örnek Koçaş Teknik demo verilerini geri yükle">
-            <span>⚡ Demo Yükle</span>
+          <button type="button" class="btn btn-outline-cyan btn-xs" id="btn-settings-load-demo" style="padding: 6px 8px; font-size: 0.74rem;" title="Örnek Koçaş Teknik demo verilerini geri yükle">
+            <span>⚡ Demo</span>
           </button>
-          <button type="button" class="btn btn-outline-warning btn-xs" id="btn-clear-knowledge-base" title="Öğrenen AI Bilgi Bankasını temizle ve firmanızın kendi çözümleriyle dolduracağı boş kütüphaneyle başlat">
-            <span>🧠 AI Hafızasını Temizle</span>
+          <button type="button" class="btn btn-outline-warning btn-xs" id="btn-clear-knowledge-base" style="padding: 6px 8px; font-size: 0.74rem;" title="Öğrenen AI Bilgi Bankasını temizle">
+            <span>🧠 AI Hafıza</span>
           </button>
-          <button class="modal-close-btn" id="btn-close-settings-modal">&times;</button>
+          <button class="modal-close-btn" id="btn-close-settings-modal" style="padding: 0 4px; line-height: 1; margin-left: 4px;">&times;</button>
         </div>
       </div>
 
-      <!-- Ayarlar Sekme Gezinti Çubuğu -->
+      <!-- Ayarlar Sekme Gezinti Çubuğu (5 Eşit Kolon, Sıfır Kaydırma, Kristal Netliğinde) -->
       <div class="settings-nav-tabs">
         <button type="button" class="settings-tab-btn active" data-tab="tab-settings-company" id="btn-set-tab-company">
-          <span>🏢 1. Firma & Servis Kimliği</span>
+          <span class="tab-icon">🏢</span>
+          <span class="tab-text">1. Firma & Kimlik</span>
         </button>
         <button type="button" class="settings-tab-btn" data-tab="tab-settings-staff" id="btn-set-tab-staff">
-          <span>👥 2. Saha Elemanları & Kadro</span>
-          <span class="badge badge-purple" id="badge-settings-staff-count">4 Uzman</span>
+          <span class="tab-icon">👥</span>
+          <span class="tab-text">2. Saha Kadrosu</span>
+          <span class="badge badge-purple" id="badge-settings-staff-count" style="font-size: 0.68rem; padding: 1px 5px;">4 Uzman</span>
         </button>
         <button type="button" class="settings-tab-btn" data-tab="tab-settings-devices" id="btn-set-tab-devices">
-          <span>🏷️ 3. Hizmet Verilen Cihazlar</span>
-          <span class="badge badge-cyan" id="badge-settings-device-count">8 Kategori</span>
+          <span class="tab-icon">🏷️</span>
+          <span class="tab-text">3. Cihaz Kapsamı</span>
+          <span class="badge badge-cyan" id="badge-settings-device-count" style="font-size: 0.68rem; padding: 1px 5px;">8 Kategori</span>
         </button>
         <button type="button" class="settings-tab-btn settings-tab-rates-highlight" data-tab="tab-settings-rates" id="btn-set-tab-rates">
-          <span style="font-weight: 700; color: #fbbf24;">💰 4. İşçilik & Onarım Tarifeleri</span>
-          <span class="badge badge-warning" style="font-size: 0.68rem; margin-left: 4px; padding: 2px 6px;">Fiyat Değiştir</span>
+          <span class="tab-icon">💰</span>
+          <span class="tab-text" style="font-weight: 700; color: #fbbf24;">4. Onarım Tarifeleri</span>
+          <span class="badge badge-warning" style="font-size: 0.68rem; padding: 1px 6px;">₺ Fiyatlar</span>
         </button>
         <button type="button" class="settings-tab-btn" data-tab="tab-settings-integrations" id="btn-set-tab-integrations">
-          <span>🧾 5. e-Fatura & Sanal POS</span>
+          <span class="tab-icon">🧾</span>
+          <span class="tab-text">5. e-Fatura & POS</span>
         </button>
       </div>
 
@@ -4774,7 +4779,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261029_1550"></script>
+  <script src="app.js?v=20261029_1605"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">

@@ -72,3 +72,4 @@ console.log('  ✓ Kullanıcı hangi sekmede olduğunu ve nereden kaydedeceğini
 console.log('================================================================================');
 console.log('   🎉 TÜM AYARLAR & TARİFE GEZİNİM TESTLERİ BAŞARIYLA GEÇTİ (4/4)');
 console.log('================================================================================');
+
