@@ -68,6 +68,22 @@ if (typeof window !== 'undefined') {
   window.escapeHtml = escapeHtml;
 }
 
+// Demo Cihaz Sicili Sabit Seri Numaraları (Temiz modda ayıklanır)
+const DEMO_EQUIPMENT_SERIALS = new Set([
+  'DLT-2024-99823',
+  'SCH-2025-44120',
+  'GRF-2024-77192',
+  'DAI-2023-88214',
+  'SIE-2025-1214C',
+  'OMR-2024-31902',
+  'AUT-2025-45512',
+  'SCH-2025-1104',
+  'ABB-2025-10042',
+  'SIEM-2024-55102',
+  'OMR-2024-33100',
+  'DAN-2025-19842'
+]);
+
 // ==================== State Management ====================
 const state = {
   activeTab: 'admin-view',
@@ -644,7 +660,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedMaint = localStorage.getItem('servisai_maintenance');
     state.maintenance = savedMaint ? (JSON.parse(savedMaint) || []) : [];
     const savedEq = localStorage.getItem('servisai_equipment_registry');
-    state.equipmentRegistry = savedEq ? (JSON.parse(savedEq) || []) : [];
+    let loadedEq = savedEq ? (JSON.parse(savedEq) || []) : [];
+    state.equipmentRegistry = Array.isArray(loadedEq)
+      ? loadedEq.filter(eq => eq && eq.serial_number && !DEMO_EQUIPMENT_SERIALS.has(String(eq.serial_number).trim()))
+      : [];
+    try {
+      localStorage.setItem('servisai_equipment_registry', JSON.stringify(state.equipmentRegistry));
+    } catch (_) {}
   }
 
   loadWorkOrdersFromLocalStorage();
@@ -2804,6 +2826,8 @@ function renderStockTable() {
   if (elWorkshopQty) elWorkshopQty.textContent = `${workshopSum} Adet`;
   if (elVehiclesQty) elVehiclesQty.textContent = `${vehiclesSum} Adet`;
   if (elCriticalCount) elCriticalCount.textContent = `${criticalCount} Kalem`;
+
+  if (typeof updateStockBadges === 'function') updateStockBadges();
 
   if (elFooterInfo) {
     elFooterInfo.innerHTML = `Görüntülenen: <strong>${filtered.length}</strong> / ${totalKinds} Kalem Parça ${filter.category !== 'all' ? `• [${filter.category}]` : ''} ${filter.criticalOnly ? '• <span class="text-rose" style="font-weight: 600;">⚠️ Kritik Filtresi Aktif</span>' : ''}`;
@@ -7345,6 +7369,7 @@ function startCleanSlateService() {
   updateActiveOrdersKPI();
   renderMaintenance();
   if (typeof updateEquipmentBadge === 'function') updateEquipmentBadge();
+  if (typeof updateStockBadges === 'function') updateStockBadges();
   if (typeof renderEquipmentRegistry === 'function') renderEquipmentRegistry();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
 
@@ -16115,7 +16140,15 @@ function initEquipmentRegistry() {
   try {
     const saved = localStorage.getItem('servisai_equipment_registry');
     if (saved) {
-      state.equipmentRegistry = JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (appMode === 'clean') {
+        state.equipmentRegistry = Array.isArray(parsed)
+          ? parsed.filter(eq => eq && eq.serial_number && !DEMO_EQUIPMENT_SERIALS.has(String(eq.serial_number).trim()))
+          : [];
+        saveEquipmentRegistryToLocalStorage();
+      } else {
+        state.equipmentRegistry = Array.isArray(parsed) ? parsed : [];
+      }
     } else if (appMode === 'clean') {
       state.equipmentRegistry = [];
       saveEquipmentRegistryToLocalStorage();
@@ -16139,11 +16172,21 @@ function saveEquipmentRegistryToLocalStorage() {
 }
 
 function updateEquipmentBadge() {
-  const badge = document.getElementById('equipment-count-badge');
-  if (badge) {
-    badge.textContent = `${state.equipmentRegistry.length} Cihaz`;
-  }
+  const count = (state.equipmentRegistry || []).length;
+  const badges = document.querySelectorAll('#equipment-count-badge, [id="equipment-count-badge"]');
+  badges.forEach(b => {
+    b.textContent = `${count} Cihaz`;
+  });
 }
+
+function updateStockBadges() {
+  const count = (state.stock || []).length;
+  const badges = document.querySelectorAll('#subnav-stock-badge, [id="subnav-stock-badge"]');
+  badges.forEach(b => {
+    b.textContent = `${count} Kalem`;
+  });
+}
+window.updateStockBadges = updateStockBadges;
 
 // Cihaz Sicil Tablosunu ve Sayaçları Ekrana Basıcı
 function renderEquipmentRegistry() {
@@ -16185,6 +16228,22 @@ function renderEquipmentRegistry() {
   if (pVeh) pVeh.textContent = vehicleCount;
 
   updateEquipmentBadge();
+
+  if (registry.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 60px 20px; text-align: center; color: var(--text-muted);">
+        <div style="font-size: 2.8rem; margin-bottom: 12px;">🏷️</div>
+        <strong style="color: var(--text-main); font-size: 1.15rem; display: block; margin-bottom: 8px;">Kayıtlı Cihaz Sicili Bulunmuyor</strong>
+        <p style="font-size: 0.9rem; max-width: 540px; margin: 0 auto 18px auto; line-height: 1.55; color: var(--text-muted);">
+          Sistem sıfırdan servis kurulum modundadır. Açılan servis çağrıları veya yukarıdaki "<strong>➕ Yeni Cihaz Kaydı Ekle</strong>" butonu üzerinden oluşturulan cihaz pasaportları burada listelenir.
+        </p>
+        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('btn-open-new-equipment-modal')?.click()">
+          <span>➕ İlk Cihaz Sicilini Ekle</span>
+        </button>
+      </div>
+    `;
+    return;
+  }
 
   // Filtreleme & Arama
   const activeFilter = state.activeEquipmentFilter || 'all';
