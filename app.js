@@ -538,8 +538,95 @@ const state = {
   }
 };
 
+function getActiveCompanyName() {
+  const elHdr = document.getElementById('header-tenant-name');
+  if (elHdr && elHdr.textContent && elHdr.textContent.trim()) {
+    const txt = elHdr.textContent.trim();
+    if (!txt.includes('Koçaş') && txt !== 'Teknik Servis') return txt;
+  }
+  if (state.companyProfile && state.companyProfile.name && !state.companyProfile.name.includes('Koçaş')) {
+    return state.companyProfile.name;
+  }
+  try {
+    const rawTenants = localStorage.getItem('servisai_saas_tenants');
+    if (rawTenants) {
+      const tenants = JSON.parse(rawTenants);
+      const active = Array.isArray(tenants) ? tenants.find(t => t.isActive) : null;
+      if (active && (active.shortName || active.name)) {
+        const val = active.shortName || active.name;
+        if (!val.includes('Koçaş')) return val;
+      }
+    }
+  } catch (_) {}
+  try {
+    const rawProf = localStorage.getItem('servisai_company_profile');
+    if (rawProf) {
+      const p = JSON.parse(rawProf);
+      if (p.name && !p.name.includes('Koçaş')) return p.name;
+      if (p.legalName && !p.legalName.includes('Koçaş')) return p.legalName;
+    }
+  } catch (_) {}
+  return 'Altostek';
+}
+window.getActiveCompanyName = getActiveCompanyName;
+
+function getActiveCompanyLegalName() {
+  const short = getActiveCompanyName();
+  if (state.companyProfile && state.companyProfile.legalName && !state.companyProfile.legalName.includes('Koçaş')) {
+    return state.companyProfile.legalName;
+  }
+  try {
+    const rawProf = localStorage.getItem('servisai_company_profile');
+    if (rawProf) {
+      const p = JSON.parse(rawProf);
+      if (p.legalName && !p.legalName.includes('Koçaş')) return p.legalName;
+    }
+  } catch (_) {}
+  if (short === 'Altostek') return 'Altostek Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.';
+  return `${short} Endüstriyel Elektronik San. ve Tic. A.Ş.`;
+}
+window.getActiveCompanyLegalName = getActiveCompanyLegalName;
+
 // ==================== DOM Elements ====================
 document.addEventListener('DOMContentLoaded', () => {
+  // Otomatik depolama temizliği ve migrasyonu (Koçaş -> Altostek)
+  try {
+    const rawP = localStorage.getItem('servisai_company_profile');
+    if (rawP) {
+      const p = JSON.parse(rawP);
+      if (p && (!p.name || p.name.includes('Koçaş'))) {
+        p.name = 'Altostek';
+        if (!p.legalName || p.legalName.includes('Koçaş')) {
+          p.legalName = 'Altostek Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.';
+        }
+        if (!p.website || p.website.includes('kocasteknik')) {
+          p.website = 'https://altostek.com';
+        }
+        if (!p.email || p.email.includes('kocasteknik')) {
+          p.email = 'destek@altostek.com';
+        }
+        localStorage.setItem('servisai_company_profile', JSON.stringify(p));
+      }
+    }
+    const rawT = localStorage.getItem('servisai_saas_tenants');
+    if (rawT) {
+      const tenants = JSON.parse(rawT);
+      let changed = false;
+      if (Array.isArray(tenants)) {
+        tenants.forEach(t => {
+          if (t.id === 1 && (t.shortName?.includes('Koçaş') || t.name?.includes('Koçaş'))) {
+            t.shortName = 'Altostek';
+            t.name = 'Altostek Endüstriyel Elektronik & Otomasyon A.Ş.';
+            changed = true;
+          }
+        });
+        if (changed) {
+          localStorage.setItem('servisai_saas_tenants', JSON.stringify(tenants));
+        }
+      }
+    }
+  } catch (_) {}
+
   const appMode = localStorage.getItem('servisai_app_mode');
   const initialProfile = getStoredCompanyProfile();
 
@@ -2128,7 +2215,7 @@ function initAccountingReceiptActions() {
         `• Sorumlu Saha Uzmanı: ${tech}\n` +
         `• Fatura Durumu: e-Fatura / e-Arşiv Düzenlendi\n\n` +
         `Cihazınızı iyi günlerde kullanmanızı diler, bizi tercih ettiğiniz için teşekkür ederiz.\n` +
-        `Koçaş Teknik Servis & Mühendislik`;
+        `${(typeof getActiveCompanyName === 'function' ? getActiveCompanyName() : 'Altostek')} & Mühendislik`;
 
       const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMsg)}`;
       window.open(waUrl, '_blank');
@@ -6412,7 +6499,7 @@ GENEL TOPLAM SERVİS BEDELİ (KDV Dahil)     : ${totalCost.toLocaleString('tr-TR
 9. RESMİ TESLİMAT VE GARANTİ ŞARTLARI
 --------------------------------------------------------------------------------
 Cihaz sahada teknik testlerden geçirilmiş olup eksiksiz çalışır durumda teslim
-edilmiştir. Değiştirilen parçalar 12 Ay boyunca Koçaş Teknik Servis garantisi
+edilmiştir. Değiştirilen parçalar 12 Ay boyunca ${(typeof getActiveCompanyName === 'function' ? getActiveCompanyName() : 'Altostek')} garantisi
 altındadır.
 
 Teknisyen İmzası / Kaşe                 Müşteri Teslim Alan Yetkili
@@ -9114,13 +9201,14 @@ function loadAndShowServiceLabel(trackingCode) {
   const compPhoneEl = document.getElementById('lbl-company-phone');
 
   // Aktif servis ve firma profilini etikete dinamik yansıt
+  const activeCompName = (typeof getActiveCompanyName === 'function' ? getActiveCompanyName() : 'Altostek').toUpperCase();
   const profile = (typeof getStoredCompanyProfile === 'function' ? getStoredCompanyProfile() : null) || state.companyProfile || {};
-  const compName = (profile.name || profile.legalName || 'Koçaş Teknik Servis').toUpperCase();
   const compPhone = profile.phone || profile.gsm || '0216 555 0101';
-  let compWeb = profile.website || 'kocasteknik.com';
+  let compWeb = profile.website || 'altostek.com';
+  if (compWeb.includes('kocasteknik')) compWeb = 'altostek.com';
   compWeb = compWeb.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
-  if (compNameEl) compNameEl.textContent = compName;
+  if (compNameEl) compNameEl.textContent = activeCompName;
   if (compTrackingEl) compTrackingEl.textContent = `Online Takip: ${compWeb}/takip`;
   if (compPhoneEl) compPhoneEl.textContent = `Tel: ${compPhone}`;
 
@@ -17595,7 +17683,7 @@ function initSanalPosEngine() {
         `• Ödeme Seçeneği: Kredi Kartı Tek Çekim veya Peşin Fiyatına 3 Taksit\n\n` +
         `Güvenli 3D Secure kredi kartı ödeme linkiniz:\n${url}\n\n` +
         `Ödemeniz tamamlandığında e-Faturanız otomatik olarak tarafınıza iletilecektir.\n` +
-        `Koçaş Teknik Servis & Mühendislik`;
+        `${(typeof getActiveCompanyName === 'function' ? getActiveCompanyName() : 'Altostek')} & Mühendislik`;
 
       const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(waMsg)}`;
       window.open(waUrl, '_blank');
@@ -17684,8 +17772,8 @@ function openSanalPosModal(orderCode) {
 const defaultSaasTenants = [
   {
     id: 1,
-    name: "Koçaş Endüstriyel Elektronik & Otomasyon A.Ş.",
-    shortName: "Koçaş Teknik Servis",
+    name: "Altostek Endüstriyel Elektronik & Otomasyon A.Ş.",
+    shortName: "Altostek",
     industry: "Endüstriyel Elektronik, PLC & Sürücü",
     plan: "Kurumsal SaaS (Limitsiz)",
     vkn: "5760129841",
@@ -17777,7 +17865,18 @@ function initMultiTenantSaaSEngine() {
 function getStoredTenants() {
   try {
     const raw = localStorage.getItem('servisai_saas_tenants');
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) {
+        list.forEach(t => {
+          if (t.id === 1 && (t.shortName?.includes('Koçaş') || t.name?.includes('Koçaş'))) {
+            t.shortName = 'Altostek';
+            t.name = 'Altostek Endüstriyel Elektronik & Otomasyon A.Ş.';
+          }
+        });
+        return list;
+      }
+    }
   } catch (e) {}
   return defaultSaasTenants;
 }
@@ -17843,6 +17942,13 @@ function switchSaaSTenant(tenantId) {
     const elCur = document.getElementById('tenant-current-title');
     if (elCur) elCur.textContent = selectedTenant.name;
 
+    const curProf = (typeof getStoredCompanyProfile === 'function' ? getStoredCompanyProfile() : null) || state.companyProfile || {};
+    curProf.name = selectedTenant.shortName || selectedTenant.name;
+    curProf.legalName = selectedTenant.name;
+    state.companyProfile = curProf;
+    if (typeof saveStoredCompanyProfile === 'function') saveStoredCompanyProfile(curProf);
+    if (typeof applyCompanyProfile === 'function') applyCompanyProfile(curProf);
+
     showToast(`🏢 Aktif Şirket Değiştirildi: ${selectedTenant.name}`, 'info');
   }
 
@@ -17868,8 +17974,8 @@ window.switchSaaSTenant = switchSaaSTenant;
 // ==========================================================================
 
 const defaultCompanyProfile = {
-  name: "Koçaş Teknik Servis",
-  legalName: "Koçaş Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.",
+  name: "Altostek",
+  legalName: "Altostek Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.",
   industry: "Endüstriyel Elektronik, PLC & Sürücü Onarımı",
   sectorKey: "endustriyel_otomasyon",
   taxOffice: "Nilüfer Vergi Dairesi",
@@ -17878,8 +17984,8 @@ const defaultCompanyProfile = {
   city: "Bursa",
   district: "Osmangazi",
   phone: "+90 224 441 00 24",
-  email: "muhasebe@kocasteknik.com",
-  website: "https://kocasteknik.com",
+  email: "destek@altostek.com",
+  website: "https://altostek.com",
   tradeRegNo: "Bursa Tic. Sicil #98241",
   mersisNo: "0576012984100018",
   efaturaScenario: "Ticari Fatura (UBL-TR 2.1)",
@@ -17898,16 +18004,16 @@ const defaultCompanyProfile = {
 
 const SECTOR_TEMPLATES = {
   endustriyel_otomasyon: {
-    name: "Koçaş Teknik Servis",
-    legalName: "Koçaş Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.",
+    name: "Altostek",
+    legalName: "Altostek Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.",
     industry: "Endüstriyel Elektronik, PLC & Sürücü Onarımı",
     taxOffice: "Nilüfer Vergi Dairesi",
     taxId: "5760129841",
     billingAddress: "Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14 Osmangazi / BURSA",
     city: "Bursa / Nilüfer",
     phone: "+90 224 441 00 24",
-    email: "info@kocasteknik.com",
-    website: "https://kocasteknik.com",
+    email: "destek@altostek.com",
+    website: "https://altostek.com",
     managerName: "Zafer Koçaş",
     managerTitle: "Elektronik ve Haberleşme Mühendisi / Firma Sahibi",
     managerPhone: "0532 999 88 77",
@@ -18094,7 +18200,16 @@ let wizardStockList = [];
 function getStoredCompanyProfile() {
   try {
     const raw = localStorage.getItem('servisai_company_profile');
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p) {
+        if (!p.name || p.name.includes('Koçaş')) p.name = 'Altostek';
+        if (!p.legalName || p.legalName.includes('Koçaş')) p.legalName = 'Altostek Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.';
+        if (!p.website || p.website.includes('kocasteknik')) p.website = 'https://altostek.com';
+        if (!p.email || p.email.includes('kocasteknik')) p.email = 'destek@altostek.com';
+        return p;
+      }
+    }
   } catch (e) {}
   return defaultCompanyProfile;
 }
@@ -18148,9 +18263,10 @@ function applyCompanyProfile(profile) {
   if (elCurTenant) elCurTenant.textContent = profile.legalName || profile.name;
 
   // 1B. Cihaz Kabul ve Kimlik Etiketi (Fiziksel QR Fiş) Başlık & İletişim Bilgileri
-  const labelCompName = (profile.name || profile.legalName || 'Koçaş Teknik Servis').toUpperCase();
+  const labelCompName = (profile.name || profile.legalName || 'Altostek').toUpperCase();
   const labelPhone = profile.phone || profile.gsm || '0216 555 0101';
-  let labelWeb = profile.website || 'kocasteknik.com';
+  let labelWeb = profile.website || 'altostek.com';
+  if (labelWeb.includes('kocasteknik')) labelWeb = 'altostek.com';
   labelWeb = labelWeb.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
   const elLblCompName = document.getElementById('lbl-company-name');
@@ -18164,7 +18280,7 @@ function applyCompanyProfile(profile) {
 
   // Tahsilat & Muhasebe Makbuzu Şirket Başlığı
   const elReceiptTitle = document.getElementById('receipt-company-title');
-  if (elReceiptTitle) elReceiptTitle.textContent = (profile.legalName || profile.name || 'Koçaş Teknik Servis').toUpperCase();
+  if (elReceiptTitle) elReceiptTitle.textContent = (profile.legalName || profile.name || 'Altostek').toUpperCase();
 
   // 2. Şirket Fatura Kartı (Teknisyen Dış Harcama Ekranı)
   const elBillLegal = document.getElementById('billing-card-legal-name');
@@ -18499,13 +18615,13 @@ function openOnboardingWizard(step = 1) {
   wizardSelectedSector = cur.sectorKey || 'endustriyel_otomasyon';
 
   // Formları doldur
-  setVal('wizard-company-name', cur.name || 'Koçaş Teknik Servis');
+  setVal('wizard-company-name', cur.name || 'Altostek');
   setVal('wizard-company-city', cur.city || 'Bursa / Nilüfer');
   setVal('wizard-company-phone', cur.phone || '+90 224 441 00 24');
   setVal('wizard-company-email', cur.email || 'info@kocasteknik.com');
   setVal('wizard-company-website', cur.website || 'https://kocasteknik.com');
 
-  setVal('wizard-legal-name', cur.legalName || 'Koçaş Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.');
+  setVal('wizard-legal-name', cur.legalName || 'Altostek Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.');
   setVal('wizard-tax-office', cur.taxOffice || 'Nilüfer Vergi Dairesi');
   setVal('wizard-tax-id', cur.taxId || '5760129841');
   setVal('wizard-billing-address', cur.billingAddress || 'Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14 Osmangazi / BURSA');
