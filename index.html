@@ -25,7 +25,7 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261104_1710">
+  <link rel="stylesheet" href="styles.css?v=20261104_1755">
 </head>
 <body>
   <!-- Header / Navigation -->
@@ -82,20 +82,29 @@
   <main class="app-container">
 
     <!-- ==================== 1. YÖNETİCİ & KONTROL PANELİ ==================== -->
-    <section id="admin-view" class="view-panel active">
+        <section id="admin-view" class="view-panel active">
       <!-- Yönetici & Kontrol Paneli Üst Komuta Çubuğu (Admin Subnav Bar) -->
       <div class="admin-subnav-bar">
         <div class="admin-subnav-left">
-          <button type="button" class="admin-subnav-btn active" id="btn-admin-sub-dispatch" onclick="switchToAdminSection('admin-view')">
+          <button type="button" class="admin-subnav-btn active" data-tab="admin-view" id="btn-admin-sub-dispatch" onclick="switchToAdminSection('admin-view')">
             <span class="subnav-icon">📋</span>
             <span>Sevk Masası & Operasyon</span>
           </button>
-          <button type="button" class="admin-subnav-btn" id="btn-tab-equipment" data-tab="equipment-view" onclick="switchToAdminSection('equipment-view')" title="Cihaz Sicil Kartları ve Dijital Pasaport Yönetimi">
+          <button type="button" class="admin-subnav-btn " data-tab="gps-view" id="btn-tab-gps" onclick="switchToAdminSection('gps-view')" title="Canlı Saha GPS, Teknisyen Konumları ve Rota Takibi">
+            <span class="subnav-icon">🗺️</span>
+            <span>Canlı GPS & Harita</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="inventory-view" id="btn-tab-inventory" onclick="switchToAdminSection('inventory-view')" title="Merkez Depo, Atölye ve Saha Araç Stokları Yönetimi">
+            <span class="subnav-icon">📦</span>
+            <span>Stok & Araç Depoları</span>
+            <span class="badge" id="subnav-stock-badge">12 Kalem</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="equipment-view" id="btn-tab-equipment" onclick="switchToAdminSection('equipment-view')" title="Cihaz Sicil Kartları ve Dijital Pasaport Yönetimi">
             <span class="subnav-icon">🏷️</span>
             <span>Cihaz Sicil & Seri No</span>
             <span class="badge" id="equipment-count-badge">8 Cihaz</span>
           </button>
-          <button type="button" class="admin-subnav-btn" id="btn-tab-reports" data-tab="reports-view" onclick="switchToAdminSection('reports-view')" title="İş Zekası (BI), Personel ve Finans Raporları">
+          <button type="button" class="admin-subnav-btn " data-tab="reports-view" id="btn-tab-reports" onclick="switchToAdminSection('reports-view')" title="İş Zekası (BI), Personel ve Finans Raporları">
             <span class="subnav-icon">📈</span>
             <span>Raporlama & Analitik</span>
           </button>
@@ -105,6 +114,7 @@
             <span class="pulse-dot"></span>
             <span class="status-label">Saha Senkronize</span>
           </div>
+          
         </div>
       </div>
 
@@ -126,12 +136,12 @@
             <span class="kpi-subtext" id="kpi-fleet-subtext">3 aktif mobil depo görevde</span>
           </div>
         </div>
-        <div class="kpi-card accent-amber">
+        <div class="kpi-card accent-amber" id="kpi-card-critical-stock" style="cursor: pointer;" onclick="switchToAdminSection('inventory-view')" title="Stok & Araç Depoları Yönetimini Aç">
           <div class="kpi-icon">⚠️</div>
           <div class="kpi-info">
             <span class="kpi-title">Kritik Araç Stokları</span>
             <span class="kpi-value" id="kpi-critical-stock">2 Parça</span>
-            <span class="kpi-subtext">Servis aracında tükenmek üzere</span>
+            <span class="kpi-subtext">Servis aracında tükenmek üzere (Görüntüle ➔)</span>
           </div>
         </div>
         <div class="kpi-card accent-emerald">
@@ -144,30 +154,18 @@
         </div>
       </div>
 
-      <!-- Main Layout: 2 Columns -->
+      <!-- 2 Kolonlu Dengeli ve Ferah Sevk Masası -->
       <div class="admin-grid-layout">
         
-        <!-- Sol Kolon: Akıllı Saha Atama ve Canlı Personel Radarı -->
-        <div class="content-card">
+        <!-- Sol Kolon: Servis Çağrıları & Sevk Masası -->
+        <div class="content-card dispatch-column">
           <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
             <div>
-              <h2 class="card-title">Saha Ekibi ve Akıllı Lokasyon Ataması</h2>
-              <p class="card-subtitle">Müşteri arıza noktasına en yakın ve uygun uzmanlıktaki personeli otomatik belirler</p>
+              <h2 class="card-title">📞 Servis Çağrıları & Sevk Masası</h2>
+              <p class="card-subtitle">Müşteri arıza çağrılarını yönetin, önceliklendirin ve saha ekiplerine atayın</p>
             </div>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <span class="chip chip-success">GPS Canlı</span>
-              <button class="btn btn-primary btn-sm" id="btn-open-staff-entry-modal" title="Yeni teknisyen, tekniker veya mühendis işe girişi yap">
-                <span>➕ Yeni Personel Girişi</span>
-              </button>
-              <button class="btn btn-outline btn-sm" id="btn-open-fleet-modal" title="Servis araçlarını listele, yeni araç ekle veya filodan çıkar">
-                <span>🚗 Servis Araçları (Filo)</span>
-              </button>
-              <button class="btn btn-outline btn-sm" id="btn-open-manager-modal-alt" title="Sistem yöneticilerini görüntüle ve tanımla">
-                <span>👔 Yöneticiler</span>
-              </button>
-              <button class="btn btn-outline btn-sm" id="btn-open-settings-modal" title="Hızlı tarife bedelleri, işçilik fiyatları ve sistem ayarları">
-                <span>⚙️ Ayarlar & Tarifeler</span>
-              </button>
+              <span class="badge badge-warning" id="incoming-calls-count">1 Bekliyor</span>
             </div>
           </div>
 
@@ -242,6 +240,28 @@
               <!-- Dinamik çağrı kartları JavaScript ile doldurulur -->
             </div>
           </div>
+        </div>
+
+        <!-- Sağ Kolon: Saha Ekibi & Canlı Uzman Durumları -->
+        <div class="content-card staff-column">
+          <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 class="card-title">👷 Saha Ekibi & Uzman Radarı</h2>
+              <p class="card-subtitle">Sahadaki personellerin anlık durumu, atanmış işleri ve filo araçları</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <span class="chip chip-success">GPS Canlı</span>
+              <button class="btn btn-primary btn-sm" id="btn-open-staff-entry-modal" title="Yeni teknisyen, tekniker veya mühendis işe girişi yap">
+                <span>➕ Yeni Personel Girişi</span>
+              </button>
+              <button class="btn btn-outline btn-sm" id="btn-open-fleet-modal" title="Servis araçlarını listele, yeni araç ekle veya filodan çıkar">
+                <span>🚗 Araçlar (Filo)</span>
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" onclick="switchToAdminSection('gps-view')" title="Canlı Saha GPS Haritasına Git">
+                <span>🗺️ Haritada Gör ➔</span>
+              </button>
+            </div>
+          </div>
 
           <!-- Personel Listesi / Canlı Durum -->
           <div class="staff-list" id="staff-container">
@@ -249,113 +269,62 @@
           </div>
         </div>
 
-        <!-- Sağ Kolon: Mobil Araç Deposu ve Parça Takip Matrisi -->
-        <div class="content-card">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title">Mobil Araç Stokları, Atölye ve Depo Takibi</h2>
-              <p class="card-subtitle">Merkez depo, atölye laboratuvarı ve saha servis araçlarındaki çoklu parça envanteri</p>
-            </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button class="btn btn-primary btn-sm" id="btn-open-stock-modal">➕ Yeni Parça / Stok Girişi</button>
-              <button class="btn btn-outline btn-sm" id="btn-open-bulk-modal">📥 Excel / CSV Yükle</button>
-              <button class="btn btn-outline btn-sm" id="btn-transfer-part">🔄 Parça Transfer Et</button>
-              <button class="btn btn-outline btn-sm" id="btn-open-category-modal" title="Özel parça kategorilerini yönet veya yeni kategori tanımla">🏷️ Kategori Yönetimi</button>
-            </div>
+      </div>
+
+      <!-- Alt Bölüm: Periyodik Bakım ve Garanti Radarı -->
+      <div class="content-card mt-6">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Periyodik Bakım Sözleşmeleri & Garanti Takibi</h2>
+            <p class="card-subtitle">Zamanı gelen bakım periyotları ve fabrika/onarım garantisi alarmları</p>
           </div>
-
-          <!-- Canlı Envanter Özet Metrik Şeridi (KPI Bar) -->
-          <div class="stock-kpi-bar" id="stock-kpi-bar">
-            <div class="stock-kpi-item">
-              <span class="stock-kpi-label">Toplam Kalem:</span>
-              <strong class="stock-kpi-val" id="stock-kpi-total-kinds">12 Kalem</strong>
-            </div>
-            <div class="stock-kpi-item">
-              <span class="stock-kpi-label">🏢 Merkez Depo:</span>
-              <strong class="stock-kpi-val text-cyan" id="stock-kpi-central-qty">985 Adet</strong>
-            </div>
-            <div class="stock-kpi-item">
-              <span class="stock-kpi-label">🔬 Merkez Atölye:</span>
-              <strong class="stock-kpi-val text-purple" id="stock-kpi-workshop-qty">220 Adet</strong>
-            </div>
-            <div class="stock-kpi-item">
-              <span class="stock-kpi-label">🚐 Mobil Araçlar:</span>
-              <strong class="stock-kpi-val text-emerald" id="stock-kpi-vehicles-qty">122 Adet</strong>
-            </div>
-            <div class="stock-kpi-item stock-kpi-alert-item" id="stock-kpi-critical-card" title="Kritik seviyedeki parçaları tek tıkla listelemek için tıklayın">
-              <span class="stock-kpi-label">⚠️ Kritik İkmal:</span>
-              <strong class="stock-kpi-val text-rose" id="stock-kpi-critical-count">4 Kalem</strong>
-            </div>
-          </div>
-
-          <!-- Çok Çeşitli Parça İçin Akıllı Arama & Filtreleme Araç Çubuğu -->
-          <div class="stock-filter-toolbar">
-            <div class="stock-search-box">
-              <span class="stock-search-icon">🔍</span>
-              <input type="text" id="stock-search-input" class="stock-search-input" placeholder="Parça adı, kodu veya kategori ile anında ara (örn: Rulman, IGBT, Röle, Vana, Sigorta, 6204)...">
-              <button type="button" class="stock-search-clear" id="btn-clear-stock-search" title="Aramayı Temizle" style="display: none;">&times;</button>
-            </div>
-
-            <div class="stock-quick-actions">
-              <button class="btn btn-sm btn-outline stock-filter-btn" id="btn-filter-critical" data-active="false">
-                <span>⚠️ Kritik / Bitenler</span>
-              </button>
-              <select id="stock-location-view-filter" class="form-select form-select-sm" style="min-width: 180px;">
-                <option value="all">📍 Tüm Lokasyonlar</option>
-                <option value="central">🏢 Yalnızca Merkez Depolar (Depo + Atölye)</option>
-                <option value="workshop">🔬 Yalnızca Merkez Atölye / Lab</option>
-                <option value="vehicles">🚐 Tüm Saha Araçları (Tüm Filo)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Parça Kategorisi Hızlı Seçim Çipleri (Pills) -->
-          <div class="stock-category-pills" id="stock-category-pills">
-            <button class="category-pill active" data-category="all">Tümü (12)</button>
-            <button class="category-pill" data-category="Yarı İletken & Güç">⚡ Güç Elektroniği</button>
-            <button class="category-pill" data-category="Pasif & Trafo">🔋 Pasif & Trafo</button>
-            <button class="category-pill" data-category="Röle & Şalt">🔲 Röle & Şalt</button>
-            <button class="category-pill" data-category="Elektronik & Kart">💾 Elektronik & Kart</button>
-            <button class="category-pill" data-category="Mekanik & Rulman">⚙️ Mekanik & Rulman / Vana</button>
-            <button class="category-pill" data-category="Sensör & Termal">🌡️ Sensör & Termal</button>
-          </div>
-
-          <!-- Lokasyon & Depo Hızlı Seçim Çipleri (Kayan Bant) -->
-          <div class="stock-location-pills" id="stock-location-pills">
-            <!-- JavaScript ile doldurulur: MERKEZ DEPO, MERKEZ ATÖLYE/LAB, ARAÇLAR (Murat, Caner, Levent...) -->
-          </div>
-
-          <div class="stock-table-wrapper">
-            <table class="data-table" id="stock-table">
-              <thead id="stock-thead">
-                <tr>
-                  <th style="min-width: 170px;">Parça Kodu & Tanımı</th>
-                  <th style="min-width: 130px; white-space: nowrap;">Birim Fiyat</th>
-                  <th class="col-central">🏢 MERKEZ DEPO</th>
-                  <th class="col-workshop">🔬 MERKEZ ATÖLYE / LAB</th>
-                  <th class="col-v1">🚐 ARAÇ (34 ABC 101 - MURAT)</th>
-                  <th class="col-v2">🚐 ARAÇ (34 DEF 202 - CANER)</th>
-                  <th style="text-align: right; min-width: 140px;">İşlem / İkmal & Sil</th>
-                </tr>
-              </thead>
-              <tbody id="stock-tbody">
-                <!-- JavaScript ile doldurulur -->
-              </tbody>
-            </table>
-          </div>
-
-          <div class="stock-footer-bar">
-            <div class="stock-footer-info" id="stock-footer-info">
-              Görüntülenen: <strong>12</strong> / 12 Kalem Parça
-            </div>
-            <div class="stock-legend">
-              <span class="legend-item"><span class="indicator safe"></span> Güvenli Stok</span>
-              <span class="legend-item"><span class="indicator warning"></span> Kritik Seviye (&le; 2 adet)</span>
-              <span class="legend-item"><span class="indicator danger"></span> Tükendi (0 adet)</span>
-            </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" id="btn-open-maintenance-modal">➕ Yeni Bakım & Garanti Sözleşmesi</button>
+            <button class="btn btn-secondary btn-sm" id="btn-trigger-all-maintenance">Otomatik Randevu Oluştur</button>
           </div>
         </div>
 
+        <div class="maintenance-grid" id="maintenance-container">
+          <!-- JavaScript ile doldurulur -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 1B. CANLI GPS & FİLO RADARI ==================== -->
+    <section id="gps-view" class="view-panel">
+      <!-- Yönetici & Kontrol Paneli Üst Komuta Çubuğu (Admin Subnav Bar) -->
+      <div class="admin-subnav-bar">
+        <div class="admin-subnav-left">
+          <button type="button" class="admin-subnav-btn " data-tab="admin-view" id="btn-admin-sub-dispatch" onclick="switchToAdminSection('admin-view')">
+            <span class="subnav-icon">📋</span>
+            <span>Sevk Masası & Operasyon</span>
+          </button>
+          <button type="button" class="admin-subnav-btn active" data-tab="gps-view" id="btn-tab-gps" onclick="switchToAdminSection('gps-view')" title="Canlı Saha GPS, Teknisyen Konumları ve Rota Takibi">
+            <span class="subnav-icon">🗺️</span>
+            <span>Canlı GPS & Harita</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="inventory-view" id="btn-tab-inventory" onclick="switchToAdminSection('inventory-view')" title="Merkez Depo, Atölye ve Saha Araç Stokları Yönetimi">
+            <span class="subnav-icon">📦</span>
+            <span>Stok & Araç Depoları</span>
+            <span class="badge" id="subnav-stock-badge">12 Kalem</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="equipment-view" id="btn-tab-equipment" onclick="switchToAdminSection('equipment-view')" title="Cihaz Sicil Kartları ve Dijital Pasaport Yönetimi">
+            <span class="subnav-icon">🏷️</span>
+            <span>Cihaz Sicil & Seri No</span>
+            <span class="badge" id="equipment-count-badge">8 Cihaz</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="reports-view" id="btn-tab-reports" onclick="switchToAdminSection('reports-view')" title="İş Zekası (BI), Personel ve Finans Raporları">
+            <span class="subnav-icon">📈</span>
+            <span>Raporlama & Analitik</span>
+          </button>
+        </div>
+        <div class="admin-subnav-right">
+          <div class="system-status" id="admin-system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
+            <span class="pulse-dot"></span>
+            <span class="status-label">Saha Senkronize</span>
+          </div>
+          <button type="button" class="btn btn-outline btn-xs" onclick="switchToAdminSection('admin-view')"><span>← Sevk Masasına Dön</span></button>
+        </div>
       </div>
 
       <!-- Canlı Saha GPS ve Araç Takip Radarı (YENİ MODÜL) -->
@@ -510,29 +479,154 @@
 
         </div>
       </div>
-
-
-      <!-- Alt Bölüm: Periyodik Bakım ve Garanti Radarı -->
-      <div class="content-card mt-6">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Periyodik Bakım Sözleşmeleri & Garanti Takibi</h2>
-            <p class="card-subtitle">Zamanı gelen bakım periyotları ve fabrika/onarım garantisi alarmları</p>
-          </div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn btn-primary btn-sm" id="btn-open-maintenance-modal">➕ Yeni Bakım & Garanti Sözleşmesi</button>
-            <button class="btn btn-secondary btn-sm" id="btn-trigger-all-maintenance">Otomatik Randevu Oluştur</button>
-          </div>
-        </div>
-
-        <div class="maintenance-grid" id="maintenance-container">
-          <!-- JavaScript ile doldurulur -->
-        </div>
-      </div>
     </section>
 
-    <!-- ==================== 2. TEKNİSYEN SAHA EKRANI ==================== -->
-    <section id="tech-view" class="view-panel">
+    <!-- ==================== 1C. MOBİL ARAÇ STOKLARI & DEPO YÖNETİMİ ==================== -->
+    <section id="inventory-view" class="view-panel">
+      <!-- Yönetici & Kontrol Paneli Üst Komuta Çubuğu (Admin Subnav Bar) -->
+      <div class="admin-subnav-bar">
+        <div class="admin-subnav-left">
+          <button type="button" class="admin-subnav-btn " data-tab="admin-view" id="btn-admin-sub-dispatch" onclick="switchToAdminSection('admin-view')">
+            <span class="subnav-icon">📋</span>
+            <span>Sevk Masası & Operasyon</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="gps-view" id="btn-tab-gps" onclick="switchToAdminSection('gps-view')" title="Canlı Saha GPS, Teknisyen Konumları ve Rota Takibi">
+            <span class="subnav-icon">🗺️</span>
+            <span>Canlı GPS & Harita</span>
+          </button>
+          <button type="button" class="admin-subnav-btn active" data-tab="inventory-view" id="btn-tab-inventory" onclick="switchToAdminSection('inventory-view')" title="Merkez Depo, Atölye ve Saha Araç Stokları Yönetimi">
+            <span class="subnav-icon">📦</span>
+            <span>Stok & Araç Depoları</span>
+            <span class="badge" id="subnav-stock-badge">12 Kalem</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="equipment-view" id="btn-tab-equipment" onclick="switchToAdminSection('equipment-view')" title="Cihaz Sicil Kartları ve Dijital Pasaport Yönetimi">
+            <span class="subnav-icon">🏷️</span>
+            <span>Cihaz Sicil & Seri No</span>
+            <span class="badge" id="equipment-count-badge">8 Cihaz</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="reports-view" id="btn-tab-reports" onclick="switchToAdminSection('reports-view')" title="İş Zekası (BI), Personel ve Finans Raporları">
+            <span class="subnav-icon">📈</span>
+            <span>Raporlama & Analitik</span>
+          </button>
+        </div>
+        <div class="admin-subnav-right">
+          <div class="system-status" id="admin-system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
+            <span class="pulse-dot"></span>
+            <span class="status-label">Saha Senkronize</span>
+          </div>
+          <button type="button" class="btn btn-outline btn-xs" onclick="switchToAdminSection('admin-view')"><span>← Sevk Masasına Dön</span></button>
+        </div>
+      </div>
+
+      <!-- Sağ Kolon: Mobil Araç Deposu ve Parça Takip Matrisi -->
+        <div class="content-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Mobil Araç Stokları, Atölye ve Depo Takibi</h2>
+              <p class="card-subtitle">Merkez depo, atölye laboratuvarı ve saha servis araçlarındaki çoklu parça envanteri</p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-primary btn-sm" id="btn-open-stock-modal">➕ Yeni Parça / Stok Girişi</button>
+              <button class="btn btn-outline btn-sm" id="btn-open-bulk-modal">📥 Excel / CSV Yükle</button>
+              <button class="btn btn-outline btn-sm" id="btn-transfer-part">🔄 Parça Transfer Et</button>
+              <button class="btn btn-outline btn-sm" id="btn-open-category-modal" title="Özel parça kategorilerini yönet veya yeni kategori tanımla">🏷️ Kategori Yönetimi</button>
+            </div>
+          </div>
+
+          <!-- Canlı Envanter Özet Metrik Şeridi (KPI Bar) -->
+          <div class="stock-kpi-bar" id="stock-kpi-bar">
+            <div class="stock-kpi-item">
+              <span class="stock-kpi-label">Toplam Kalem:</span>
+              <strong class="stock-kpi-val" id="stock-kpi-total-kinds">12 Kalem</strong>
+            </div>
+            <div class="stock-kpi-item">
+              <span class="stock-kpi-label">🏢 Merkez Depo:</span>
+              <strong class="stock-kpi-val text-cyan" id="stock-kpi-central-qty">985 Adet</strong>
+            </div>
+            <div class="stock-kpi-item">
+              <span class="stock-kpi-label">🔬 Merkez Atölye:</span>
+              <strong class="stock-kpi-val text-purple" id="stock-kpi-workshop-qty">220 Adet</strong>
+            </div>
+            <div class="stock-kpi-item">
+              <span class="stock-kpi-label">🚐 Mobil Araçlar:</span>
+              <strong class="stock-kpi-val text-emerald" id="stock-kpi-vehicles-qty">122 Adet</strong>
+            </div>
+            <div class="stock-kpi-item stock-kpi-alert-item" id="stock-kpi-critical-card" title="Kritik seviyedeki parçaları tek tıkla listelemek için tıklayın">
+              <span class="stock-kpi-label">⚠️ Kritik İkmal:</span>
+              <strong class="stock-kpi-val text-rose" id="stock-kpi-critical-count">4 Kalem</strong>
+            </div>
+          </div>
+
+          <!-- Çok Çeşitli Parça İçin Akıllı Arama & Filtreleme Araç Çubuğu -->
+          <div class="stock-filter-toolbar">
+            <div class="stock-search-box">
+              <span class="stock-search-icon">🔍</span>
+              <input type="text" id="stock-search-input" class="stock-search-input" placeholder="Parça adı, kodu veya kategori ile anında ara (örn: Rulman, IGBT, Röle, Vana, Sigorta, 6204)...">
+              <button type="button" class="stock-search-clear" id="btn-clear-stock-search" title="Aramayı Temizle" style="display: none;">&times;</button>
+            </div>
+
+            <div class="stock-quick-actions">
+              <button class="btn btn-sm btn-outline stock-filter-btn" id="btn-filter-critical" data-active="false">
+                <span>⚠️ Kritik / Bitenler</span>
+              </button>
+              <select id="stock-location-view-filter" class="form-select form-select-sm" style="min-width: 180px;">
+                <option value="all">📍 Tüm Lokasyonlar</option>
+                <option value="central">🏢 Yalnızca Merkez Depolar (Depo + Atölye)</option>
+                <option value="workshop">🔬 Yalnızca Merkez Atölye / Lab</option>
+                <option value="vehicles">🚐 Tüm Saha Araçları (Tüm Filo)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Parça Kategorisi Hızlı Seçim Çipleri (Pills) -->
+          <div class="stock-category-pills" id="stock-category-pills">
+            <button class="category-pill active" data-category="all">Tümü (12)</button>
+            <button class="category-pill" data-category="Yarı İletken & Güç">⚡ Güç Elektroniği</button>
+            <button class="category-pill" data-category="Pasif & Trafo">🔋 Pasif & Trafo</button>
+            <button class="category-pill" data-category="Röle & Şalt">🔲 Röle & Şalt</button>
+            <button class="category-pill" data-category="Elektronik & Kart">💾 Elektronik & Kart</button>
+            <button class="category-pill" data-category="Mekanik & Rulman">⚙️ Mekanik & Rulman / Vana</button>
+            <button class="category-pill" data-category="Sensör & Termal">🌡️ Sensör & Termal</button>
+          </div>
+
+          <!-- Lokasyon & Depo Hızlı Seçim Çipleri (Kayan Bant) -->
+          <div class="stock-location-pills" id="stock-location-pills">
+            <!-- JavaScript ile doldurulur: MERKEZ DEPO, MERKEZ ATÖLYE/LAB, ARAÇLAR (Murat, Caner, Levent...) -->
+          </div>
+
+          <div class="stock-table-wrapper">
+            <table class="data-table" id="stock-table">
+              <thead id="stock-thead">
+                <tr>
+                  <th style="min-width: 170px;">Parça Kodu & Tanımı</th>
+                  <th style="min-width: 130px; white-space: nowrap;">Birim Fiyat</th>
+                  <th class="col-central">🏢 MERKEZ DEPO</th>
+                  <th class="col-workshop">🔬 MERKEZ ATÖLYE / LAB</th>
+                  <th class="col-v1">🚐 ARAÇ (34 ABC 101 - MURAT)</th>
+                  <th class="col-v2">🚐 ARAÇ (34 DEF 202 - CANER)</th>
+                  <th style="text-align: right; min-width: 140px;">İşlem / İkmal & Sil</th>
+                </tr>
+              </thead>
+              <tbody id="stock-tbody">
+                <!-- JavaScript ile doldurulur -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="stock-footer-bar">
+            <div class="stock-footer-info" id="stock-footer-info">
+              Görüntülenen: <strong>12</strong> / 12 Kalem Parça
+            </div>
+            <div class="stock-legend">
+              <span class="legend-item"><span class="indicator safe"></span> Güvenli Stok</span>
+              <span class="legend-item"><span class="indicator warning"></span> Kritik Seviye (&le; 2 adet)</span>
+              <span class="legend-item"><span class="indicator danger"></span> Tükendi (0 adet)</span>
+            </div>
+          </div>
+        </div>
+    </section>
+
+<section id="tech-view" class="view-panel">
       <!-- Mobil & Tablet Görünüm Sekmesi (Mobil Ekranlarda Görevler ile Tezgâh Arasında Hızlı Geçiş) -->
       <div class="tech-mobile-toggle-bar" id="tech-mobile-toggle-bar">
         <button type="button" class="tech-m-toggle-btn active" id="btn-toggle-m-jobs">
@@ -1167,30 +1261,38 @@
 
     <!-- ==================== 4. RAPORLAMA & İŞ ZEKASI (BI) ==================== -->
     <section id="reports-view" class="view-panel">
-      <!-- Yönetici Gezinim & Komuta Çubuğu -->
+            <!-- Yönetici & Kontrol Paneli Üst Komuta Çubuğu (Admin Subnav Bar) -->
       <div class="admin-subnav-bar">
         <div class="admin-subnav-left">
-          <button type="button" class="admin-subnav-btn" onclick="switchToAdminSection('admin-view')">
+          <button type="button" class="admin-subnav-btn " data-tab="admin-view" id="btn-admin-sub-dispatch" onclick="switchToAdminSection('admin-view')">
             <span class="subnav-icon">📋</span>
             <span>Sevk Masası & Operasyon</span>
           </button>
-          <button type="button" class="admin-subnav-btn" onclick="switchToAdminSection('equipment-view')">
+          <button type="button" class="admin-subnav-btn " data-tab="gps-view" id="btn-tab-gps" onclick="switchToAdminSection('gps-view')" title="Canlı Saha GPS, Teknisyen Konumları ve Rota Takibi">
+            <span class="subnav-icon">🗺️</span>
+            <span>Canlı GPS & Harita</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="inventory-view" id="btn-tab-inventory" onclick="switchToAdminSection('inventory-view')" title="Merkez Depo, Atölye ve Saha Araç Stokları Yönetimi">
+            <span class="subnav-icon">📦</span>
+            <span>Stok & Araç Depoları</span>
+            <span class="badge" id="subnav-stock-badge">12 Kalem</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="equipment-view" id="btn-tab-equipment" onclick="switchToAdminSection('equipment-view')" title="Cihaz Sicil Kartları ve Dijital Pasaport Yönetimi">
             <span class="subnav-icon">🏷️</span>
             <span>Cihaz Sicil & Seri No</span>
+            <span class="badge" id="equipment-count-badge">8 Cihaz</span>
           </button>
-          <button type="button" class="admin-subnav-btn active">
+          <button type="button" class="admin-subnav-btn active" data-tab="reports-view" id="btn-tab-reports" onclick="switchToAdminSection('reports-view')" title="İş Zekası (BI), Personel ve Finans Raporları">
             <span class="subnav-icon">📈</span>
             <span>Raporlama & Analitik</span>
           </button>
         </div>
         <div class="admin-subnav-right">
-          <div class="system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
+          <div class="system-status" id="admin-system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
             <span class="pulse-dot"></span>
             <span class="status-label">Saha Senkronize</span>
           </div>
-          <button type="button" class="btn btn-outline btn-xs" onclick="switchToAdminSection('admin-view')">
-            <span>← Sevk Masasına Dön</span>
-          </button>
+          <button type="button" class="btn btn-outline btn-xs" onclick="switchToAdminSection('admin-view')"><span>← Sevk Masasına Dön</span></button>
         </div>
       </div>
 
@@ -1302,30 +1404,38 @@
 
     <!-- ==================== 5. CİHAZ SİCİL & SERİ NO TAKİP SİSTEMİ (YENİ MODÜL) ==================== -->
     <section id="equipment-view" class="view-panel">
-      <!-- Yönetici Gezinim & Komuta Çubuğu -->
+            <!-- Yönetici & Kontrol Paneli Üst Komuta Çubuğu (Admin Subnav Bar) -->
       <div class="admin-subnav-bar">
         <div class="admin-subnav-left">
-          <button type="button" class="admin-subnav-btn" onclick="switchToAdminSection('admin-view')">
+          <button type="button" class="admin-subnav-btn " data-tab="admin-view" id="btn-admin-sub-dispatch" onclick="switchToAdminSection('admin-view')">
             <span class="subnav-icon">📋</span>
             <span>Sevk Masası & Operasyon</span>
           </button>
-          <button type="button" class="admin-subnav-btn active">
+          <button type="button" class="admin-subnav-btn " data-tab="gps-view" id="btn-tab-gps" onclick="switchToAdminSection('gps-view')" title="Canlı Saha GPS, Teknisyen Konumları ve Rota Takibi">
+            <span class="subnav-icon">🗺️</span>
+            <span>Canlı GPS & Harita</span>
+          </button>
+          <button type="button" class="admin-subnav-btn " data-tab="inventory-view" id="btn-tab-inventory" onclick="switchToAdminSection('inventory-view')" title="Merkez Depo, Atölye ve Saha Araç Stokları Yönetimi">
+            <span class="subnav-icon">📦</span>
+            <span>Stok & Araç Depoları</span>
+            <span class="badge" id="subnav-stock-badge">12 Kalem</span>
+          </button>
+          <button type="button" class="admin-subnav-btn active" data-tab="equipment-view" id="btn-tab-equipment" onclick="switchToAdminSection('equipment-view')" title="Cihaz Sicil Kartları ve Dijital Pasaport Yönetimi">
             <span class="subnav-icon">🏷️</span>
             <span>Cihaz Sicil & Seri No</span>
+            <span class="badge" id="equipment-count-badge">8 Cihaz</span>
           </button>
-          <button type="button" class="admin-subnav-btn" onclick="switchToAdminSection('reports-view')">
+          <button type="button" class="admin-subnav-btn " data-tab="reports-view" id="btn-tab-reports" onclick="switchToAdminSection('reports-view')" title="İş Zekası (BI), Personel ve Finans Raporları">
             <span class="subnav-icon">📈</span>
             <span>Raporlama & Analitik</span>
           </button>
         </div>
         <div class="admin-subnav-right">
-          <div class="system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
+          <div class="system-status" id="admin-system-status" title="Saha Ekipleri ve Canlı GPS Bağlantısı Aktif">
             <span class="pulse-dot"></span>
             <span class="status-label">Saha Senkronize</span>
           </div>
-          <button type="button" class="btn btn-outline btn-xs" onclick="switchToAdminSection('admin-view')">
-            <span>← Sevk Masasına Dön</span>
-          </button>
+          <button type="button" class="btn btn-outline btn-xs" onclick="switchToAdminSection('admin-view')"><span>← Sevk Masasına Dön</span></button>
         </div>
       </div>
 
@@ -4880,7 +4990,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261104_1710"></script>
+  <script src="app.js?v=20261104_1755"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">

@@ -524,7 +524,7 @@ body {
 
 .admin-grid-layout {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
   width: 100%;
   min-width: 0;
@@ -7488,4 +7488,40 @@ body {
   background: rgba(56, 189, 248, 0.2);
   color: #38bdf8;
   font-weight: 700;
+}
+
+/* ==================== Modüler Yönetici Sekmeleri & Odak Düzeni ==================== */
+#gps-view, #inventory-view {
+  width: 100%;
+  min-width: 0;
+}
+
+#gps-view .gps-tracking-panel {
+  margin-top: 0 !important;
+}
+
+#inventory-view .content-card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#inventory-view .stock-table-wrapper {
+  max-height: 640px;
+  overflow-y: auto;
+}
+
+.dispatch-column, .staff-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kpi-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }

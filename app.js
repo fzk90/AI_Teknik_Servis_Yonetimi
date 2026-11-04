@@ -709,7 +709,7 @@ function switchToAdminSection(targetId) {
   const subnavBtns = document.querySelectorAll('.admin-subnav-btn');
   subnavBtns.forEach(sb => {
     const sbTarget = sb.getAttribute('data-tab');
-    if (sbTarget === targetId || (targetId === 'admin-view' && sb.id === 'btn-admin-sub-dispatch')) {
+    if (sbTarget === targetId || (targetId === 'admin-view' && (sbTarget === 'admin-view' || sb.id === 'btn-admin-sub-dispatch'))) {
       sb.classList.add('active');
     } else {
       sb.classList.remove('active');
@@ -722,6 +722,26 @@ function switchToAdminSection(targetId) {
     if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     updateFleetKPI();
     updateActiveOrdersKPI();
+    if (typeof renderStaffList === 'function') renderStaffList();
+  } else if (targetId === 'gps-view') {
+    if (typeof populateMapTechDropdown === 'function') populateMapTechDropdown();
+    if (typeof initLeafletMap === 'function') {
+      try { initLeafletMap(); } catch (_) {}
+    }
+    if (typeof leafletMapState !== 'undefined' && leafletMapState && leafletMapState.map) {
+      setTimeout(() => {
+        try { leafletMapState.map.invalidateSize(); } catch (_) {}
+      }, 100);
+    }
+    if (state.staff && state.staff.length > 0 && typeof selectMapTech === 'function') {
+      const activeTech = state.staff.find(s => s.id == (state.activeTechId || 1)) || state.staff[0];
+      selectMapTech(activeTech.id);
+    }
+  } else if (targetId === 'inventory-view') {
+    if (typeof renderStockTable === 'function') renderStockTable();
+    if (typeof renderStockCategoryPills === 'function') renderStockCategoryPills();
+    if (typeof renderStockLocationPills === 'function') renderStockLocationPills();
+    if (typeof updateStockLocationFilterDropdown === 'function') updateStockLocationFilterDropdown();
   } else if (targetId === 'reports-view') {
     updateReportStaffDropdown();
     if (typeof initCustomSelect === 'function') {
@@ -736,6 +756,8 @@ function switchToAdminSection(targetId) {
 
   const titles = {
     'admin-view': 'Sevk Masası & Operasyon',
+    'gps-view': 'Canlı GPS & Filo Haritası',
+    'inventory-view': 'Stok & Araç Depoları',
     'reports-view': 'Raporlama & Analitik',
     'equipment-view': 'Cihaz Sicil & Seri No'
   };
