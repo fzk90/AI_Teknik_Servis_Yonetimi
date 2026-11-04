@@ -659,6 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStockMovementsFromLocalStorage();
   initTabs();
   loadCustomCategories();
+  loadMaintenanceFromLocalStorage();
   loadStockFromLocalStorage();
   loadStaffFromLocalStorage();
   loadVehiclesFromLocalStorage();
@@ -696,6 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initStockCurrencyConverter();
   fetchTCMBExchangeRates();
   renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   updateFleetKPI();
   updateActiveOrdersKPI();
   const initialOrder = (state.workOrders && state.workOrders.length > 0) ? state.workOrders[0] : null;
@@ -752,6 +754,7 @@ function initTabs() {
         renderTechJobs();
       } else if (targetId === 'admin-view') {
         renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
         if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
         updateFleetKPI();
         updateActiveOrdersKPI();
@@ -806,6 +809,7 @@ function switchToAdminSection(targetId) {
   state.activeTab = targetId;
   if (targetId === 'admin-view') {
     renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     updateFleetKPI();
     updateActiveOrdersKPI();
@@ -1444,6 +1448,7 @@ function renderIncomingCalls() {
     trayActiveBtn.onclick = () => {
       state.dispatchTray = 'active';
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     };
   }
@@ -1451,6 +1456,7 @@ function renderIncomingCalls() {
     trayOnHoldBtn.onclick = () => {
       state.dispatchTray = 'onhold';
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     };
   }
@@ -1458,6 +1464,7 @@ function renderIncomingCalls() {
     trayCompletedBtn.onclick = () => {
       state.dispatchTray = 'completed';
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     };
   }
@@ -2262,6 +2269,7 @@ function initAccountingReceiptActions() {
       showToast(`💾 #${code} tahsilatı (${method}) başarıyla muhasebe sistemine işlendi ve kapatıldı!`);
       if (modal) modal.style.display = 'none';
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     });
   }
 }
@@ -2287,10 +2295,23 @@ function updateDispatchBanner(order, assignedTech) {
       order = (state.workOrders || []).find(o => !isCompletedOrder(o) && !isOnHoldOrder(o) && !o.assigned_tech)
            || (state.workOrders || []).find(o => !isCompletedOrder(o) && !isOnHoldOrder(o));
     }
-    if (!order) {
-      order = (state.workOrders || []).filter(o => isCompletedOrder(o)).slice(-1)[0]
-           || (state.workOrders && state.workOrders[0]) || null;
-    }
+  }
+
+  // Eğer hiçbir aktif iş emri veya çağrı yoksa, temiz boş durum göster
+  if (!order) {
+    banner.innerHTML = `
+      <div style="text-align: center; padding: 24px 16px; color: var(--text-dim); background: rgba(255,255,255,0.015); border: 1px dashed var(--border-color); border-radius: 8px;">
+        <div style="font-size: 1.8rem; margin-bottom: 6px;">📞</div>
+        <strong style="color: var(--text-main); font-size: 0.95rem;">Şu Anda Bekleyen Servis Çağrısı Bulunmuyor</strong>
+        <p style="margin: 4px 0 12px; font-size: 0.8rem; color: var(--text-muted);">
+          Yeni bir müşteri arızası veya servis talebi geldiğinde yukarıdaki <strong>"+ Yeni Müşteri Çağrısı"</strong> butonundan iş emri açabilirsiniz.
+        </p>
+        <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('btn-open-intake-modal')?.click()">
+          <span>➕ Yeni Çağrı & İş Emri Girişi</span>
+        </button>
+      </div>
+    `;
+    return;
   }
 
   if (order && !assignedTech) {
@@ -3046,11 +3067,50 @@ function initStockFilterControls() {
   };
 }
 
+function loadMaintenanceFromLocalStorage() {
+  const appMode = localStorage.getItem('servisai_app_mode');
+  try {
+    const saved = localStorage.getItem('servisai_maintenance');
+    if (saved) {
+      state.maintenance = JSON.parse(saved);
+    } else if (appMode === 'clean') {
+      state.maintenance = [];
+    }
+  } catch (e) {
+    if (appMode === 'clean') state.maintenance = [];
+  }
+}
+
+function saveMaintenanceToLocalStorage() {
+  try {
+    localStorage.setItem('servisai_maintenance', JSON.stringify(state.maintenance || []));
+  } catch (e) {}
+}
+
 function renderMaintenance() {
   const container = document.getElementById('maintenance-container');
+  const kpiCount = document.getElementById('kpi-maintenance-count');
+  const maintList = state.maintenance || [];
+
+  if (kpiCount) {
+    kpiCount.textContent = `${maintList.length} Cihaz`;
+  }
   if (!container) return;
 
-  container.innerHTML = state.maintenance.map((m, idx) => `
+  if (maintList.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 36px 16px; background: rgba(255,255,255,0.015); border: 1px dashed var(--border-color); border-radius: 8px; color: var(--text-dim);">
+        <div style="font-size: 2rem; margin-bottom: 8px;">🛡️</div>
+        <strong style="color: var(--text-main); font-size: 0.95rem;">Henüz Kayıtlı Periyodik Bakım veya Garanti Sözleşmesi Bulunmuyor</strong>
+        <p style="margin: 6px 0 12px; font-size: 0.8rem; color: var(--text-muted);">
+          Yukarıdaki <strong>"➕ Yeni Bakım & Garanti Sözleşmesi"</strong> butonuna basarak müşteri cihazlarının periyodik bakım takvimini ekleyebilirsiniz.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = maintList.map((m, idx) => `
     <div class="maintenance-card">
       <div class="maintenance-header">
         <div>
@@ -3283,6 +3343,7 @@ function initAdminActions() {
           // Sevk Masası ve Çağrı Listesini Güncelle
           updateDispatchBanner(newOrder, null);
           renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
           renderTechJobs();
 
           // Modalı Kapat & Bildirim Göster
@@ -7155,6 +7216,8 @@ function startCleanSlateService() {
   state.vehicles = []; // Boş araç filosu
   state.stock = []; // Boş yedek parça envanteri
   state.serviceKnowledgeBase = []; // AI kütüphanesini sıfırla - gerçek çözümlerle sıfırdan öğrensin
+  state.maintenance = []; // Periyodik bakım sözleşmelerini sıfırla
+  state.equipmentRegistry = []; // Cihaz sicil kayıtlarını sıfırla
 
   saveWorkOrdersToLocalStorage();
   saveStaffToLocalStorage();
@@ -7162,6 +7225,8 @@ function startCleanSlateService() {
   if (typeof saveStockToLocalStorage === 'function') saveStockToLocalStorage();
   saveServiceKnowledgeBaseToLocalStorage();
   saveTechnicianExpensesToLocalStorage();
+  if (typeof saveMaintenanceToLocalStorage === 'function') saveMaintenanceToLocalStorage();
+  if (typeof saveEquipmentRegistryToLocalStorage === 'function') saveEquipmentRegistryToLocalStorage();
 
   try {
     localStorage.setItem('servisai_staff_jobs', JSON.stringify({}));
@@ -7203,6 +7268,7 @@ function startCleanSlateService() {
   if (welcomeModal) welcomeModal.style.display = 'none';
 
   renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   renderStaffList();
   renderSettingsStaff();
   renderStockTable();
@@ -7214,6 +7280,10 @@ function startCleanSlateService() {
   populateLoginTechDropdown();
   updateFleetKPI();
   updateActiveOrdersKPI();
+  renderMaintenance();
+  if (typeof updateEquipmentBadge === 'function') updateEquipmentBadge();
+  if (typeof renderEquipmentRegistry === 'function') renderEquipmentRegistry();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
 
   if (typeof loadCompanyProfileToSettingsForm === 'function') {
     loadCompanyProfileToSettingsForm();
@@ -8177,6 +8247,7 @@ function initTechActions() {
       updateActiveOrdersKPI();
       updateDispatchBanner();
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       renderStaffList();
       renderTechJobs();
       showToast(`🎉 İş Emri #${code} durumu "${newStatus}" olarak kaydedildi ve Yönetici Kontrol Paneline yansıtıldı!`, "success");
@@ -8382,6 +8453,7 @@ function initTechActions() {
       updateTechJourneyUI(state.activeOrder);
       renderTechJobs();
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
 
       try {
         await fetch(`${API_BASE_URL}/api/work-orders/${code}/status`, {
@@ -8484,6 +8556,7 @@ function initTechActions() {
       updateTechJourneyUI(state.activeOrder);
       renderTechJobs();
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
 
       try {
         await fetch(`${API_BASE_URL}/api/work-orders/${code}/status`, {
@@ -8584,6 +8657,7 @@ function initTechActions() {
       updateTechJourneyUI(state.activeOrder);
       renderTechJobs();
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       if (typeof updateDispatchBanner === 'function') updateDispatchBanner(matchingOrder, curTech);
       updateActiveOrdersKPI();
 
@@ -8611,7 +8685,7 @@ function initTechActions() {
 }
 
 // ==================== 3. Customer Portal Functions ====================
-let currentSearchedCode = "SRV-2026-104";
+let currentSearchedCode = "";
 
 function initCustomerActions() {
   const btnApprove = document.getElementById('btn-cust-approve');
@@ -8682,6 +8756,7 @@ function initCustomerActions() {
 
       // 7. Yönetici & Kontrol Paneli Görünümlerini Anında Yenile
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       renderTechJobs();
       updateActiveOrdersKPI();
       if (typeof updateFleetKPI === 'function') updateFleetKPI();
@@ -8706,7 +8781,10 @@ function initCustomerActions() {
     btnSearch.addEventListener('click', async () => {
       const inputEl = document.getElementById('cust-search-input');
       const query = inputEl ? inputEl.value.trim() : '';
-      if (!query) return;
+      if (!query) {
+        showToast("Lütfen bir Servis Takip Kodu (örn: SRV-2026-104) giriniz.", "warning");
+        return;
+      }
 
       btnSearch.disabled = true;
       btnSearch.innerHTML = `<span>Aranıyor...</span>`;
@@ -12444,6 +12522,7 @@ function initStaffManagement() {
       closeExitModal();
       renderStaffList();
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       updateFleetKPI();
       if (typeof populateMapTechDropdown === 'function') {
         populateMapTechDropdown();
@@ -14452,6 +14531,7 @@ function submitPartHoldForm(e) {
   // 3. UI Güncellemeleri
   updateTechJourneyUI(currentOrder);
   renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   renderStaffList();
   renderTechJobs();
 
@@ -14489,6 +14569,7 @@ function resumeOrderFromHold(orderCode) {
   state.dispatchTray = 'active';
 
   renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   renderStaffList();
   renderTechJobs();
   if (state.activeOrder && (state.activeOrder.tracking_code || state.activeOrder.code) === code) {
@@ -14535,6 +14616,7 @@ function checkStockArrivalForWaitingOrders(itemCode, itemName) {
   if (matchedAny) {
     saveWorkOrdersToLocalStorage();
     renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   }
 }
 window.checkStockArrivalForWaitingOrders = checkStockArrivalForWaitingOrders;
@@ -14721,6 +14803,7 @@ function submitSendToWorkshopForm(e) {
   // 4. UI Güncellemeleri
   updateTechJourneyUI(currentOrder);
   renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   renderStaffList();
   renderTechJobs();
   updateActiveOrdersKPI();
@@ -14832,6 +14915,7 @@ function initSendToWorkshopModal() {
       saveWorkOrdersToLocalStorage();
       updateTechJourneyUI(currentOrder);
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       renderTechJobs();
       updateActiveOrdersKPI();
       if (typeof updateDispatchBanner === 'function') {
@@ -14868,6 +14952,7 @@ function initSendToWorkshopModal() {
       saveWorkOrdersToLocalStorage();
       updateTechJourneyUI(state.activeOrder);
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       renderTechJobs();
       showToast(`🔬 #${code} cihazı merkez atölye tezgâhında inceleme ve teste alındı!`, 'success');
     });
@@ -15152,6 +15237,7 @@ function initDispatchAssignModal() {
         closeModal();
         if (typeof renderStaffList === 'function') renderStaffList();
         if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
         if (typeof renderTechJobs === 'function') renderTechJobs();
         if (typeof updateActiveOrdersKPI === 'function') updateActiveOrdersKPI();
         if (typeof selectMapTech === 'function') {
@@ -15942,17 +16028,21 @@ function getDefaultEquipmentRegistry() {
 }
 
 function initEquipmentRegistry() {
+  const appMode = localStorage.getItem('servisai_app_mode');
   try {
     const saved = localStorage.getItem('servisai_equipment_registry');
     if (saved) {
       state.equipmentRegistry = JSON.parse(saved);
+    } else if (appMode === 'clean') {
+      state.equipmentRegistry = [];
+      saveEquipmentRegistryToLocalStorage();
     } else {
       state.equipmentRegistry = getDefaultEquipmentRegistry();
       saveEquipmentRegistryToLocalStorage();
     }
   } catch (err) {
     console.warn("Equipment registry load error:", err);
-    state.equipmentRegistry = getDefaultEquipmentRegistry();
+    state.equipmentRegistry = (appMode === 'clean') ? [] : getDefaultEquipmentRegistry();
   }
   updateEquipmentBadge();
 }
@@ -16917,6 +17007,7 @@ function handleIncomingWebOrder(order) {
     saveWorkOrdersToLocalStorage();
     consolidateAllWorkOrders();
     renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     updateActiveOrdersKPI();
     showToast(`🌐 Yeni Müşteri Web Kaydı Düştü: #${order.id || order.tracking_code} - ${order.customer_name}`, 'success');
 
@@ -17266,6 +17357,7 @@ function transmitInvoiceToIntegratorApi() {
       saveWorkOrdersToLocalStorage();
       consolidateAllWorkOrders();
       renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     }
 
     // Muhasebe Fişi modalındaki statüyü de güncelle
@@ -17811,6 +17903,7 @@ function initSanalPosEngine() {
       const rcptModal = document.getElementById('accounting-receipt-modal');
       if (rcptModal) rcptModal.style.display = 'none';
       if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     });
   }
 
@@ -19250,6 +19343,7 @@ async function promptAddSerialNumber(code) {
     try { updateDispatchBanner(order, null); } catch (e) {}
   }
   if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   if (typeof renderTechJobs === 'function') renderTechJobs();
   showToast(`✅ #${code} cihazı artık ${sn} seri numarasıyla izleniyor.`);
 }
