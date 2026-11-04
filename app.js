@@ -6830,16 +6830,16 @@ function loadCompanyProfileToSettingsForm() {
   setEl('setting-company-address', p.billingAddress || '');
   setEl('setting-company-city', p.city || '');
   setEl('setting-company-district', p.district || '');
-  setEl('setting-workshop-address', p.workshopAddress || 'Alaaddinbey Mah. 632. Sok. Otomasyon Center No: 8 Nilüfer / BURSA');
-  setEl('setting-workshop-unit', p.workshopUnit || p.mainWorkshop || 'Elektronik Kart & BGA Rework Laboratuvarı');
-  setEl('setting-warehouse-address', p.warehouseAddress || 'Demirtaş Organize Sanayi Bölgesi (DOSAB) Lojistik Depo No: 14 Osmangazi / BURSA');
-  setEl('setting-warehouse-contact', p.warehouseContact || 'Hasan Usta (Dahili: 104) • depo@kocasteknik.com');
+  setEl('setting-workshop-address', p.workshopAddress || '');
+  setEl('setting-workshop-unit', p.workshopUnit || p.mainWorkshop || '');
+  setEl('setting-warehouse-address', p.warehouseAddress || '');
+  setEl('setting-warehouse-contact', p.warehouseContact || '');
   setEl('setting-company-phone', p.phone || '');
   setEl('setting-company-gsm', p.gsm || p.phone || '');
   setEl('setting-company-email', p.email || '');
   setEl('setting-company-web', p.website || '');
-  setEl('setting-company-iban', p.iban || 'TR92 0006 2000 0001 2948 1029 48 - Garanti BBVA (TL Hesabı)');
-  setEl('setting-company-manager-name', p.managerName || (state.currentUser ? state.currentUser.name : 'Zafer Koçaş'));
+  setEl('setting-company-iban', p.iban || '');
+  setEl('setting-company-manager-name', p.managerName || (state.currentUser ? state.currentUser.name : 'Servis Yöneticisi'));
   setEl('setting-company-manager-title', p.managerTitle || 'Firma Sahibi / Yönetici');
   setEl('setting-company-manager-pin', p.managerPin || '1234');
 }
@@ -7093,49 +7093,77 @@ function saveIntegrationsSettings() {
 function startCleanSlateService() {
   localStorage.setItem('servisai_app_mode', 'clean');
 
+  const curShort = (typeof getActiveCompanyName === 'function' ? getActiveCompanyName() : '').trim();
+  const compShort = (curShort && !curShort.includes('Koçaş') && curShort !== 'Teknik Servis') ? curShort : 'Altostek';
+  const compLegal = (typeof getActiveCompanyLegalName === 'function' ? getActiveCompanyLegalName() : '').trim() || `${compShort} Teknik Servis San. ve Tic. A.Ş.`;
+
   const cleanProfile = {
-    name: "Yeni Teknik Servis",
-    legalName: "Yeni Teknik Servis Ltd. Şti.",
-    industry: "Endüstriyel Elektronik & Otomasyon",
-    sectorKey: "endustriyel_otomasyon",
+    name: compShort,
+    legalName: compLegal,
+    slogan: "",
+    industry: "",
+    sectorKey: "",
     taxOffice: "",
     taxId: "",
     billingAddress: "",
-    city: "İstanbul",
+    city: "",
+    district: "",
     phone: "",
+    gsm: "",
     email: "",
     website: "",
     tradeRegNo: "",
     mersisNo: "",
+    iban: "",
     efaturaScenario: "Ticari Fatura (UBL-TR 2.1)",
     managerName: "Servis Yöneticisi",
-    managerTitle: "Firma Sahibi / Yetkili",
+    managerTitle: "Firma Sahibi / Yönetici",
     managerPhone: "",
-    managerEmail: "yonetici@servis.com",
+    managerEmail: "",
     managerPin: "1234",
     mainWarehouse: "Merkez Depo",
-    mainWorkshop: "Merkez Atölye"
+    mainWorkshop: "Merkez Atölye",
+    workshopAddress: "",
+    workshopUnit: "",
+    warehouseAddress: "",
+    warehouseContact: ""
   };
 
   state.companyProfile = cleanProfile;
   saveStoredCompanyProfile(cleanProfile);
 
+  // Tüm operasyonel kayıtları ve eski demo test verilerini sıfırla
   state.workOrders = [];
   state.staffJobs = {};
   state.activeOrder = null;
   state.technicianExpenses = [];
   state.stockMovements = [];
-  state.staff = []; // Boş başla
-  state.vehicles = []; // Boş filo
-  state.serviceKnowledgeBase = []; // AI kütüphanesini sıfırla - firma kendi çözümleriyle doldursun
+  state.staff = []; // Boş personel kadrosu (kullanıcı kendi ekibini sıfırdan ekler)
+  state.vehicles = []; // Boş araç filosu
+  state.stock = []; // Boş yedek parça envanteri
+  state.serviceKnowledgeBase = []; // AI kütüphanesini sıfırla - gerçek çözümlerle sıfırdan öğrensin
+
+  saveWorkOrdersToLocalStorage();
+  saveStaffToLocalStorage();
+  saveVehiclesToLocalStorage();
+  if (typeof saveStockToLocalStorage === 'function') saveStockToLocalStorage();
   saveServiceKnowledgeBaseToLocalStorage();
+  saveTechnicianExpensesToLocalStorage();
+
+  try {
+    localStorage.setItem('servisai_staff_jobs', JSON.stringify({}));
+    localStorage.setItem('servisai_stock', JSON.stringify([]));
+    localStorage.setItem('servisai_stock_movements', JSON.stringify([]));
+    localStorage.setItem('servisai_knowledge_base', JSON.stringify([]));
+    localStorage.removeItem('servisai_staff_terminated');
+  } catch (e) {}
 
   const cleanManager = {
     id: 1,
     name: "Servis Yöneticisi",
-    title: "Firma Sahibi / Yetkili",
-    email: "yonetici@servis.com",
-    phone: "0530 000 00 00",
+    title: "Firma Sahibi / Yönetici",
+    email: "yonetici@altostek.com",
+    phone: "",
     role: "Süper Yönetici (Tüm Yetkiler)",
     status: "Aktif",
     avatar: "SY"
@@ -7145,17 +7173,12 @@ function startCleanSlateService() {
   state.currentUser = {
     id: 1,
     name: "Servis Yöneticisi",
-    email: "yonetici@servis.com",
+    email: "yonetici@altostek.com",
     role: "Yönetici",
     avatar: "SY"
   };
 
-  saveWorkOrdersToLocalStorage();
-  saveStaffToLocalStorage();
-  saveVehiclesToLocalStorage();
-  saveTechnicianExpensesToLocalStorage();
   try {
-    localStorage.setItem('servisai_staff_jobs', JSON.stringify({}));
     localStorage.setItem('servisai_auth_user', JSON.stringify(state.currentUser));
     localStorage.setItem('servisai_managers', JSON.stringify(state.managers));
   } catch (e) {}
@@ -7169,6 +7192,7 @@ function startCleanSlateService() {
   renderIncomingCalls();
   renderStaffList();
   renderSettingsStaff();
+  renderStockTable();
   renderFleetCards();
   renderManagerCards();
   renderTechJobs();
@@ -7178,8 +7202,11 @@ function startCleanSlateService() {
   updateFleetKPI();
   updateActiveOrdersKPI();
 
-  openOnboardingWizard(1);
-  showToast("🚀 Yeni servisiniz için sıfırdan kurulum modu başlatıldı! Bilgilerinizi 3 adımlı sihirbazdan doldurabilirsiniz.", "success");
+  if (typeof loadCompanyProfileToSettingsForm === 'function') {
+    loadCompanyProfileToSettingsForm();
+  }
+
+  showToast("🧹 Tüm demo verileri temizlendi! Sıfırdan temiz servis kurulumu hazır. Kendi personelinizi ve bilgilerinizi girebilirsiniz.", "success");
 }
 window.startCleanSlateService = startCleanSlateService;
 
@@ -7515,13 +7542,20 @@ function initSettingsActions() {
   }
 
   // Sıfırdan Başla Butonu (Clean Slate)
+  const confirmCleanSlate = () => {
+    if (confirm("⚠️ DİKKAT: Tüm örnek demo çağrıları, sahte yedek parçalar, AI arıza kütüphanesi ve eski test personelleri (Levent İmekçi vb.) hafızadan tamamen silinecektir.\n\nSistem sıfırdan kendi firmanızı (Bülent Ersoy, Zeki Müren ve gerçek stoğunuzu) kurabileceğiniz tertemiz bir sayfaya (Clean Slate) geçirilecek.\n\nDevam etmek istiyor musunuz?")) {
+      closeSettingsModal();
+      startCleanSlateService();
+    }
+  };
+
   if (btnCleanSlate) {
-    btnCleanSlate.addEventListener('click', () => {
-      if (confirm("🗑️ Tüm demo servis kayıtları temizlenecek ve sistem sıfırdan kendi firmanızı kurabileceğiniz boş moda geçecektir. Devam etmek istiyor musunuz?")) {
-        closeSettingsModal();
-        startCleanSlateService();
-      }
-    });
+    btnCleanSlate.addEventListener('click', confirmCleanSlate);
+  }
+
+  const btnBannerClean = document.getElementById('btn-banner-clean-slate');
+  if (btnBannerClean) {
+    btnBannerClean.addEventListener('click', confirmCleanSlate);
   }
 
   // Demo Yükle Butonu
