@@ -626,19 +626,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const rawT = localStorage.getItem('servisai_saas_tenants');
     if (rawT) {
-      const tenants = JSON.parse(rawT);
-      let changed = false;
+      let tenants = JSON.parse(rawT);
       if (Array.isArray(tenants)) {
-        tenants.forEach(t => {
-          if (t.id === 1 && (t.shortName?.includes('Koçaş') || t.name?.includes('Koçaş'))) {
-            t.shortName = 'Altostek';
-            t.name = 'Altostek Endüstriyel Elektronik & Otomasyon A.Ş.';
-            changed = true;
-          }
-        });
-        if (changed) {
-          localStorage.setItem('servisai_saas_tenants', JSON.stringify(tenants));
+        const DEMO_TENANT_NAMES = new Set([
+          'Ege İklimlendirme', 
+          'Marmara CNC Robotik', 
+          'Ege İklimlendirme & Soğutma Sistemleri Ltd.', 
+          'Marmara CNC & Robotik Mekatronik Hizmetleri'
+        ]);
+        tenants = tenants.filter(t => t && !DEMO_TENANT_NAMES.has(t.shortName) && !DEMO_TENANT_NAMES.has(t.name) && t.id !== 2 && t.id !== 3);
+        if (tenants.length === 0) {
+          tenants = [{
+            id: 1,
+            name: 'Altostek Teknik Servis Hizmetleri',
+            shortName: 'Altostek',
+            industry: 'Bilgisayar & Elektronik',
+            plan: 'Merkez Şube',
+            vkn: '5760129841',
+            city: 'Merkez',
+            isActive: true
+          }];
+        } else if (tenants[0].id === 1 && (tenants[0].shortName?.includes('Koçaş') || tenants[0].name?.includes('Koçaş'))) {
+          tenants[0].shortName = 'Altostek';
+          tenants[0].name = 'Altostek Teknik Servis Hizmetleri';
         }
+        localStorage.setItem('servisai_saas_tenants', JSON.stringify(tenants));
       }
     }
   } catch (_) {}
@@ -889,7 +901,13 @@ function renderStaffList() {
     updateReportStaffDropdown();
   }
 
-  const fieldStaff = (state.staff || []).filter(person => person.role !== 'Yönetici' && person.status !== 'Ayrıldı');
+  const DEMO_STAFF_NAMES = new Set(['Murat Aydın', 'Caner Güler', 'Selin Kaya', 'Emre Yıldız', 'Serdar Yılmaz', 'Levent İmekci', 'Levent İmekçi']);
+  const appMode = localStorage.getItem('servisai_app_mode');
+  const fieldStaff = (state.staff || []).filter(person => {
+    if (person.role === 'Yönetici' || person.status === 'Ayrıldı') return false;
+    if (appMode === 'clean' && DEMO_STAFF_NAMES.has((person.name || '').trim())) return false;
+    return true;
+  });
   if (fieldStaff.length === 0) {
     container.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 32px 16px; background: rgba(255,255,255,0.015); border: 1px dashed var(--border-color); border-radius: 8px; color: var(--text-dim);">
@@ -1437,7 +1455,8 @@ function renderIncomingCalls() {
   if (trayOnHoldCount) trayOnHoldCount.textContent = onHoldOrders.length;
   if (trayCompletedCount) trayCompletedCount.textContent = completedOrders.length;
 
-  if (countBadge) {
+  const countBadges = document.querySelectorAll('#incoming-calls-count, [id="incoming-calls-count"]');
+  countBadges.forEach(countBadge => {
     if (state.dispatchTray === 'completed') {
       countBadge.className = 'badge badge-success';
       countBadge.textContent = `${completedOrders.length} Biten İş`;
@@ -1453,7 +1472,7 @@ function renderIncomingCalls() {
         countBadge.textContent = `Tüm Çağrılar Sevk Edildi`;
       }
     }
-  }
+  });
 
   // Tray sekmeleri aktiflik durumu ve tıklama bağlamaları
   const allTrayBtns = [trayActiveBtn, trayOnHoldBtn, trayCompletedBtn].filter(Boolean);
@@ -2831,6 +2850,7 @@ function renderStockTable() {
   if (elCriticalCount) elCriticalCount.textContent = `${criticalCount} Kalem`;
 
   if (typeof updateStockBadges === 'function') updateStockBadges();
+  if (typeof updateCriticalStockKPI === 'function') updateCriticalStockKPI();
 
   if (elFooterInfo) {
     elFooterInfo.innerHTML = `Görüntülenen: <strong>${filtered.length}</strong> / ${totalKinds} Kalem Parça ${filter.category !== 'all' ? `• [${filter.category}]` : ''} ${filter.criticalOnly ? '• <span class="text-rose" style="font-weight: 600;">⚠️ Kritik Filtresi Aktif</span>' : ''}`;
@@ -3005,6 +3025,35 @@ function renderStockTable() {
     });
   });
 }
+
+function updateCriticalStockKPI() {
+  const el = document.getElementById('kpi-critical-stock');
+  const subEl = document.querySelector('#kpi-card-critical-stock .kpi-subtext');
+  if (!el) return;
+  const stock = state.stock || [];
+  const activeVehicles = (typeof getActiveFieldVehicles === 'function') ? getActiveFieldVehicles() : [];
+  let criticalCount = 0;
+  if (stock.length > 0) {
+    criticalCount = stock.filter(s => {
+      let isCrit = ((s.vehicle1 !== undefined && s.vehicle1 > 0 && s.vehicle1 <= 2) ||
+                    (s.vehicle2 !== undefined && s.vehicle2 > 0 && s.vehicle2 <= 2));
+      if (!isCrit && activeVehicles.length > 0) {
+        isCrit = activeVehicles.some(v => {
+          const qty = getItemVehicleStock(s, v);
+          return qty > 0 && qty <= 2;
+        });
+      }
+      return isCrit;
+    }).length;
+  }
+  el.textContent = `${criticalCount} Parça`;
+  if (subEl) {
+    subEl.textContent = criticalCount > 0 
+      ? 'Servis aracında tükenmek üzere (Görüntüle ➔)' 
+      : 'Tüm araç stok seviyeleri normal';
+  }
+}
+window.updateCriticalStockKPI = updateCriticalStockKPI;
 
 // ==================== Çoklu Stok Arama & Kategori Kontrolleri ====================
 function initStockFilterControls() {
@@ -7398,6 +7447,7 @@ function startCleanSlateService() {
   renderMaintenance();
   if (typeof updateEquipmentBadge === 'function') updateEquipmentBadge();
   if (typeof updateStockBadges === 'function') updateStockBadges();
+  if (typeof updateCriticalStockKPI === 'function') updateCriticalStockKPI();
   if (typeof renderEquipmentRegistry === 'function') renderEquipmentRegistry();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
 
@@ -18113,33 +18163,13 @@ function openSanalPosModal(orderCode) {
 const defaultSaasTenants = [
   {
     id: 1,
-    name: "Altostek Endüstriyel Elektronik & Otomasyon A.Ş.",
+    name: "Altostek Teknik Servis Hizmetleri",
     shortName: "Altostek",
-    industry: "Endüstriyel Elektronik, PLC & Sürücü",
-    plan: "Kurumsal SaaS (Limitsiz)",
+    industry: "Bilgisayar, Elektronik & Otomasyon",
+    plan: "Merkez Şube",
     vkn: "5760129841",
-    city: "Bursa / Nilüfer",
+    city: "Merkez",
     isActive: true
-  },
-  {
-    id: 2,
-    name: "Ege İklimlendirme & Soğutma Sistemleri Ltd.",
-    shortName: "Ege İklimlendirme",
-    industry: "Klima, VRF, Chiller & Soğutma",
-    plan: "Profesyonel (10 Teknisyen)",
-    vkn: "3829104921",
-    city: "İzmir / Bornova",
-    isActive: false
-  },
-  {
-    id: 3,
-    name: "Marmara CNC & Robotik Mekatronik Hizmetleri",
-    shortName: "Marmara CNC Robotik",
-    industry: "Talaşlı İmalat, Servo & Robotik",
-    plan: "Kurumsal SaaS (Limitsiz)",
-    vkn: "6648291038",
-    city: "İstanbul / Tuzla",
-    isActive: false
   }
 ];
 
@@ -18174,10 +18204,11 @@ function initMultiTenantSaaSEngine() {
       const nameInput = document.getElementById('new-tenant-name');
       const indInput = document.getElementById('new-tenant-industry');
       const planInput = document.getElementById('new-tenant-plan');
+      const cityInput = document.getElementById('new-tenant-city');
 
       const name = nameInput ? nameInput.value.trim() : '';
       if (!name) {
-        showToast('⚠️ Lütfen firma / işletme adını giriniz.', 'warning');
+        showToast('⚠️ Lütfen şube veya işletme adını giriniz.', 'warning');
         return;
       }
 
@@ -18187,9 +18218,9 @@ function initMultiTenantSaaSEngine() {
         name: name,
         shortName: name.length > 20 ? name.substring(0, 18) + '...' : name,
         industry: indInput ? indInput.value : 'Teknik Servis',
-        plan: planInput ? planInput.value : 'Kurumsal (Sınırsız)',
+        plan: planInput ? planInput.value : 'Bölge Servis Şubesi',
         vkn: Math.floor(1000000000 + Math.random() * 9000000000).toString(),
-        city: 'Türkiye',
+        city: cityInput ? (cityInput.value.trim() || 'Merkez') : 'Merkez',
         isActive: false
       };
 
@@ -18197,29 +18228,53 @@ function initMultiTenantSaaSEngine() {
       saveStoredTenants(tenants);
 
       if (nameInput) nameInput.value = '';
+      if (cityInput) cityInput.value = '';
       renderTenantList();
-      showToast(`🏢 '${name}' firması başarıyla SaaS sistemine kaydedildi!`, 'success');
+      showToast(`🏢 '${name}' şubesi başarıyla sisteme eklendi!`, 'success');
     });
   }
 }
 
 function getStoredTenants() {
+  const compShort = (typeof getActiveCompanyName === 'function' ? getActiveCompanyName() : 'Altostek') || 'Altostek';
+  const compLegal = (typeof getActiveCompanyLegalName === 'function' ? getActiveCompanyLegalName() : `${compShort} Teknik Servis Hizmetleri`) || `${compShort} Teknik Servis Hizmetleri`;
+  const defaultList = [
+    {
+      id: 1,
+      name: compLegal,
+      shortName: compShort,
+      industry: "Bilgisayar & Elektronik Servisi",
+      plan: "Merkez Şube",
+      vkn: "5760129841",
+      city: "Merkez",
+      isActive: true
+    }
+  ];
+
   try {
     const raw = localStorage.getItem('servisai_saas_tenants');
     if (raw) {
-      const list = JSON.parse(raw);
+      let list = JSON.parse(raw);
       if (Array.isArray(list) && list.length > 0) {
-        list.forEach(t => {
-          if (t.id === 1 && (t.shortName?.includes('Koçaş') || t.name?.includes('Koçaş'))) {
-            t.shortName = 'Altostek';
-            t.name = 'Altostek Endüstriyel Elektronik & Otomasyon A.Ş.';
-          }
-        });
+        const DEMO_TENANT_NAMES = new Set([
+          'Ege İklimlendirme', 
+          'Marmara CNC Robotik', 
+          'Ege İklimlendirme & Soğutma Sistemleri Ltd.', 
+          'Marmara CNC & Robotik Mekatronik Hizmetleri'
+        ]);
+        list = list.filter(t => t && !DEMO_TENANT_NAMES.has(t.shortName) && !DEMO_TENANT_NAMES.has(t.name) && t.id !== 2 && t.id !== 3);
+        if (list.length === 0) {
+          list = defaultList;
+        } else if (list[0].id === 1) {
+          list[0].shortName = compShort;
+          list[0].name = compLegal;
+        }
+        localStorage.setItem('servisai_saas_tenants', JSON.stringify(list));
         return list;
       }
     }
   } catch (e) {}
-  return defaultSaasTenants;
+  return defaultList;
 }
 
 function saveStoredTenants(tenants) {
@@ -18241,16 +18296,16 @@ function renderTenantList() {
         <div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <strong style="color: #f8fafc; font-size: 0.92rem;">${escapeHtml(t.name)}</strong>
-            ${t.isActive ? '<span class="badge" style="background: #10b981; color: #fff; font-size: 0.65rem;">Şu An Seçili</span>' : ''}
+            ${t.isActive ? '<span class="badge" style="background: #10b981; color: #fff; font-size: 0.65rem;">Aktif Şube</span>' : ''}
           </div>
           <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 3px;">
-            Sektör: ${escapeHtml(t.industry)} • VKN: ${escapeHtml(t.vkn)} • Paket: ${escapeHtml(t.plan)}
+            Yetki/Rol: ${escapeHtml(t.plan || 'Şube')} • Lokasyon: ${escapeHtml(t.city || 'Merkez')}
           </div>
         </div>
         <div>
           ${t.isActive 
-            ? '<button class="btn btn-xs btn-outline" disabled style="opacity: 0.6; font-size: 0.72rem;">Aktif Şirket</button>'
-            : `<button class="btn btn-xs btn-outline-cyan" onclick="switchSaaSTenant(${t.id})" style="font-size: 0.72rem; padding: 4px 10px;">🏢 Bu Şirkete Geç</button>`
+            ? '<button class="btn btn-xs btn-outline" disabled style="opacity: 0.6; font-size: 0.72rem;">Aktif Şube</button>'
+            : `<button class="btn btn-xs btn-outline-cyan" onclick="switchSaaSTenant(${t.id})" style="font-size: 0.72rem; padding: 4px 10px;">🏢 Bu Şubeye Geç</button>`
           }
         </div>
       </div>
