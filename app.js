@@ -7093,25 +7093,38 @@ function saveIntegrationsSettings() {
 function startCleanSlateService() {
   localStorage.setItem('servisai_app_mode', 'clean');
 
+  // Kullanıcının formda zaten yazmış olduğu şirket ve servis adını koru
+  const inputShort = (document.getElementById('setting-company-short')?.value || '').trim();
+  const inputLegal = (document.getElementById('setting-company-name')?.value || '').trim();
+  const inputSlogan = (document.getElementById('setting-company-slogan')?.value || '').trim();
+  const inputTaxOffice = (document.getElementById('setting-company-tax-office')?.value || '').trim();
+  const inputTaxId = (document.getElementById('setting-company-tax-number')?.value || '').trim();
+  const inputCity = (document.getElementById('setting-company-city')?.value || '').trim();
+  const inputDistrict = (document.getElementById('setting-company-district')?.value || '').trim();
+  const inputPhone = (document.getElementById('setting-company-phone')?.value || '').trim();
+  const inputGsm = (document.getElementById('setting-company-gsm')?.value || '').trim();
+  const inputEmail = (document.getElementById('setting-company-email')?.value || '').trim();
+  const inputWeb = (document.getElementById('setting-company-web')?.value || '').trim();
+
   const curShort = (typeof getActiveCompanyName === 'function' ? getActiveCompanyName() : '').trim();
-  const compShort = (curShort && !curShort.includes('Koçaş') && curShort !== 'Teknik Servis') ? curShort : 'Altostek';
-  const compLegal = (typeof getActiveCompanyLegalName === 'function' ? getActiveCompanyLegalName() : '').trim() || `${compShort} Teknik Servis San. ve Tic. A.Ş.`;
+  const compShort = inputShort || ((curShort && !curShort.includes('Koçaş') && curShort !== 'Teknik Servis') ? curShort : 'Altos');
+  const compLegal = inputLegal || (typeof getActiveCompanyLegalName === 'function' ? getActiveCompanyLegalName() : '').trim() || `${compShort} Teknik Servis Hizmetleri`;
 
   const cleanProfile = {
     name: compShort,
     legalName: compLegal,
-    slogan: "",
-    industry: "",
+    slogan: inputSlogan || "",
+    industry: inputSlogan || "",
     sectorKey: "",
-    taxOffice: "",
-    taxId: "",
+    taxOffice: inputTaxOffice || "",
+    taxId: inputTaxId || "",
     billingAddress: "",
-    city: "",
-    district: "",
-    phone: "",
-    gsm: "",
-    email: "",
-    website: "",
+    city: inputCity || "",
+    district: inputDistrict || "",
+    phone: inputPhone || "",
+    gsm: inputGsm || "",
+    email: inputEmail || "",
+    website: inputWeb || "",
     tradeRegNo: "",
     mersisNo: "",
     iban: "",
