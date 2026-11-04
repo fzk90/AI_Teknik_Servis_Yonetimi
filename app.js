@@ -1840,7 +1840,8 @@ function openServiceReportModal(code) {
   reportPreText.textContent = formalReport;
 
   // Teknisyen ve Müşteri Künyesi Doldurma
-  const techName = order.assigned_tech || order.assignedTech || 'Levent İmekci';
+  const activeTech = (state.staff || []).find(s => s.id == (order.assigned_user_id || state.activeTechId));
+  const techName = order.assigned_tech || order.assignedTech || (activeTech ? activeTech.name : (state.staff && state.staff[0] ? state.staff[0].name : 'Sorumlu Saha Uzmanı'));
   const sigTechEl = document.getElementById('report-sig-tech-name');
   if (sigTechEl) sigTechEl.textContent = techName;
 
@@ -1924,7 +1925,7 @@ function openAccountingReceiptModal(code) {
   // Cihaz ve Teknisyen Bilgileri
   const deviceName = `${order.device_brand || ''} ${order.device_model || ''}`.trim() || order.device || "Schneider Electric ATV630 Endüstriyel Sürücü";
   const serialNo = order.serial_number || order.serialNo || "Belirtilmedi";
-  const techName = order.assigned_tech || (state.staff.find(s => s.id == (order.assigned_user_id || state.activeTechId)) || {}).name || "Levent İmekci";
+  const techName = order.assigned_tech || (state.staff.find(s => s.id == (order.assigned_user_id || state.activeTechId)) || {}).name || (state.staff && state.staff[0] ? state.staff[0].name : "Sorumlu Saha Uzmanı");
   const curTechObj = (state.staff || []).find(s => s.name === techName || s.id == (order.assigned_user_id || state.activeTechId));
   const techPlate = curTechObj ? (curTechObj.vehiclePlate || "34 NK 0023") : "34 NK 0023";
 
@@ -6298,7 +6299,7 @@ function generateOfficialServiceReport(order) {
   
   const currentTechId = state.activeTechId || 2;
   const currentTech = (state.staff || []).find(s => s.id == currentTechId);
-  const techName = currentOrder.assigned_tech || currentOrder.assignedTech || (currentTech ? currentTech.name : "Levent İmekci");
+  const techName = currentOrder.assigned_tech || currentOrder.assignedTech || (currentTech ? currentTech.name : (state.staff && state.staff[0] ? state.staff[0].name : "Sorumlu Saha Uzmanı"));
   const assignedStaff = (state.staff || []).find(s => s.name === techName || (currentOrder.assigned_user_id && s.id === currentOrder.assigned_user_id)) || currentTech;
   const techPlate = currentOrder.assigned_tech_plate || (assignedStaff ? assignedStaff.vehiclePlate : "34 NK 0023") || "34 NK 0023";
 
@@ -8200,6 +8201,49 @@ function initTechActions() {
           method: 'POST'
         });
       } catch (err) {}
+
+      // Teknisyen ve Müşteri Kaşe/İmza Künyesini Dinamik Senkronize Et
+      const currentOrder = state.activeOrder || {};
+      const activeTechId = state.activeTechId || 2;
+      const currentTech = (state.staff || []).find(s => s.id == activeTechId);
+      const assignedTechName = currentOrder.assigned_tech || currentOrder.assignedTech || (currentTech ? currentTech.name : (state.staff && state.staff[0] ? state.staff[0].name : "Sorumlu Saha Uzmanı"));
+      
+      const sigTechEl = document.getElementById('report-sig-tech-name');
+      if (sigTechEl) sigTechEl.textContent = assignedTechName;
+
+      const sigTechDate = document.getElementById('report-sig-tech-date');
+      if (sigTechDate) sigTechDate.textContent = `Tarih: ${new Date().toLocaleDateString('tr-TR')}`;
+
+      const custName = currentOrder.customer_name || currentOrder.customer || 'Müşteri Yetkilisi';
+      const sigCustEl = document.getElementById('report-sig-customer-name');
+      if (sigCustEl) sigCustEl.textContent = custName;
+
+      const sigImg = document.getElementById('report-sig-customer-img');
+      const sigPlaceholder = document.getElementById('report-sig-empty-placeholder');
+      const sigBadge = document.getElementById('report-signature-status-badge');
+
+      if (currentOrder.customer_signature) {
+        if (sigImg) {
+          sigImg.src = currentOrder.customer_signature;
+          sigImg.style.display = 'inline-block';
+        }
+        if (sigPlaceholder) sigPlaceholder.style.display = 'none';
+        if (sigBadge) {
+          sigBadge.textContent = '✓ Müşteri İmzası Alındı';
+          sigBadge.className = 'badge badge-success';
+          sigBadge.style.background = '#10B981';
+          sigBadge.style.color = '#fff';
+        }
+      } else {
+        if (sigImg) sigImg.style.display = 'none';
+        if (sigPlaceholder) sigPlaceholder.style.display = 'block';
+        if (sigBadge) {
+          sigBadge.textContent = '⏳ İmza Bekliyor';
+          sigBadge.className = 'badge badge-warning';
+          sigBadge.style.background = '#f59e0b';
+          sigBadge.style.color = '#fff';
+        }
+      }
 
       reportModal.style.display = 'flex';
       showToast(`📄 #${code} için Resmi Teknik Servis & Ekspertiz Raporu oluşturuldu!`);
