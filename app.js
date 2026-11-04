@@ -9109,6 +9109,20 @@ function loadAndShowServiceLabel(trackingCode) {
   const dateEl = document.getElementById('lbl-intake-date');
   const techEl = document.getElementById('lbl-assigned-tech');
   const compEl = document.getElementById('lbl-complaint-text');
+  const compNameEl = document.getElementById('lbl-company-name');
+  const compTrackingEl = document.getElementById('lbl-company-tracking');
+  const compPhoneEl = document.getElementById('lbl-company-phone');
+
+  // Aktif servis ve firma profilini etikete dinamik yansıt
+  const profile = (typeof getStoredCompanyProfile === 'function' ? getStoredCompanyProfile() : null) || state.companyProfile || {};
+  const compName = (profile.name || profile.legalName || 'Koçaş Teknik Servis').toUpperCase();
+  const compPhone = profile.phone || profile.gsm || '0216 555 0101';
+  let compWeb = profile.website || 'kocasteknik.com';
+  compWeb = compWeb.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+
+  if (compNameEl) compNameEl.textContent = compName;
+  if (compTrackingEl) compTrackingEl.textContent = `Online Takip: ${compWeb}/takip`;
+  if (compPhoneEl) compPhoneEl.textContent = `Tel: ${compPhone}`;
 
   const code = trackingCode || (localOrder ? (localOrder.tracking_code || localOrder.code) : "SRV-2026-104");
 
@@ -18132,6 +18146,25 @@ function applyCompanyProfile(profile) {
 
   const elCurTenant = document.getElementById('tenant-current-title');
   if (elCurTenant) elCurTenant.textContent = profile.legalName || profile.name;
+
+  // 1B. Cihaz Kabul ve Kimlik Etiketi (Fiziksel QR Fiş) Başlık & İletişim Bilgileri
+  const labelCompName = (profile.name || profile.legalName || 'Koçaş Teknik Servis').toUpperCase();
+  const labelPhone = profile.phone || profile.gsm || '0216 555 0101';
+  let labelWeb = profile.website || 'kocasteknik.com';
+  labelWeb = labelWeb.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+
+  const elLblCompName = document.getElementById('lbl-company-name');
+  if (elLblCompName) elLblCompName.textContent = labelCompName;
+
+  const elLblTracking = document.getElementById('lbl-company-tracking');
+  if (elLblTracking) elLblTracking.textContent = `Online Takip: ${labelWeb}/takip`;
+
+  const elLblPhone = document.getElementById('lbl-company-phone');
+  if (elLblPhone) elLblPhone.textContent = `Tel: ${labelPhone}`;
+
+  // Tahsilat & Muhasebe Makbuzu Şirket Başlığı
+  const elReceiptTitle = document.getElementById('receipt-company-title');
+  if (elReceiptTitle) elReceiptTitle.textContent = (profile.legalName || profile.name || 'Koçaş Teknik Servis').toUpperCase();
 
   // 2. Şirket Fatura Kartı (Teknisyen Dış Harcama Ekranı)
   const elBillLegal = document.getElementById('billing-card-legal-name');
