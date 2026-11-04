@@ -652,7 +652,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedOrders = localStorage.getItem('servisai_work_orders');
     state.workOrders = savedOrders ? (JSON.parse(savedOrders) || []) : [];
     const savedStaff = localStorage.getItem('servisai_staff');
-    state.staff = savedStaff ? (JSON.parse(savedStaff) || []) : [];
+    let loadedStaff = savedStaff ? (JSON.parse(savedStaff) || []) : [];
+    const DEMO_STAFF_NAMES = new Set(['Murat Aydın', 'Caner Güler', 'Selin Kaya', 'Emre Yıldız', 'Serdar Yılmaz', 'Levent İmekci', 'Levent İmekçi']);
+    state.staff = loadedStaff.filter(s => s && s.name && !DEMO_STAFF_NAMES.has(s.name.trim()));
+    try { localStorage.setItem('servisai_staff', JSON.stringify(state.staff)); } catch (_) {}
     const savedVehicles = localStorage.getItem('servisai_vehicles');
     state.vehicles = savedVehicles ? (JSON.parse(savedVehicles) || []) : [];
     const savedStock = localStorage.getItem('servisai_stock');
@@ -5040,12 +5043,13 @@ function populateActiveTechDropdown() {
   const fieldStaff = (state.staff || []).filter(p => p.role !== 'Yönetici' && p.status !== 'Ayrıldı');
   if (fieldStaff.length === 0) {
     select.innerHTML = '<option value="">Personel Bulunamadı</option>';
+    updateActiveTechProfileHeader();
     return;
   }
 
   // Ensure state.activeTechId is valid
   if (!state.activeTechId || !fieldStaff.some(p => p.id == state.activeTechId)) {
-    const defaultTech = fieldStaff.find(p => p.id == 2) || fieldStaff[0];
+    const defaultTech = fieldStaff[0];
     state.activeTechId = defaultTech.id;
   }
 
@@ -5061,7 +5065,11 @@ function populateActiveTechDropdown() {
 function updateActiveTechProfileHeader() {
   const infoEl = document.getElementById('tech-profile-info');
   const activeTech = (state.staff || []).find(p => p.id == state.activeTechId) || (state.staff ? state.staff[0] : null);
-  if (!infoEl || !activeTech) return;
+  if (!infoEl) return;
+  if (!activeTech) {
+    infoEl.innerHTML = '<span class="text-muted">Kayıtlı saha teknisyeni bulunmuyor. Ayarlardan personel ekleyebilirsiniz.</span>';
+    return;
+  }
 
   const statusBadge = activeTech.status === 'Görevde' ? '<span class="badge badge-primary">Görevde</span>' :
                       activeTech.status === 'Yolda' ? '<span class="badge badge-warning">Yolda</span>' :
@@ -5888,20 +5896,37 @@ window.clearTechWorkbench = clearTechWorkbench;
 function renderTechJobs() {
   const container = document.getElementById('job-cards-container');
   const countBadge = document.getElementById('tech-active-jobs-badge');
+  const assignedJobsBadge = document.getElementById('assigned-jobs-badge');
   if (!container) return;
 
-  const currentTechId = state.activeTechId || 2;
+  const currentTechId = state.activeTechId || (state.staff && state.staff[0] ? state.staff[0].id : null);
   const activeTech = (state.staff || []).find(s => s.id == currentTechId) || (state.staff ? state.staff[0] : null);
+
+  if (!activeTech) {
+    if (countBadge) countBadge.textContent = '0 Aktif İş';
+    if (assignedJobsBadge) assignedJobsBadge.textContent = '0 İş';
+    container.innerHTML = `
+      <div style="text-align: center; padding: 30px 15px; color: var(--text-muted); background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.12);">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">🧑‍🔧</div>
+        <strong style="color: var(--text-main); font-size: 0.95rem;">Kayıtlı Saha Personeli Bulunmuyor</strong>
+        <p style="font-size: 0.8rem; margin-top: 6px; color: var(--text-muted);">
+          Ayarlar > Saha Kadrosu sekmesinden yeni teknisyen ekleyerek iş ataması yapabilirsiniz.
+        </p>
+      </div>
+    `;
+    clearTechWorkbench();
+    return;
+  }
 
   // Filter jobs for this active technician
   const allOrders = state.workOrders || [];
   let techOrders = allOrders.filter(o => 
-    (o.assigned_user_id && String(o.assigned_user_id) === String(currentTechId)) ||
-    (activeTech && o.assigned_tech && o.assigned_tech.toLowerCase() === activeTech.name.toLowerCase())
+    (currentTechId && o.assigned_user_id && String(o.assigned_user_id) === String(currentTechId)) ||
+    (o.assigned_tech && o.assigned_tech.toLowerCase() === activeTech.name.toLowerCase())
   );
 
   // Also include any jobs from state.staffJobs[currentTechId]
-  if (state.staffJobs && state.staffJobs[currentTechId]) {
+  if (currentTechId && state.staffJobs && state.staffJobs[currentTechId]) {
     state.staffJobs[currentTechId].forEach(so => {
       const code = so.tracking_code || so.code;
       if (!techOrders.some(to => (to.tracking_code || to.code) === code)) {
@@ -5912,6 +5937,9 @@ function renderTechJobs() {
 
   if (countBadge) {
     countBadge.textContent = `${techOrders.length} Aktif İş`;
+  }
+  if (assignedJobsBadge) {
+    assignedJobsBadge.textContent = `${techOrders.length} İş`;
   }
 
   if (techOrders.length === 0) {
@@ -13552,25 +13580,12 @@ function loadStaffFromLocalStorage() {
     const saved = localStorage.getItem('servisai_staff');
     const terminated = JSON.parse(localStorage.getItem('servisai_staff_terminated') || '[]');
     if (appMode === 'clean') {
-      if (saved) {
-        state.staff = JSON.parse(saved) || [];
-      }
-      const hasWorkshopClean = (state.staff || []).some(s => s.staffType === 'workshop' || (s.role && (s.role.includes('Atölye') || s.role.includes('Laboratuvar'))));
-      if (!hasWorkshopClean && !terminated.includes(15)) {
-        state.staff.push({
-          id: 15,
-          name: "Serdar Yılmaz",
-          role: "Atölye & Laboratuvar Şefi",
-          specialty: "Mikroelektronik, SMD & BGA Çip Onarımı",
-          status: "Müsait",
-          location: "🏢 Merkez Servis Atölyesi / Laboratuvar",
-          baseAddress: "🏢 Merkez Servis Atölyesi / Laboratuvar",
-          vehiclePlate: "🏢 Merkez Atölye (Sabit)",
-          avatar: "SY",
-          distanceKm: 0.0,
-          staffType: "workshop"
-        });
-      }
+      let loaded = saved ? (JSON.parse(saved) || []) : [];
+      const DEMO_STAFF_NAMES = new Set(['Murat Aydın', 'Caner Güler', 'Selin Kaya', 'Emre Yıldız', 'Serdar Yılmaz', 'Levent İmekci', 'Levent İmekçi']);
+      state.staff = loaded.filter(s => s && s.name && !DEMO_STAFF_NAMES.has(s.name.trim()) && !terminated.includes(s.id));
+      try {
+        localStorage.setItem('servisai_staff', JSON.stringify(state.staff));
+      } catch (_) {}
       return;
     }
     if (saved) {
