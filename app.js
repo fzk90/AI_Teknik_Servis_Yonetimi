@@ -632,24 +632,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (appMode === 'clean') {
     state.staffJobs = {};
+    state.activeOrder = null;
     const savedOrders = localStorage.getItem('servisai_work_orders');
-    if (savedOrders) {
-      try { state.workOrders = JSON.parse(savedOrders) || []; } catch(e) { state.workOrders = []; }
-    } else {
-      state.workOrders = [];
-    }
+    state.workOrders = savedOrders ? (JSON.parse(savedOrders) || []) : [];
     const savedStaff = localStorage.getItem('servisai_staff');
-    if (savedStaff) {
-      try { state.staff = JSON.parse(savedStaff) || []; } catch(e) { state.staff = []; }
-    } else {
-      state.staff = [];
-    }
+    state.staff = savedStaff ? (JSON.parse(savedStaff) || []) : [];
     const savedVehicles = localStorage.getItem('servisai_vehicles');
-    if (savedVehicles) {
-      try { state.vehicles = JSON.parse(savedVehicles) || []; } catch(e) { state.vehicles = []; }
-    } else {
-      state.vehicles = [];
-    }
+    state.vehicles = savedVehicles ? (JSON.parse(savedVehicles) || []) : [];
+    const savedStock = localStorage.getItem('servisai_stock');
+    state.stock = savedStock ? (JSON.parse(savedStock) || []) : [];
+    const savedMaint = localStorage.getItem('servisai_maintenance');
+    state.maintenance = savedMaint ? (JSON.parse(savedMaint) || []) : [];
+    const savedEq = localStorage.getItem('servisai_equipment_registry');
+    state.equipmentRegistry = savedEq ? (JSON.parse(savedEq) || []) : [];
   }
 
   loadWorkOrdersFromLocalStorage();
@@ -672,6 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMaintenance();
   populateActiveTechDropdown();
   initActiveTechSwitcher();
+  clearTechWorkbench();
   renderTechJobs();
   renderTechExpenses();
   initTechActions();
@@ -751,7 +747,8 @@ function initTabs() {
       state.activeTab = targetId;
       if (targetId === 'tech-view') {
         populateActiveTechDropdown();
-        renderTechJobs();
+        clearTechWorkbench();
+  renderTechJobs();
       } else if (targetId === 'admin-view') {
         renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
@@ -3344,7 +3341,8 @@ function initAdminActions() {
           updateDispatchBanner(newOrder, null);
           renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
-          renderTechJobs();
+          clearTechWorkbench();
+  renderTechJobs();
 
           // Modalı Kapat & Bildirim Göster
           intakeModal.style.display = 'none';
@@ -5066,7 +5064,8 @@ function initActiveTechSwitcher() {
     const newTechId = parseInt(e.target.value);
     state.activeTechId = newTechId;
     updateActiveTechProfileHeader();
-    renderTechJobs();
+    clearTechWorkbench();
+  renderTechJobs();
     const selText = e.target.options[e.target.selectedIndex] ? e.target.options[e.target.selectedIndex].text : '';
     showToast(`👤 Teknisyen ekranı aktif edildi: ${selText}`);
   });
@@ -5800,6 +5799,68 @@ function saveCurrentSolutionToKnowledgeBase() {
 }
 window.saveCurrentSolutionToKnowledgeBase = saveCurrentSolutionToKnowledgeBase;
 
+function clearTechWorkbench() {
+  state.activeOrder = null;
+  const codeEl = document.getElementById('active-job-code');
+  if (codeEl) codeEl.textContent = '— Atanmış İş Yok —';
+
+  const titleEl = document.getElementById('active-job-title');
+  if (titleEl) titleEl.textContent = 'Henüz Seçili veya Atanmış İş Emri Bulunmuyor';
+
+  const custEl = document.getElementById('active-job-customer');
+  if (custEl) custEl.textContent = 'Müşteri ve arıza detayları iş emri seçildiğinde burada görüntülenir.';
+
+  const intikalAddress = document.getElementById('tech-intikal-address');
+  if (intikalAddress) intikalAddress.textContent = '—';
+
+  const timeDeparted = document.getElementById('tech-time-departed-text');
+  if (timeDeparted) timeDeparted.textContent = 'İntikal Bekliyor (Henüz görev atanmadı)';
+
+  const timeDuration = document.getElementById('tech-time-duration-text');
+  if (timeDuration) timeDuration.textContent = '';
+
+  const symptomInput = document.getElementById('ai-symptom-input');
+  if (symptomInput) symptomInput.value = '';
+
+  const aiOutput = document.getElementById('ai-output-box');
+  if (aiOutput) aiOutput.style.display = 'none';
+
+  const findingsInput = document.getElementById('tech-findings-input');
+  if (findingsInput) findingsInput.value = '';
+
+  const solutionInput = document.getElementById('tech-solution-input');
+  if (solutionInput) solutionInput.value = '';
+
+  const actionInput = document.getElementById('tech-action-input');
+  if (actionInput) actionInput.value = '';
+
+  const workStepsContainer = document.getElementById('tech-work-steps-list');
+  if (workStepsContainer) workStepsContainer.innerHTML = '<div style="text-align: center; padding: 16px; color: var(--text-dim); font-size: 0.8rem;">Kayıtlı saha işlem adımı yok.</div>';
+
+  const usedPartsTbody = document.getElementById('used-parts-tbody');
+  if (usedPartsTbody) usedPartsTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim); padding: 18px 10px; font-size: 0.82rem;">Bu iş emrinde henüz yedek parça kullanılmadı.</td></tr>';
+
+  const laborInput = document.getElementById('tech-labor-cost-input');
+  if (laborInput) laborInput.value = '0';
+
+  const totalCost = document.getElementById('tech-total-cost-display');
+  if (totalCost) totalCost.textContent = '0 ₺';
+
+  const btnOnTheWay = document.getElementById('btn-tech-on-the-way');
+  if (btnOnTheWay) btnOnTheWay.style.display = 'none';
+  const btnArrived = document.getElementById('btn-tech-arrived');
+  if (btnArrived) btnArrived.style.display = 'none';
+  const durationBadge = document.getElementById('tech-job-duration-badge');
+  if (durationBadge) durationBadge.style.display = 'none';
+  const btnComplete = document.getElementById('btn-tech-complete-banner');
+  if (btnComplete) btnComplete.style.display = 'none';
+  const btnHold = document.getElementById('btn-tech-hold-banner');
+  if (btnHold) btnHold.style.display = 'none';
+  const btnWorkshop = document.getElementById('btn-tech-workshop-banner');
+  if (btnWorkshop) btnWorkshop.style.display = 'none';
+}
+window.clearTechWorkbench = clearTechWorkbench;
+
 function renderTechJobs() {
   const container = document.getElementById('job-cards-container');
   const countBadge = document.getElementById('tech-active-jobs-badge');
@@ -5839,6 +5900,7 @@ function renderTechJobs() {
         </p>
       </div>
     `;
+    clearTechWorkbench();
     return;
   }
 
@@ -7274,6 +7336,7 @@ function startCleanSlateService() {
   renderStockTable();
   renderFleetCards();
   renderManagerCards();
+  clearTechWorkbench();
   renderTechJobs();
   renderTechExpenses();
   populateActiveTechDropdown();
@@ -8249,7 +8312,8 @@ function initTechActions() {
       renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       renderStaffList();
-      renderTechJobs();
+      clearTechWorkbench();
+  renderTechJobs();
       showToast(`🎉 İş Emri #${code} durumu "${newStatus}" olarak kaydedildi ve Yönetici Kontrol Paneline yansıtıldı!`, "success");
     });
   }
@@ -8304,6 +8368,10 @@ function initTechActions() {
 
   if (btnAiReport && reportModal) {
     btnAiReport.addEventListener('click', async () => {
+      if (!state.activeOrder && (!state.workOrders || state.workOrders.length === 0)) {
+        showToast("⚠️ Rapor oluşturulacak aktif bir iş emri bulunmuyor. Lütfen önce bir iş emri seçiniz veya çağrı oluşturunuz.", "warning");
+        return;
+      }
       btnAiReport.innerHTML = `<span>⏳ Rapor Hazırlanıyor...</span>`;
       btnAiReport.disabled = true;
 
@@ -8451,7 +8519,8 @@ function initTechActions() {
       saveWorkOrdersToLocalStorage();
       syncStatusEverywhere("Yolda");
       updateTechJourneyUI(state.activeOrder);
-      renderTechJobs();
+      clearTechWorkbench();
+  renderTechJobs();
       renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
 
@@ -8554,7 +8623,8 @@ function initTechActions() {
       saveWorkOrdersToLocalStorage();
       syncStatusEverywhere("Onarımda");
       updateTechJourneyUI(state.activeOrder);
-      renderTechJobs();
+      clearTechWorkbench();
+  renderTechJobs();
       renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
 
@@ -8655,7 +8725,8 @@ function initTechActions() {
       saveWorkOrdersToLocalStorage();
       syncStatusEverywhere("Tamamlandı");
       updateTechJourneyUI(state.activeOrder);
-      renderTechJobs();
+      clearTechWorkbench();
+  renderTechJobs();
       renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
       if (typeof updateDispatchBanner === 'function') updateDispatchBanner(matchingOrder, curTech);
@@ -8757,7 +8828,8 @@ function initCustomerActions() {
       // 7. Yönetici & Kontrol Paneli Görünümlerini Anında Yenile
       renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
-      renderTechJobs();
+      clearTechWorkbench();
+  renderTechJobs();
       updateActiveOrdersKPI();
       if (typeof updateFleetKPI === 'function') updateFleetKPI();
 
@@ -9475,7 +9547,8 @@ async function syncInitialDataFromBackend() {
           updateDispatchBanner(unassigned, null);
         }
 
-        renderTechJobs();
+        clearTechWorkbench();
+  renderTechJobs();
       }
     }
   } catch (err) {
@@ -13408,16 +13481,19 @@ function saveCustomCategories() {
 }
 
 function loadStockFromLocalStorage() {
+  const appMode = localStorage.getItem('servisai_app_mode');
   try {
     const saved = localStorage.getItem('servisai_stock');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         state.stock = parsed;
       }
+    } else if (appMode === 'clean') {
+      state.stock = [];
     }
   } catch (e) {
-    console.warn("Stok localStorage'dan okunurken hata:", e);
+    if (appMode === 'clean') state.stock = [];
   }
 }
 
@@ -14533,6 +14609,7 @@ function submitPartHoldForm(e) {
   renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   renderStaffList();
+  clearTechWorkbench();
   renderTechJobs();
 
   showToast(`⏸️ #${targetCode} iş emri parça beklemesine alındı! Sevk Masası'nda "Parça Bekleyenler" tepsisine aktarıldı.`, "success");
@@ -14571,6 +14648,7 @@ function resumeOrderFromHold(orderCode) {
   renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   renderStaffList();
+  clearTechWorkbench();
   renderTechJobs();
   if (state.activeOrder && (state.activeOrder.tracking_code || state.activeOrder.code) === code) {
     updateTechJourneyUI(state.activeOrder);
@@ -14805,6 +14883,7 @@ function submitSendToWorkshopForm(e) {
   renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
   renderStaffList();
+  clearTechWorkbench();
   renderTechJobs();
   updateActiveOrdersKPI();
   if (typeof updateDispatchBanner === 'function') {
@@ -14916,7 +14995,8 @@ function initSendToWorkshopModal() {
       updateTechJourneyUI(currentOrder);
       renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
-      renderTechJobs();
+      clearTechWorkbench();
+  renderTechJobs();
       updateActiveOrdersKPI();
       if (typeof updateDispatchBanner === 'function') {
         updateDispatchBanner(currentOrder);
@@ -14953,7 +15033,8 @@ function initSendToWorkshopModal() {
       updateTechJourneyUI(state.activeOrder);
       renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
-      renderTechJobs();
+      clearTechWorkbench();
+  renderTechJobs();
       showToast(`🔬 #${code} cihazı merkez atölye tezgâhında inceleme ve teste alındı!`, 'success');
     });
   }
@@ -15238,7 +15319,8 @@ function initDispatchAssignModal() {
         if (typeof renderStaffList === 'function') renderStaffList();
         if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
-        if (typeof renderTechJobs === 'function') renderTechJobs();
+        if (typeof renderTechJobs === 'function') clearTechWorkbench();
+  renderTechJobs();
         if (typeof updateActiveOrdersKPI === 'function') updateActiveOrdersKPI();
         if (typeof selectMapTech === 'function') {
           try { selectMapTech(targetTech.id); } catch (_) {}
@@ -15635,7 +15717,8 @@ async function performTechLogin(staffId, pin) {
     if (selectActiveTech) {
       selectActiveTech.value = String(user.id);
       populateActiveTechDropdown();
-      renderTechJobs();
+      clearTechWorkbench();
+  renderTechJobs();
     }
   } else {
     if (techError) {
@@ -19344,7 +19427,8 @@ async function promptAddSerialNumber(code) {
   }
   if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
   if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
-  if (typeof renderTechJobs === 'function') renderTechJobs();
+  if (typeof renderTechJobs === 'function') clearTechWorkbench();
+  renderTechJobs();
   showToast(`✅ #${code} cihazı artık ${sn} seri numarasıyla izleniyor.`);
 }
 window.promptAddSerialNumber = promptAddSerialNumber;

@@ -25,7 +25,7 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261104_2020">
+  <link rel="stylesheet" href="styles.css?v=20261104_2035">
 </head>
 <body>
   <!-- Header / Navigation -->
@@ -665,13 +665,13 @@
           <div class="card-header">
             <div>
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span class="chip chip-info" id="active-job-code">#SRV-2026-104</span>
+                <span class="chip chip-info" id="active-job-code">— Atanmış İş Yok —</span>
                 <button type="button" class="btn btn-xs btn-outline-cyan" id="btn-tech-show-billing-card" style="font-size: 0.74rem; padding: 3px 8px; border-color: #818cf8; color: #c7d2fe; display: inline-flex; align-items: center; gap: 5px;" title="Dışarıda parça veya masraf yaparken satıcıya göstermek veya iletmek için şirket fatura bilgilerini aç">
                   <span>🏢 Şirket Fatura Bilgilerimiz (Dış Alım İbrazı)</span>
                 </button>
               </div>
-              <h2 class="card-title mt-2" id="active-job-title">Endüstriyel Güç Kartı - Aşırı Isınma ve Röle Bırakma</h2>
-              <p class="card-subtitle" id="active-job-customer">Müşteri: TermoTek Ltd. • Kadıköy, İstanbul</p>
+              <h2 class="card-title mt-2" id="active-job-title">Henüz Seçili veya Atanmış İş Emri Bulunmuyor</h2>
+              <p class="card-subtitle" id="active-job-customer">Müşteri ve arıza detayları iş emri seçildiğinde burada görüntülenir.</p>
             </div>
             <div class="status-selector">
               <label for="select-job-status" class="status-label-small">İş Durumu:</label>
@@ -714,9 +714,9 @@
               <div class="trigger-left" style="margin: 0; display: flex; align-items: center; gap: 10px;">
                 <span class="pulse-dot" id="tech-journey-pulse" style="width: 10px; height: 10px; background: #8B5CF6;"></span>
                 <div class="journey-meta-info">
-                  <span style="font-size: 0.84rem; color: #f8fafc;"><strong>Müşteri Adresine İntikal:</strong> <span id="tech-intikal-address" style="color: #38bdf8;">Kadıköy Rıhtım Cd. No:14</span></span>
+                  <span style="font-size: 0.84rem; color: #f8fafc;"><strong>Müşteri Adresine İntikal:</strong> <span id="tech-intikal-address" style="color: #38bdf8;">—</span></span>
                   <div class="tech-journey-timing-row mt-1" id="tech-journey-timing-row" style="font-size: 0.78rem; color: #94a3b8;">
-                    <span id="tech-time-departed-text">⏳ İntikal Bekliyor (Henüz yola çıkılmadı)</span>
+                    <span id="tech-time-departed-text">İntikal Bekliyor (Henüz görev atanmadı)</span>
                     <span id="tech-time-duration-text" style="margin-left: 8px; font-weight: 600; color: #38bdf8;"></span>
                   </div>
                 </div>
@@ -781,7 +781,7 @@
             <div class="ai-input-group">
               <label for="ai-symptom-input">Müşteri Şikayeti & Cihaz Giriş Belirtisi:</label>
               <div class="ai-textarea-wrapper">
-                <textarea id="ai-symptom-input" rows="2" placeholder="Örn: 24V çıkış dalgalanıyor, kondansatörlerde şişme yok, röle 10sn sonra açıyor...">Kart giriş voltajı normal fakat 5 saniye sonra yüksek akım çekerek aşırı ısınıyor ve koruma rölesi devreyi kesiyor.</textarea>
+                <textarea id="ai-symptom-input" rows="2" placeholder="Örn: 24V çıkış dalgalanıyor, kondansatörlerde şişme yok, röle 10sn sonra açıyor..."></textarea>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <button class="btn btn-ai" id="btn-run-ai-diag" style="flex: 1.2;">
                     <span>🧠 Teşhis Et & AI ile Analiz Et</span>
@@ -794,7 +794,7 @@
             </div>
 
             <!-- AI Sonuç Alanı -->
-            <div class="ai-output" id="ai-output-box">
+            <div class="ai-output" id="ai-output-box" style="display: none;">
               <div class="ai-output-header">
                 <span class="status-pill status-success">Olası Neden Tespit Edildi (%92 Güven)</span>
                 <span class="ai-time">Tahmini Onarım Süresi: 35 Dk</span>
@@ -5002,7 +5002,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261104_2020"></script>
+  <script src="app.js?v=20261104_2035"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">
