@@ -16,6 +16,31 @@
 // ==================== Backend API URL ====================
 const API_BASE_URL = "http://127.0.0.1:8000";
 
+// ==================== Seri Numarası Yardımcıları ====================
+// Seri no elle yazılır veya okuyucu/kamera ile okutulur (ikisi de aynı kutuya düşer); asla rastgele üretilmez.
+// Girilmediyse cihaz "Belirtilmedi" olarak işaretlenir ve seri no sonradan eklenebilir.
+const SERIAL_MISSING_LABEL = "Belirtilmedi";
+
+function normalizeSerial(raw) {
+  return String(raw || '').replace(/\s+/g, '').toUpperCase();
+}
+
+function isSerialMissing(sn) {
+  const s = String(sn || '').trim();
+  return !s || s === '-' || /^SNYOK-/i.test(s) || /belirtilmedi/i.test(s);
+}
+
+function displaySerial(sn) {
+  return isSerialMissing(sn) ? SERIAL_MISSING_LABEL : sn;
+}
+
+// Seri no yoksa yanına "Seri No Gir" bağlantısı koyar
+function serialLabelHtml(sn, code) {
+  if (!isSerialMissing(sn)) return sn;
+  const c = String(code || '').replace(/'/g, "");
+  return `<em>${SERIAL_MISSING_LABEL}</em> <a href="javascript:void(0)" onclick="promptAddSerialNumber('${c}')" title="Seri numarasını şimdi ekle" style="color:#38bdf8; text-decoration:underline;">➕ Seri No Gir</a>`;
+}
+
 // ==================== Fikri Mülkiyet & Telif Bildirimi (Console Watermark) ====================
 if (typeof console !== 'undefined' && console.log) {
   console.log(
@@ -1789,7 +1814,7 @@ function openAccountingReceiptModal(code) {
 
   // Cihaz ve Teknisyen Bilgileri
   const deviceName = `${order.device_brand || ''} ${order.device_model || ''}`.trim() || order.device || "Schneider Electric ATV630 Endüstriyel Sürücü";
-  const serialNo = order.serial_number || order.serialNo || "SCH-2024-9912";
+  const serialNo = order.serial_number || order.serialNo || "Belirtilmedi";
   const techName = order.assigned_tech || (state.staff.find(s => s.id == (order.assigned_user_id || state.activeTechId)) || {}).name || "Levent İmekci";
   const curTechObj = (state.staff || []).find(s => s.name === techName || s.id == (order.assigned_user_id || state.activeTechId));
   const techPlate = curTechObj ? (curTechObj.vehiclePlate || "34 NK 0023") : "34 NK 0023";
@@ -2171,7 +2196,7 @@ function updateDispatchBanner(order, assignedTech) {
   const custAddr = order ? (order.customer_address || order.customerAddress || "Kadıköy, İstanbul") : "Kadıköy, İstanbul";
   const devBrand = order ? (order.device_brand || order.device || "Schneider") : "Schneider";
   const devModel = order ? (order.device_model || "") : "3-Faz İnverter";
-  const devSn = order ? (order.serial_number || order.serialNo || "SCH-2025-1104") : "SCH-2025-1104";
+  const devSn = order ? (order.serial_number || order.serialNo || "") : "SCH-2025-1104";
   const complaint = order ? (order.customer_complaint || order.complaint || 'Arıza belirtilmedi') : "Cihaz aşırı ısınıyor ve aşırı akım çekip korumaya geçiyor.";
   const priority = order ? (order.priority || "Normal") : "Normal";
   const channel = order ? (order.channel || "Telefon") : "Telefon";
@@ -2236,7 +2261,7 @@ function updateDispatchBanner(order, assignedTech) {
         <div class="dispatch-complaint-box">
           <span class="dispatch-info-label">⚙️ CİHAZ VE OPERASYON ÖZETİ:</span>
           <div class="dispatch-complaint-text">
-            <strong>${devBrand} ${devModel}</strong> (Seri No: ${devSn}) • ${order.action || order.technician_action || complaint}
+            <strong>${devBrand} ${devModel}</strong> (Seri No: ${serialLabelHtml(devSn, code)}) • ${order.action || order.technician_action || complaint}
           </div>
           <div class="mt-1" style="font-size: 0.76rem; color: var(--accent-cyan); display: flex; gap: 8px; flex-wrap: wrap;">
             <span>🚗 İntikal: <strong>${travelM} dk</strong></span>
@@ -2294,7 +2319,7 @@ function updateDispatchBanner(order, assignedTech) {
         <div class="dispatch-complaint-box">
           <span class="dispatch-info-label">⚙️ CİHAZ VE ARIZA:</span>
           <div class="dispatch-complaint-text">
-            <strong>${devBrand} ${devModel}</strong> (Seri No: ${devSn}) • ${complaint}
+            <strong>${devBrand} ${devModel}</strong> (Seri No: ${serialLabelHtml(devSn, code)}) • ${complaint}
           </div>
         </div>
       </div>
@@ -2332,7 +2357,7 @@ function updateDispatchBanner(order, assignedTech) {
           <div class="dispatch-info-item">
             <span class="dispatch-info-label">⚙️ CİHAZ & MODEL:</span>
             <strong class="dispatch-info-value">${devBrand} ${devModel}</strong>
-            <span class="dispatch-info-sub">Seri No: ${devSn}</span>
+            <span class="dispatch-info-sub">Seri No: ${serialLabelHtml(devSn, code)}</span>
           </div>
         </div>
         <div class="dispatch-complaint-box">
@@ -2995,6 +3020,8 @@ function initAdminActions() {
   const formIntake = document.getElementById('form-quick-intake');
   const submitBtnIntake = document.getElementById('btn-submit-intake');
 
+  initIntakeSerialField();
+
   const intakeChannelSel = document.getElementById('intake-channel');
   if (intakeChannelSel) {
     intakeChannelSel.addEventListener('change', () => {
@@ -3049,13 +3076,25 @@ function initAdminActions() {
           const devBrand = document.getElementById('intake-dev-brand').value.trim();
           const devModel = document.getElementById('intake-dev-model').value.trim();
           const complaint = document.getElementById('intake-complaint').value.trim();
+          const serialInputEl = document.getElementById('intake-serial-number');
+          const serialNo = normalizeSerial(serialInputEl ? serialInputEl.value : '');
           const intakeLaborInput = document.getElementById('intake-labor-cost');
           const initLabor = intakeLaborInput ? (parseFloat(intakeLaborInput.value) || 600) : 600;
 
-          // 1. Benzersiz Takip Kodu ve Seri No Üret
+          // Aynı seri numaralı cihaz zaten serviste mi? (cihaz seri no ile izlenir)
+          if (serialNo) {
+            const openDup = (state.workOrders || []).find(o =>
+              normalizeSerial(o.serial_number || o.serialNo) === serialNo &&
+              !/tamamland|teslim edildi/i.test(o.status || '')
+            );
+            if (openDup && !confirm(`⚠️ ${serialNo} seri numaralı cihaz zaten serviste (#${openDup.tracking_code || openDup.code}, ${openDup.status}).\n\nYine de yeni bir kabul açılsın mı?`)) {
+              return;
+            }
+          }
+
+          // 1. Benzersiz Takip Kodu (seri no ELLE girilen/okutulan değerdir, üretilmez)
           const codeNum = Math.floor(Math.random() * 800 + 107);
           let trackingCode = `SRV-2026-${codeNum}`;
-          const serialNo = `SN-${devBrand.slice(0, 3).toUpperCase()}-${Math.floor(Math.random() * 90000 + 10000)}`;
 
           const isWorkshopIntake = channel === 'Elden Teslim';
           const finalAddr = custAddr || (isWorkshopIntake ? "🏢 Merkez Servis Atölyesi (Elden Teslim)" : "İstanbul");
@@ -3075,6 +3114,7 @@ function initAdminActions() {
             device_model: devModel,
             device: `${devBrand} ${devModel}`,
             serial_number: serialNo,
+            serial_missing: !serialNo,
             customer_complaint: `[${channel} Çağrısı] ${complaint}`,
             status: finalStatus,
             repair_location: isWorkshopIntake ? 'workshop' : 'field',
@@ -3103,7 +3143,7 @@ function initAdminActions() {
                 device_brand: devBrand,
                 device_model: devModel,
                 complaint: complaint,
-                serial_number: serialNo
+                serial_number: serialNo || null
               })
             });
             if (res.ok) {
@@ -3124,6 +3164,9 @@ function initAdminActions() {
           state.activeOrder = newOrder;
           saveWorkOrdersToLocalStorage();
 
+          // Cihaz sicilini seri no ile güncelle (yeni cihazsa kart açılır, varsa servis geçmişine eklenir)
+          upsertEquipmentFromOrder(newOrder);
+
           // KPI Aktif İş ve Onay Durumunu Güncelle
           updateActiveOrdersKPI();
 
@@ -3135,7 +3178,9 @@ function initAdminActions() {
           // Modalı Kapat & Bildirim Göster
           intakeModal.style.display = 'none';
           formIntake.reset();
-          showToast(`✅ #${trackingCode} yeni servis çağrısı başarıyla sisteme kaydedildi ve sevk masasına işlendi!`);
+          showToast(serialNo
+            ? `✅ #${trackingCode} kaydedildi. Cihaz ${serialNo} seri numarasıyla izleniyor.`
+            : `✅ #${trackingCode} kaydedildi. Seri no "Belirtilmedi" — sevk banner'ından sonradan eklenebilir.`);
 
           // Cihaz Servis Etiketini Otomatik Aç
           setTimeout(() => {
@@ -4500,7 +4545,7 @@ function initMaintenanceActions() {
         const newMaintItem = {
           customer: custName,
           device: `${devBrand} ${devModel}`,
-          serial_number: serialNo || `SN-${devBrand.slice(0, 3).toUpperCase()}-${Math.floor(Math.random() * 9000 + 1000)}`,
+          serial_number: normalizeSerial(serialNo),
           period: period,
           dueDate: formatTrDate(dueDate),
           warranty: warrantyType,
@@ -4518,7 +4563,7 @@ function initMaintenanceActions() {
               customer_phone: custPhone,
               device_brand: devBrand,
               device_model: devModel,
-              serial_number: serialNo,
+              serial_number: normalizeSerial(serialNo),
               period_months: period.includes('3') ? 3 : period.includes('Yıllık') ? 12 : period.includes('Aylık') && !period.includes('6') ? 1 : 6,
               due_date: dueDate,
               warranty_type: warrantyType,
@@ -6139,7 +6184,7 @@ function generateOfficialServiceReport(order) {
   const customerAddr = currentOrder.customerAddress || currentOrder.customer_address || "Dudullu OSB 2. Cadde No: 14, Ümraniye / İstanbul";
   const customerPhone = currentOrder.customerPhone || currentOrder.customer_phone || "0216 455 10 20";
   const deviceName = currentOrder.device || "Schneider Electric ATV630 Endüstriyel Sürücü";
-  const serialNo = currentOrder.serialNo || currentOrder.serial_number || "SCH-2024-9912";
+  const serialNo = currentOrder.serialNo || currentOrder.serial_number || "Belirtilmedi";
   const complaint = currentOrder.complaint || currentOrder.customer_complaint || "Kart giriş voltajı normal fakat 5 saniye sonra yüksek akım çekerek aşırı ısınıyor ve koruma rölesi devreyi kesiyor.";
   
   const currentTechId = state.activeTechId || 2;
@@ -8802,7 +8847,7 @@ function renderCustomerTrackingResult(data) {
 
   const brand = data.device_brand || (data.device && typeof data.device === 'object' ? data.device.brand : '') || '';
   const model = data.device_model || (data.device && typeof data.device === 'object' ? data.device.model : '') || (typeof data.device === 'string' ? data.device : '');
-  const serialNo = data.serial_number || (data.device && typeof data.device === 'object' ? data.device.serial_number : 'SN-2026-BELIRTILMEDI');
+  const serialNo = data.serial_number || (data.device && typeof data.device === 'object' ? data.device.serial_number : 'Belirtilmedi');
 
   const deviceName = resultBox.querySelector('.device-name');
   if (deviceName) deviceName.textContent = `${brand} ${model}`.trim() || (typeof data.device === 'string' ? data.device : "Endüstriyel Cihaz");
@@ -9048,7 +9093,7 @@ function loadAndShowServiceLabel(trackingCode) {
   if (codeEl) codeEl.textContent = code;
   if (custEl && localOrder) custEl.textContent = localOrder.customer_name || localOrder.customer || "Müşteri";
   if (devEl && localOrder) devEl.textContent = localOrder.device || `${localOrder.device_brand || ''} ${localOrder.device_model || ''}`.trim() || "Endüstriyel Cihaz";
-  if (snEl && localOrder) snEl.textContent = localOrder.serial_number || localOrder.serialNo || "SN-2026-BELIRTILMEDI";
+  if (snEl && localOrder) snEl.textContent = localOrder.serial_number || localOrder.serialNo || "Belirtilmedi";
   if (compEl && localOrder) compEl.textContent = localOrder.customer_complaint || "Arıza açıklaması belirtilmedi.";
   if (techEl && localOrder) techEl.textContent = localOrder.assigned_tech ? `${localOrder.assigned_tech}` : "⏳ Atama Bekliyor (Henüz Sevk Edilmedi)";
   if (dateEl) {
@@ -13767,6 +13812,15 @@ function getStaffLiveLocationAndDistance(staff, targetAddress) {
 }
 window.getStaffLiveLocationAndDistance = getStaffLiveLocationAndDistance;
 
+function isWorkshopStaff(s) {
+  return !!(
+    (s && s.staffType === 'workshop') || 
+    (s && s.role && (s.role.includes('Atölye') || s.role.includes('Laboratuvar') || s.role.includes('Atolye'))) ||
+    (s && s.specialty && (s.specialty.includes('Atölye') || s.specialty.includes('Laboratuvar') || s.specialty.includes('Atolye')))
+  );
+}
+window.isWorkshopStaff = isWorkshopStaff;
+
 let currentAssignOrderCode = null;
 let currentAssignSourceStaffId = null;
 let selectedAssignTechId = null;
@@ -13806,7 +13860,7 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
   const custAddr = order.customer_address || "İstanbul";
   const devBrand = order.device_brand || "";
   const devModel = order.device_model || (typeof order.device === 'string' ? order.device : "");
-  const serialNo = order.serial_number || order.serialNo || "SN-2026-BELIRTILMEDI";
+  const serialNo = order.serial_number || order.serialNo || "Belirtilmedi";
   const complaint = order.customer_complaint || order.complaint || "Arıza açıklaması bulunmuyor.";
 
   // 2. Modal Başlık & Detayları Doldur
@@ -14621,6 +14675,7 @@ function initDispatchAssignModal() {
       if (typeof e.stopPropagation === 'function') e.stopPropagation();
     }
     modal.style.display = 'none';
+    modal.classList.remove('active', 'is-open', 'show');
     currentAssignOrderCode = null;
     currentAssignSourceStaffId = null;
     selectedAssignTechId = null;
@@ -14666,205 +14721,227 @@ function initDispatchAssignModal() {
         return;
       }
 
-      const noteInput = document.getElementById('assign-dispatch-note');
-      const managerNote = noteInput ? noteInput.value.trim() : '';
+      try {
+        const noteInput = document.getElementById('assign-dispatch-note');
+        const managerNote = noteInput ? noteInput.value.trim() : '';
 
-      // Hedef iş emrini bul
-      let order = (state.workOrders || []).find(o => (o.tracking_code === currentAssignOrderCode || o.code === currentAssignOrderCode));
-      if (!order && state.staffJobs) {
-        for (const sId in state.staffJobs) {
-          const match = state.staffJobs[sId].find(o => (o.tracking_code === currentAssignOrderCode || o.code === currentAssignOrderCode));
-          if (match) {
-            order = match;
-            break;
+        // Hedef iş emrini bul
+        let order = (state.workOrders || []).find(o => (o.tracking_code === currentAssignOrderCode || o.code === currentAssignOrderCode));
+        if (!order && state.staffJobs) {
+          for (const sId in state.staffJobs) {
+            const match = state.staffJobs[sId].find(o => (o.tracking_code === currentAssignOrderCode || o.code === currentAssignOrderCode));
+            if (match) {
+              order = match;
+              break;
+            }
           }
         }
-      }
-      if (!order && state.activeOrder && (state.activeOrder.code === currentAssignOrderCode || state.activeOrder.tracking_code === currentAssignOrderCode)) {
-        order = state.activeOrder;
-      }
-
-      if (!order) {
-        order = {
-          id: Date.now(),
-          tracking_code: currentAssignOrderCode,
-          code: currentAssignOrderCode,
-          customer_name: "ABC Lojistik",
-          customer_address: "Kadıköy Rıhtım, İstanbul",
-          device_brand: "Schneider Electric",
-          device_model: "3-Faz İnverter Sürücü",
-          customer_complaint: "Cihaz aşırı ısınıyor ve aşırı akım çekip korumaya geçiyor.",
-          priority: "Yüksek",
-          channel: "Telefon"
-        };
-        state.workOrders.unshift(order);
-      }
-
-      const orderCode = order.tracking_code || order.code;
-
-      // ==================== DURUM 1: BAŞKA UZMANA DEVİR / AKTARMA (TRANSFER) ====================
-      if (currentAssignSourceStaffId) {
-        if (currentAssignSourceStaffId === targetTech.id) {
-          showToast("⚠️ Görev zaten bu personele ait. Lütfen devredeceğiniz farklı bir uzman seçin.");
-          return;
+        if (!order && state.activeOrder && (state.activeOrder.code === currentAssignOrderCode || state.activeOrder.tracking_code === currentAssignOrderCode)) {
+          order = state.activeOrder;
         }
 
-        const sourceStaff = state.staff.find(s => s.id == currentAssignSourceStaffId);
-        const sourceName = sourceStaff ? sourceStaff.name : "Önceki Personel";
-
-        // Kaynak personelin staffJobs listesinden çıkar
-        if (state.staffJobs && state.staffJobs[currentAssignSourceStaffId]) {
-          state.staffJobs[currentAssignSourceStaffId] = state.staffJobs[currentAssignSourceStaffId].filter(
-            j => (j.tracking_code !== orderCode && j.code !== orderCode)
-          );
+        if (!order) {
+          order = {
+            id: Date.now(),
+            tracking_code: currentAssignOrderCode,
+            code: currentAssignOrderCode,
+            customer_name: "ABC Lojistik",
+            customer_address: "Kadıköy Rıhtım, İstanbul",
+            device_brand: "Schneider Electric",
+            device_model: "3-Faz İnverter Sürücü",
+            customer_complaint: "Cihaz aşırı ısınıyor ve aşırı akım çekip korumaya geçiyor.",
+            priority: "Yüksek",
+            channel: "Telefon"
+          };
+          if (!state.workOrders) state.workOrders = [];
+          state.workOrders.unshift(order);
         }
 
-        // Hedef personelin staffJobs listesine ekle
-        if (!state.staffJobs) state.staffJobs = {};
-        if (!state.staffJobs[targetTech.id]) state.staffJobs[targetTech.id] = [];
+        const orderCode = order.tracking_code || order.code;
 
-        const transferFinding = managerNote 
-          ? `[Yönetici Devri]: ${sourceName} uzmanından ${targetTech.name} uzmanına aktarıldı. Not: ${managerNote}`
-          : `[Yönetici Devri]: ${sourceName} uzmanından ${targetTech.name} uzmanına aktarıldı.`;
-
-        const jobEntry = {
-          id: order.id || Date.now(),
-          tracking_code: orderCode,
-          status: "Onarımda",
-          device_brand: order.device_brand,
-          device_model: order.device_model,
-          serial_number: order.serial_number || order.serialNo || "SN-2026-BELIRTILMEDI",
-          customer_name: order.customer_name || order.customer,
-          customer_phone: order.customer_phone || "",
-          customer_address: order.customer_address || "İstanbul",
-          customer_complaint: order.customer_complaint || order.complaint,
-          technician_findings: order.technician_findings ? `${order.technician_findings} | ${transferFinding}` : transferFinding,
-          total_cost: order.total_cost || 750
-        };
-
-        state.staffJobs[targetTech.id].unshift(jobEntry);
-
-        // Global workOrders güncelle
-        order.assigned_tech = targetTech.name;
-        order.assigned_user_id = targetTech.id;
-        order.status = "Onarımda";
-        if (order.technician_findings) {
-          order.technician_findings = `${order.technician_findings} | ${transferFinding}`;
-        } else {
-          order.technician_findings = transferFinding;
-        }
-
-        // Personel Durum Güncellemeleri
-        targetTech.status = "Görevde";
-        if (sourceStaff) {
-          const remainingJobs = (state.staffJobs && state.staffJobs[sourceStaff.id]) ? state.staffJobs[sourceStaff.id].filter(j => j.status !== 'Tamamlandı') : [];
-          if (remainingJobs.length === 0) {
-            sourceStaff.status = "Müsait";
+        // ==================== DURUM 1: BAŞKA UZMANA DEVİR / AKTARMA (TRANSFER) ====================
+        if (currentAssignSourceStaffId) {
+          if (currentAssignSourceStaffId === targetTech.id) {
+            showToast("⚠️ Görev zaten bu personele ait. Lütfen devredeceğiniz farklı bir uzman seçin.");
+            return;
           }
-        }
 
-        // Arka plan API Senkronizasyonu (Arayüzü bekletmez)
-        fetch(`${API_BASE_URL}/api/work-orders/${orderCode}/assign`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: targetTech.id })
-        }).catch(() => {});
+          const sourceStaff = state.staff.find(s => s.id == currentAssignSourceStaffId);
+          const sourceName = sourceStaff ? sourceStaff.name : "Önceki Personel";
 
-        showToast(`🔄 #${orderCode} iş emri ${sourceName} üzerinden ${targetTech.name} (${targetTech.vehiclePlate}) personeline başarıyla aktarıldı!`);
+          // Kaynak personelin staffJobs listesinden çıkar
+          if (state.staffJobs && state.staffJobs[currentAssignSourceStaffId]) {
+            state.staffJobs[currentAssignSourceStaffId] = state.staffJobs[currentAssignSourceStaffId].filter(
+              j => (j.tracking_code !== orderCode && j.code !== orderCode)
+            );
+          }
 
-        // Eğer personel işleri modalı açıksa onu da yeni duruma göre güncelle
-        const staffJobsModal = document.getElementById('staff-jobs-modal');
-        if (staffJobsModal && staffJobsModal.style.display === 'flex') {
-          openStaffJobsModal(currentAssignSourceStaffId);
-        }
-      } 
-      // ==================== DURUM 2: SEVK MASASINDAN YA DA ÇAĞRI BANNER'INDAN İLK ATAMA ====================
-      else {
-        targetTech.status = "Görevde";
-        order.assigned_tech = targetTech.name;
-        order.assigned_user_id = targetTech.id;
-        order.status = "Onarımda";
+          // Hedef personelin staffJobs listesine ekle
+          if (!state.staffJobs) state.staffJobs = {};
+          if (!state.staffJobs[targetTech.id]) state.staffJobs[targetTech.id] = [];
 
-        if (!state.staffJobs) state.staffJobs = {};
-        if (!state.staffJobs[targetTech.id]) state.staffJobs[targetTech.id] = [];
+          const transferFinding = managerNote 
+            ? `[Yönetici Devri]: ${sourceName} uzmanından ${targetTech.name} uzmanına aktarıldı. Not: ${managerNote}`
+            : `[Yönetici Devri]: ${sourceName} uzmanından ${targetTech.name} uzmanına aktarıldı.`;
 
-        const alreadyInStaff = state.staffJobs[targetTech.id].some(j => (j.tracking_code === orderCode || j.code === orderCode));
-        if (!alreadyInStaff) {
-          const initialFinding = managerNote
-            ? `[Yönetici Sevk Notu]: ${managerNote}`
-            : "Yönetici tarafından sahaya sevk edildi. İlk inceleme ve arıza tespiti bekleniyor.";
-
-          state.staffJobs[targetTech.id].unshift({
+          const jobEntry = {
             id: order.id || Date.now(),
             tracking_code: orderCode,
             status: "Onarımda",
             device_brand: order.device_brand,
             device_model: order.device_model,
-            serial_number: order.serial_number || order.serialNo || "SN-2026-BELIRTILMEDI",
+            serial_number: order.serial_number || order.serialNo || "Belirtilmedi",
             customer_name: order.customer_name || order.customer,
             customer_phone: order.customer_phone || "",
             customer_address: order.customer_address || "İstanbul",
             customer_complaint: order.customer_complaint || order.complaint,
-            technician_findings: initialFinding,
+            technician_findings: order.technician_findings ? `${order.technician_findings} | ${transferFinding}` : transferFinding,
             total_cost: order.total_cost || 750
-          });
-        }
+          };
 
-        state.activeOrder = {
-          code: orderCode,
-          customer: order.customer_name || order.customer,
-          customer_name: order.customer_name || order.customer,
-          customerAddress: order.customer_address || order.customerAddress || "İstanbul",
-          customer_address: order.customer_address || order.customerAddress || "İstanbul",
-          device: `${order.device_brand || ''} ${order.device_model || ''}`.trim() || (order.device || "Endüstriyel Cihaz"),
-          brand: order.device_brand,
-          model: order.device_model,
-          serialNo: order.serial_number || order.serialNo || "SN-2026-BELIRTILMEDI",
-          status: "Onarımda",
-          complaint: order.customer_complaint || order.complaint,
-          laborCost: order.labor_cost || 500,
-          usedParts: [],
-          customerApproved: false
-        };
+          state.staffJobs[targetTech.id].unshift(jobEntry);
 
-        // Arka plan API Senkronizasyonu (Arayüzü bekletmez)
-        fetch(`${API_BASE_URL}/api/work-orders/${orderCode}/assign`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: targetTech.id })
-        }).catch(() => {});
+          // Global workOrders güncelle
+          order.assigned_tech = targetTech.name;
+          order.assigned_user_id = targetTech.id;
+          order.status = "Onarımda";
+          if (order.technician_findings) {
+            order.technician_findings = `${order.technician_findings} | ${transferFinding}`;
+          } else {
+            order.technician_findings = transferFinding;
+          }
 
-        const isTargetWorkshop = isWorkshopStaff(targetTech);
-        if (isWorkshopJob || isTargetWorkshop) {
-          order.repair_location = 'workshop';
-          order.device_current_location = "🏢 Merkez Servis Atölyesi / Laboratuvar";
-          if (state.activeOrder) {
-            state.activeOrder.repair_location = 'workshop';
-            state.activeOrder.device_current_location = "🏢 Merkez Servis Atölyesi / Laboratuvar";
+          // Personel Durum Güncellemeleri
+          targetTech.status = "Görevde";
+          if (sourceStaff) {
+            const remainingJobs = (state.staffJobs && state.staffJobs[sourceStaff.id]) ? state.staffJobs[sourceStaff.id].filter(j => j.status !== 'Tamamlandı') : [];
+            if (remainingJobs.length === 0) {
+              sourceStaff.status = "Müsait";
+            }
+          }
+
+          // Arka plan API Senkronizasyonu (Arayüzü bekletmez)
+          if (typeof API_BASE_URL !== 'undefined') {
+            fetch(`${API_BASE_URL}/api/work-orders/${orderCode}/assign`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: targetTech.id })
+            }).catch(() => {});
+          }
+
+          showToast(`🔄 #${orderCode} iş emri ${sourceName} üzerinden ${targetTech.name} (${targetTech.vehiclePlate || 'Saha'}) personeline başarıyla aktarıldı!`);
+
+          // Eğer personel işleri modalı açıksa onu da yeni duruma göre güncelle
+          const staffJobsModal = document.getElementById('staff-jobs-modal');
+          if (staffJobsModal && staffJobsModal.style.display === 'flex' && typeof openStaffJobsModal === 'function') {
+            openStaffJobsModal(currentAssignSourceStaffId);
+          }
+        } 
+        // ==================== DURUM 2: SEVK MASASINDAN YA DA ÇAĞRI BANNER'INDAN İLK ATAMA ====================
+        else {
+          targetTech.status = "Görevde";
+          order.assigned_tech = targetTech.name;
+          order.assigned_user_id = targetTech.id;
+          order.status = "Onarımda";
+
+          if (!state.staffJobs) state.staffJobs = {};
+          if (!state.staffJobs[targetTech.id]) state.staffJobs[targetTech.id] = [];
+
+          const alreadyInStaff = state.staffJobs[targetTech.id].some(j => (j.tracking_code === orderCode || j.code === orderCode));
+          if (!alreadyInStaff) {
+            const initialFinding = managerNote
+              ? `[Yönetici Sevk Notu]: ${managerNote}`
+              : "Yönetici tarafından sahaya sevk edildi. İlk inceleme ve arıza tespiti bekleniyor.";
+
+            state.staffJobs[targetTech.id].unshift({
+              id: order.id || Date.now(),
+              tracking_code: orderCode,
+              status: "Onarımda",
+              device_brand: order.device_brand,
+              device_model: order.device_model,
+              serial_number: order.serial_number || order.serialNo || "Belirtilmedi",
+              customer_name: order.customer_name || order.customer,
+              customer_phone: order.customer_phone || "",
+              customer_address: order.customer_address || "İstanbul",
+              customer_complaint: order.customer_complaint || order.complaint,
+              technician_findings: initialFinding,
+              total_cost: order.total_cost || 750
+            });
+          }
+
+          state.activeOrder = {
+            code: orderCode,
+            customer: order.customer_name || order.customer,
+            customer_name: order.customer_name || order.customer,
+            customerAddress: order.customer_address || order.customerAddress || "İstanbul",
+            customer_address: order.customer_address || order.customerAddress || "İstanbul",
+            device: `${order.device_brand || ''} ${order.device_model || ''}`.trim() || (order.device || "Endüstriyel Cihaz"),
+            brand: order.device_brand,
+            model: order.device_model,
+            serialNo: order.serial_number || order.serialNo || "Belirtilmedi",
+            status: "Onarımda",
+            complaint: order.customer_complaint || order.complaint,
+            laborCost: order.labor_cost || 500,
+            usedParts: [],
+            customerApproved: false
+          };
+
+          // Arka plan API Senkronizasyonu (Arayüzü bekletmez)
+          if (typeof API_BASE_URL !== 'undefined') {
+            fetch(`${API_BASE_URL}/api/work-orders/${orderCode}/assign`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: targetTech.id })
+            }).catch(() => {});
+          }
+
+          const isJobWorkshop = order && (
+            order.repair_location === 'workshop' || 
+            order.channel === 'Elden Teslim' || 
+            (order.status && (order.status.includes('Atölye') || order.status.includes('Atolyede'))) ||
+            (order.customer_address && (order.customer_address.includes('Atölye') || order.customer_address.includes('Elden')))
+          );
+          const isTargetWorkshop = typeof isWorkshopStaff === 'function' ? isWorkshopStaff(targetTech) : false;
+          if (isJobWorkshop || isTargetWorkshop) {
+            order.repair_location = 'workshop';
+            order.device_current_location = "🏢 Merkez Servis Atölyesi / Laboratuvar";
+            if (state.activeOrder) {
+              state.activeOrder.repair_location = 'workshop';
+              state.activeOrder.device_current_location = "🏢 Merkez Servis Atölyesi / Laboratuvar";
+            }
+          }
+
+          if (typeof updateDispatchBanner === 'function') {
+            updateDispatchBanner(order, targetTech);
+          }
+          if (isJobWorkshop || isTargetWorkshop) {
+            showToast(`🏢 #${orderCode} çağrısı atölye tezgâhına sevk edildi ve ${targetTech.name} (${targetTech.vehiclePlate || 'Merkez Atölye'}) uzmanına atandı!`);
+          } else {
+            showToast(`⚡ #${orderCode} çağrısı yönetici tercihiyle ${targetTech.name} (${targetTech.vehiclePlate || 'Saha'}) personeline atandı!`);
           }
         }
 
-        updateDispatchBanner(order, targetTech);
-        if (isWorkshopJob || isTargetWorkshop) {
-          showToast(`🏢 #${orderCode} çağrısı atölye tezgâhına sevk edildi ve ${targetTech.name} (${targetTech.vehiclePlate || 'Merkez Atölye'}) uzmanına atandı!`);
-        } else {
-          showToast(`⚡ #${orderCode} çağrısı yönetici tercihiyle ${targetTech.name} (${targetTech.vehiclePlate}) personeline atandı!`);
+        // Kalıcı hafızaya kaydet & Aktif teknisyeni atanan personele çevir
+        state.activeTechId = targetTech.id;
+        if (typeof saveWorkOrdersToLocalStorage === 'function') {
+          saveWorkOrdersToLocalStorage();
         }
-      }
-
-      // Kalıcı hafızaya kaydet & Aktif teknisyeni atanan personele çevir
-      state.activeTechId = targetTech.id;
-      saveWorkOrdersToLocalStorage();
-      populateActiveTechDropdown();
-
-      // Modalı anında kapat ve Genel Arayüzü / Haritayı Yenile
-      closeModal();
-      renderStaffList();
-      renderIncomingCalls();
-      renderTechJobs();
-      updateActiveOrdersKPI();
-      if (typeof selectMapTech === 'function') {
-        selectMapTech(targetTech.id);
+        if (typeof populateActiveTechDropdown === 'function') {
+          populateActiveTechDropdown();
+        }
+      } catch (err) {
+        console.error("Sevk ve atama işlemi sırasında hata:", err);
+        showToast("⚠️ Görev sevk edilirken hata oluştu: " + (err.message || err));
+      } finally {
+        // Modalı her şartta anında kapat ve Genel Arayüzü / Haritayı Yenile
+        closeModal();
+        if (typeof renderStaffList === 'function') renderStaffList();
+        if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+        if (typeof renderTechJobs === 'function') renderTechJobs();
+        if (typeof updateActiveOrdersKPI === 'function') updateActiveOrdersKPI();
+        if (typeof selectMapTech === 'function') {
+          try { selectMapTech(targetTech.id); } catch (_) {}
+        }
       }
     });
   }
@@ -16219,9 +16296,9 @@ function initEquipmentActions() {
         const intakeModal = document.getElementById('intake-modal');
         if (intakeModal) {
           intakeModal.style.display = 'flex';
-          const custNameInput = document.getElementById('intake-customer-name');
-          const devBrandInput = document.getElementById('intake-device-brand');
-          const devModelInput = document.getElementById('intake-device-model');
+          const custNameInput = document.getElementById('intake-cust-name');
+          const devBrandInput = document.getElementById('intake-dev-brand');
+          const devModelInput = document.getElementById('intake-dev-model');
           const devSerialInput = document.getElementById('intake-serial-number');
           if (custNameInput) custNameInput.value = currentPassportDevice.customer_name;
           if (devBrandInput) devBrandInput.value = currentPassportDevice.brand;
@@ -18744,3 +18821,175 @@ window.initCompanyBillingCardEngine = initCompanyBillingCardEngine;
 window.initOnboardingWizardEngine = initOnboardingWizardEngine;
 window.openOnboardingWizard = openOnboardingWizard;
 window.applyCompanyProfile = applyCompanyProfile;
+
+// ==================== Seri No ile Cihaz İzleme ====================
+
+// Kabul formundaki seri no alanı: el tipi okuyucular yazıp Enter gönderir; formu göndermesin, sonraki alana geçsin.
+function initIntakeSerialField() {
+  const input = document.getElementById('intake-serial-number');
+  const btnScan = document.getElementById('btn-scan-serial');
+  if (input && !input.dataset.serialBound) {
+    input.dataset.serialBound = '1';
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.value = normalizeSerial(input.value);
+        const next = document.getElementById('intake-labor-cost') || document.getElementById('intake-complaint');
+        if (next) next.focus();
+      }
+    });
+    input.addEventListener('blur', () => { input.value = normalizeSerial(input.value); });
+  }
+  if (btnScan && !btnScan.dataset.serialBound) {
+    btnScan.dataset.serialBound = '1';
+    btnScan.addEventListener('click', () => scanSerialWithCamera((value) => {
+      if (input) input.value = normalizeSerial(value);
+      showToast(`📷 Okutuldu: ${normalizeSerial(value)}`);
+    }));
+  }
+}
+
+// Kamera ile barkod okutma (tarayıcı BarcodeDetector destekliyorsa). Desteklenmiyorsa el tipi okuyucu/elle giriş önerilir.
+async function scanSerialWithCamera(onResult) {
+  if (!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('ℹ️ Bu tarayıcıda kamera ile okutma desteklenmiyor. El tipi barkod okuyucu kullanın veya seri no\'yu elle yazın.');
+    return;
+  }
+  let stream = null;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;';
+  overlay.innerHTML = '<video autoplay playsinline muted style="max-width:92vw;max-height:60vh;border-radius:10px;border:2px solid #38bdf8;"></video>' +
+    '<div style="color:#fff;font-size:.9rem;">Barkodu kameraya gösterin…</div>' +
+    '<button type="button" class="btn btn-secondary">Vazgeç</button>';
+  document.body.appendChild(overlay);
+  const video = overlay.querySelector('video');
+  let active = true;
+  const stop = () => {
+    active = false;
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    overlay.remove();
+  };
+  overlay.querySelector('button').addEventListener('click', stop);
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = stream;
+    const detector = new BarcodeDetector();
+    const loop = async () => {
+      if (!active) return;
+      try {
+        const codes = await detector.detect(video);
+        if (codes && codes.length) {
+          const value = codes[0].rawValue;
+          stop();
+          onResult(value);
+          return;
+        }
+      } catch (e) { /* kare okunamadı, devam */ }
+      setTimeout(loop, 250);
+    };
+    loop();
+  } catch (err) {
+    stop();
+    showToast('⚠️ Kameraya erişilemedi: ' + (err && err.message ? err.message : err));
+  }
+}
+
+// Kabul edilen cihazı seri no ile sicile işler: kart yoksa açar, varsa servis geçmişine ekler.
+function upsertEquipmentFromOrder(order) {
+  const sn = normalizeSerial(order && (order.serial_number || order.serialNo));
+  if (!sn || !Array.isArray(state.equipmentRegistry)) return;
+
+  const code = order.tracking_code || order.code;
+  const isWorkshop = order.repair_location === 'workshop';
+  const locType = isWorkshop ? 'workshop' : 'customer';
+  const locLabel = isWorkshop ? '🔬 Merkez Servis Atölyesi (Kabul Edildi)' : '🏢 Müşteri Sahasında (Serviste)';
+  const today = new Date().toISOString().split('T')[0];
+
+  let eq = state.equipmentRegistry.find(e => normalizeSerial(e.serial_number) === sn);
+  if (!eq) {
+    eq = {
+      serial_number: sn,
+      brand: order.device_brand || '',
+      model: order.device_model || '',
+      category: 'Genel Endüstriyel Cihaz',
+      customer_name: order.customer_name || '',
+      customer_phone: order.customer_phone || '',
+      customer_address: order.customer_address || '',
+      commissioning_date: today,
+      warranty_status: 'Garanti Dışı',
+      warranty_end_date: today,
+      service_count: 0,
+      fault_history: []
+    };
+    state.equipmentRegistry.unshift(eq);
+  }
+  if (!Array.isArray(eq.fault_history)) eq.fault_history = [];
+  if (!eq.fault_history.some(h => h.order_code === code)) {
+    eq.fault_history.unshift({
+      order_code: code,
+      date: today,
+      complaint: order.customer_complaint || '',
+      findings: '',
+      action: '',
+      technician: 'Atama bekliyor',
+      replaced_parts: [],
+      laborCost: order.labor_cost || 0,
+      totalCost: order.total_cost || 0,
+      status: order.status || 'Kabul Edildi'
+    });
+    eq.service_count = (eq.service_count || 0) + 1;
+  }
+  eq.current_location = locLabel;
+  eq.current_location_type = locType;
+  eq.location_detail = `Servis kabulü: #${code}`;
+
+  try { saveEquipmentRegistryToLocalStorage(); } catch (e) {}
+  if (typeof renderEquipmentRegistry === 'function') {
+    try { renderEquipmentRegistry(); } catch (e) {}
+  }
+}
+
+// "Belirtilmedi" olarak kabul edilmiş cihaza sonradan seri no ekler (elle yazma veya okuyucu ile).
+async function promptAddSerialNumber(code) {
+  const order = (state.workOrders || []).find(o => (o.tracking_code || o.code) === code);
+  if (!order) { showToast('⚠️ İş emri bulunamadı: ' + code); return; }
+
+  const entered = window.prompt(`#${code} için cihaz seri numarasını yazın veya okutun:`, '');
+  const sn = normalizeSerial(entered);
+  if (!sn) return;
+
+  const clash = (state.workOrders || []).find(o => o !== order && normalizeSerial(o.serial_number || o.serialNo) === sn);
+  if (clash && !confirm(`${sn} seri numarası #${clash.tracking_code || clash.code} iş emrinde de kayıtlı. Aynı cihaz olarak birleştirilsin mi?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/work-orders/${encodeURIComponent(code)}/serial-number`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serial_number: sn })
+    });
+    if (!res.ok && res.status !== 404) {
+      const err = await res.json().catch(() => ({}));
+      showToast('⚠️ Seri no kaydedilemedi: ' + (err.detail || res.status));
+      return;
+    }
+  } catch (e) {
+    console.log('ServisAI: Backend çevrimdışı, seri no yerel olarak kaydedildi.');
+  }
+
+  order.serial_number = sn;
+  order.serialNo = sn;
+  order.serial_missing = false;
+  saveWorkOrdersToLocalStorage();
+  upsertEquipmentFromOrder(order);
+
+  if (typeof updateDispatchBanner === 'function') {
+    try { updateDispatchBanner(order, null); } catch (e) {}
+  }
+  if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+  if (typeof renderTechJobs === 'function') renderTechJobs();
+  showToast(`✅ #${code} cihazı artık ${sn} seri numarasıyla izleniyor.`);
+}
+window.promptAddSerialNumber = promptAddSerialNumber;
+window.scanSerialWithCamera = scanSerialWithCamera;

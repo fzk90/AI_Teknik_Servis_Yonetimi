@@ -477,3 +477,4 @@ if 'btnStart' not in js and wizard_target in js:
 with open(app_path, 'w', encoding='utf-8') as f:
     f.write(js)
 print("✓ app.js written successfully.")
+

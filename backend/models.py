@@ -205,3 +205,24 @@ class NotificationLog(Base):
     sent_at = Column(DateTime, default=datetime.utcnow)
 
     work_order = relationship("WorkOrder")
+
+
+# ==================== Seri Numarası Yardımcıları ====================
+# Seri numarası girilmeden kabul edilen cihazlar, veri tabanındaki benzersizlik kuralı
+# bozulmasın diye geçici bir "SNYOK-" kayıt anahtarı alır. Bu anahtar kullanıcıya
+# gösterilmez; arayüzde "Belirtilmedi" olarak işaretlenir ve seri no sonradan eklenebilir.
+SERIAL_PLACEHOLDER_PREFIX = "SNYOK-"
+
+
+def normalize_serial(raw) -> str:
+    """Seri numarasını boşluklardan arındırır ve büyük harfe çevirir (elle girilen/okutulan aynı sonucu verir)."""
+    return "".join(str(raw or "").split()).upper()
+
+
+def is_placeholder_serial(serial) -> bool:
+    return str(serial or "").upper().startswith(SERIAL_PLACEHOLDER_PREFIX)
+
+
+def public_serial(serial) -> str:
+    """Arayüze dönecek seri no: geçici anahtar ise boş döner (arayüz 'Belirtilmedi' yazar)."""
+    return "" if is_placeholder_serial(serial) else (serial or "")

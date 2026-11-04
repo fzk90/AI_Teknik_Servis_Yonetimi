@@ -54,6 +54,12 @@ Sistem, 3 ana kullanıcı rolünü gerçek zamanlı SQLite veri tabanı ve FastA
 * **Canlı Takip Edilen Teknisyen Seçici:** Harita başlığındaki açılır menü ile yönetici dilediği teknisyeni (*Murat Aydın, Caner Güler, Selin Kaya, Emre Yıldız*) seçebilir; haritadaki araç, plaka, güzergah, hedef müşteri pini ve telemetri (hız, ETA, kalan km) anında o personele odaklanır.
 * **Saha Personeli Atanan İşler Pop-up'ı:** Saha listesindeki herhangi bir personele veya *"📋 Atanan İşler"* butonuna tıklandığında açılan pop-up modal; personelin açık ve tamamlanan tüm işlerini, cihaz ve müşteri bilgilerini listeler. Pop-up içinden tek tıkla işi teknisyen tezgâhına alma veya WhatsApp bildirimi başlatma imkanı sunar.
 
+### 7. 🔢 Seri Numarası ile Cihaz İzleme (YENİ)
+* **Seri No Girişi:** Servis kabul formunda **Cihaz Seri Numarası (S/N)** alanı vardır. Seri no **elle yazılabilir** veya **okutulabilir** (el tipi barkod okuyucu doğrudan kutuya yazar; destekleyen tarayıcılarda `📷 Okut` düğmesi kamerayı açar). Okuyucunun gönderdiği `Enter` formu göndermez.
+* **Rastgele seri no üretilmez:** Sistem artık cihaza uydurma `SN-xxxxx` numarası vermez. Girilen numara boşluksuz ve büyük harfe normalize edilir (` dlt 001 ` → `DLT001`).
+* **Seri No Belirtilmedi:** Seri no boş bırakılırsa kabul yapılır, cihaz **"Belirtilmedi"** olarak işaretlenir. Sevk banner'ındaki **`➕ Seri No Gir`** bağlantısıyla sonradan eklenir (`PUT /api/work-orders/{takip_kodu}/serial-number`). Numara sistemde zaten kayıtlıysa iş emri o cihazın kartına bağlanır, geçmiş tek kartta birleşir.
+* **Seri no ile izleme:** Kabul edilen her cihaz Cihaz Sicil kartına seri no ile işlenir (yoksa kart açılır, varsa servis sayısı ve arıza geçmişi artar, konum güncellenir). Aynı seri numaralı cihaz zaten serviste ise kabul sırasında uyarı verilir.
+
 ---
 
 ## 💻 Nasıl Çalıştırılır ve Test Edilir?

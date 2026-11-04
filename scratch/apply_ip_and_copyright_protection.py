@@ -261,3 +261,4 @@ with open(readme_path, "w", encoding="utf-8") as f:
     f.write(readme_code)
 
 print("\n🎉 Tüm Fikri Mülkiyet ve Yasal Koruma Belgeleri Başarıyla Tamamlandı!")
+

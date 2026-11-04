@@ -876,8 +876,16 @@ def create_quick_call_intake(intake: schemas.QuickCallIntake, db: Session = Depe
         db.commit()
         db.refresh(customer)
 
-    # 3. Cihaz seri numarası üret / kaydet
-    sn = intake.serial_number or f"SN-{random.randint(10000, 99999)}"
+    # 3. Benzersiz Takip Kodu
+    code_num = random.randint(107, 999)
+    tracking_code = f"SRV-2026-{code_num}"
+
+    # 4. Cihaz seri numarası: elle girilen veya okutulan değer kullanılır, ASLA rastgele üretilmez.
+    #    Boşsa cihaz "Belirtilmedi" olarak işaretlenir (geçici anahtar) ve seri no sonradan eklenebilir.
+    sn = models.normalize_serial(intake.serial_number)
+    serial_missing = not sn
+    if serial_missing:
+        sn = f"{models.SERIAL_PLACEHOLDER_PREFIX}{tracking_code}"
     device = db.query(models.Device).filter(models.Device.serial_number == sn).first()
     if not device:
         device = models.Device(
@@ -891,9 +899,17 @@ def create_quick_call_intake(intake: schemas.QuickCallIntake, db: Session = Depe
         db.commit()
         db.refresh(device)
 
-    # 4. Benzersiz Takip Kodu
-    code_num = random.randint(107, 999)
-    tracking_code = f"SRV-2026-{code_num}"
+    # Aynı seri numaralı cihaz zaten açık bir serviste mi? (seri no ile izleme)
+    open_order = None
+    if not serial_missing:
+        open_order = (
+            db.query(models.WorkOrder)
+            .filter(models.WorkOrder.device_id == device.id)
+            .filter(~models.WorkOrder.status.like("Tamamlandı%"))
+            .filter(~models.WorkOrder.status.like("Teslim%"))
+            .order_by(models.WorkOrder.id.desc())
+            .first()
+        )
 
     # 5. İş Emrini Başlat
     new_order = models.WorkOrder(
@@ -915,8 +931,50 @@ def create_quick_call_intake(intake: schemas.QuickCallIntake, db: Session = Depe
         "tracking_code": tracking_code,
         "customer_name": customer.name,
         "device": f"{device.brand} {device.model}",
+        "serial_number": models.public_serial(device.serial_number),
+        "serial_missing": serial_missing,
+        "already_in_service": open_order.tracking_code if open_order else None,
         "channel": intake.channel,
         "priority": intake.priority
+    }
+
+@app.put("/api/work-orders/{tracking_code}/serial-number")
+def set_work_order_serial_number(tracking_code: str, payload: dict, db: Session = Depends(get_db)):
+    """Seri numarası 'Belirtilmedi' olarak kabul edilen cihaza sonradan (elle yazarak veya okutarak) seri no ekler."""
+    order = db.query(models.WorkOrder).filter(models.WorkOrder.tracking_code == tracking_code).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Geçersiz takip kodu")
+
+    new_sn = models.normalize_serial(payload.get("serial_number"))
+    if not new_sn:
+        raise HTTPException(status_code=400, detail="Seri numarası boş olamaz")
+    if models.is_placeholder_serial(new_sn):
+        raise HTTPException(status_code=400, detail="Geçersiz seri numarası")
+
+    device = order.device
+    existing = db.query(models.Device).filter(models.Device.serial_number == new_sn).first()
+
+    if existing and existing.id != device.id:
+        # Bu seri numarası sistemde zaten kayıtlı: iş emri o cihaza bağlanır (geçmiş tek kartta birleşir).
+        old_device = device
+        order.device_id = existing.id
+        db.commit()
+        if models.is_placeholder_serial(old_device.serial_number):
+            still_used = db.query(models.WorkOrder).filter(models.WorkOrder.device_id == old_device.id).count()
+            if not still_used:
+                db.delete(old_device)
+                db.commit()
+        device = existing
+    else:
+        device.serial_number = new_sn
+        device.qr_code = f"QR-{new_sn}"
+        db.commit()
+
+    return {
+        "durum": "Başarılı",
+        "tracking_code": tracking_code,
+        "serial_number": models.public_serial(device.serial_number),
+        "serial_missing": False
     }
 
 @app.get("/api/work-orders/{tracking_code}")
@@ -951,7 +1009,7 @@ def get_work_order_by_tracking(tracking_code: str, db: Session = Depends(get_db)
         "device": {
             "brand": device.brand,
             "model": device.model,
-            "serial_number": device.serial_number,
+            "serial_number": models.public_serial(device.serial_number),
             "manufacturer_warranty_end": device.manufacturer_warranty_end
         },
         "assigned_technician": {
@@ -1043,7 +1101,7 @@ def get_all_work_orders(status: Optional[str] = None, user_id: Optional[int] = N
             "customer_address": cust.address if cust else "",
             "device_brand": o.device.brand if o.device else "",
             "device_model": o.device.model if o.device else "",
-            "serial_number": o.device.serial_number if o.device else "",
+            "serial_number": models.public_serial(o.device.serial_number) if o.device else "",
             "customer_complaint": o.customer_complaint,
             "technician_findings": o.technician_findings,
             "assigned_user_id": o.assigned_user_id,
@@ -1120,7 +1178,7 @@ def get_service_label_data(tracking_code: str, db: Session = Depends(get_db)):
         "customer_phone": customer.phone,
         "device_brand": device.brand,
         "device_model": device.model,
-        "serial_number": device.serial_number,
+        "serial_number": models.public_serial(device.serial_number),
         "complaint": order.customer_complaint,
         "intake_date": order.created_at.strftime("%d.%m.%Y %H:%M") if order.created_at else datetime.utcnow().strftime("%d.%m.%Y %H:%M"),
         "assigned_tech": order.assigned_user.full_name if order.assigned_user else "Genel Havuz"
@@ -1139,7 +1197,7 @@ def get_maintenance_plans(db: Session = Depends(get_db)):
             "id": p.id,
             "customer": cust.name if cust else "Bilinmiyor",
             "device": f"{dev.brand} {dev.model}" if dev else "Bilinmiyor",
-            "serial_number": dev.serial_number if dev else "-",
+            "serial_number": models.public_serial(dev.serial_number) if dev else "-",
             "period": f"{p.period_months} Aylık",
             "dueDate": p.next_due_date.strftime("%d %B %Y") if p.next_due_date else "Belirtilmedi",
             "warranty": "12 Ay Servis & İşçilik Garantisi",
@@ -1156,7 +1214,10 @@ def create_maintenance_plan_api(payload: dict, db: Session = Depends(get_db)):
     phone = payload.get("customer_phone", "")
     dev_brand = payload.get("device_brand", "Genel Marka")
     dev_model = payload.get("device_model", "Endüstriyel Cihaz")
-    serial_no = payload.get("serial_number") or f"SN-{datetime.now().strftime('%Y%m%d%H%M')}"
+    # Seri no elle girilir/okutulur; rastgele üretilmez. Boşsa "Belirtilmedi" (geçici anahtar) olarak kaydedilir.
+    serial_no = models.normalize_serial(payload.get("serial_number"))
+    if not serial_no:
+        serial_no = f"{models.SERIAL_PLACEHOLDER_PREFIX}BKM-{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
     period_months = int(payload.get("period_months", 6))
     due_date_str = payload.get("due_date")
     warranty_type = payload.get("warranty_type", "12 Ay Servis & İşçilik Garantisi")
@@ -1218,7 +1279,7 @@ def create_maintenance_plan_api(payload: dict, db: Session = Depends(get_db)):
         "plan_id": plan.id,
         "customer": cust.name,
         "device": f"{dev.brand} {dev.model}",
-        "serial_number": dev.serial_number,
+        "serial_number": models.public_serial(dev.serial_number),
         "period": f"{period_months} Aylık",
         "dueDate": next_due.strftime("%d %B %Y"),
         "warranty": warranty_type,
@@ -1296,7 +1357,7 @@ def ai_generate_report(tracking_code: str, db: Session = Depends(get_db)):
     report_text = ai_service.generate_formal_service_report(
         tracking_code=order.tracking_code,
         customer_name=order.device.customer.name,
-        device_name=f"{order.device.brand} {order.device.model} (S/N: {order.device.serial_number})",
+        device_name=f"{order.device.brand} {order.device.model} (S/N: {models.public_serial(order.device.serial_number) or 'Belirtilmedi'})",
         technician_name=tech_name,
         complaint=order.customer_complaint,
         findings=order.technician_findings or "Güç katı ölçümleri yapıldı, arızalı komponentler yenilendi.",
