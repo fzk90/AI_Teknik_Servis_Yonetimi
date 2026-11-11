@@ -2757,6 +2757,7 @@ function updateStockLocationFilterDropdown() {
 }
 
 function renderStockTable() {
+  refreshFxStockPrices();
   const tbody = document.getElementById('stock-tbody');
   const thead = document.getElementById('stock-thead') || document.querySelector('#stock-table thead');
   if (!tbody) return;
@@ -2951,7 +2952,11 @@ function renderStockTable() {
           <small class="text-dim">• Garanti: ${item.warranty || '12 Ay'}</small>
         </td>
         <td style="white-space: nowrap;">
-          <div style="font-size: 0.95rem; font-weight: 700; color: var(--accent-emerald, #10b981);">${(item.price || 0).toLocaleString('tr-TR')} ₺</div>
+          <div style="font-size: 0.95rem; font-weight: 700; color: var(--accent-emerald, #10b981);" title="Satış fiyatı (KDV hariç)">${(item.price || 0).toLocaleString('tr-TR')} ₺</div>
+          <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+            ${item.cost ? `Alış: ${Number(item.cost).toLocaleString('tr-TR')} ₺ • Kâr %${item.margin !== undefined ? item.margin : '-'}` : 'Alış fiyatı girilmemiş'}
+          </div>
+          <button type="button" class="btn btn-xs btn-outline" style="margin-top: 3px; font-size: 0.68rem; padding: 1px 6px;" onclick="editStockMargin('${String(item.code).replace(/'/g, "\\'")}')">💹 ${item.cost ? '% Kâr / Alış' : 'Alış & Kâr gir'}</button>
           ${currencyBadgeHtml ? `<div style="margin-top: 4px;">${currencyBadgeHtml}</div>` : ''}
         </td>
         ${showCentral ? `
@@ -3519,6 +3524,24 @@ function initAdminActions() {
         const price = Math.round((rawPrice * rateUsed) * 100) / 100;
         const warranty = parseInt(document.getElementById('stock-warranty-months').value) || 12;
 
+        // Girilen tutar ALIŞ fiyatıdır. Stokta aynı parça varsa ağırlıklı ortalama maliyet hesaplanır, kâr oranı sorulur.
+        const prevItem = state.stock.find(p => p.code === code);
+        const oldQtyBefore = prevItem ? stockTotalQty(prevItem) : 0;
+        const proj = projectAvgCost(prevItem, { oldQty: oldQtyBefore, qty, unitCost: rawPrice, currency, fxRate: rateUsed });
+        let dlgTitle = `${name || code} • yeni alış: ${rawPrice.toLocaleString('tr-TR')} ${currency === 'TRY' ? '₺' : currency} (KDV hariç)`;
+        if (proj.averaged) dlgTitle += ` • Stokta ${oldQtyBefore} adet var; ağırlıklı ortalama alış maliyeti: ${proj.costTRY.toLocaleString('tr-TR')} ₺`;
+        if (currency !== 'TRY') dlgTitle += ` • Dövizli parçanın TL fiyatı kullanım günündeki kura göre hesaplanır.`;
+        const mr = await askMarginDialog({
+          title: dlgTitle,
+          cost: proj.costTRY,
+          lockCost: true,
+          margin: (prevItem && prevItem.margin !== undefined) ? prevItem.margin : getDefaultMargin()
+        });
+        if (!mr) return;
+        const marginPct = mr.margin;
+        localStorage.setItem('servisai_default_margin', String(marginPct));
+        const salePrice = calcSalePrice(proj.costTRY, marginPct);
+
         try {
           await fetch(`${API_BASE_URL}/api/stock/add-entry`, {
             method: 'POST',
@@ -3529,25 +3552,23 @@ function initAdminActions() {
               category: category,
               warehouse_target: targetWh,
               quantity: qty,
-              unit_price: price,
+              unit_price: salePrice,
               warranty_months: warranty
             })
           });
         } catch (err) {}
 
-        let existing = state.stock.find(p => p.code === code);
+        let existing = prevItem;
+        const purchase = { oldQty: oldQtyBefore, qty, unitCost: rawPrice, currency, fxRate: rateUsed, margin: marginPct };
         if (existing) {
           if (targetWh === "Atolye" || targetWh.includes("Atölye")) existing.workshop = (existing.workshop || 0) + qty;
           else if (targetWh.includes("Merkez")) existing.central += qty;
           else if (targetWh.includes("101")) existing.vehicle1 += qty;
           else if (targetWh.includes("202")) existing.vehicle2 += qty;
-          existing.price = price;
-          existing.currency = currency;
-          existing.originalPrice = rawPrice;
-          existing.exchangeRate = rateUsed;
+          applyPurchaseCost(existing, purchase);
           existing.category = category;
         } else {
-          state.stock.push({
+          const newItem = {
             code: code,
             name: name,
             category: category,
@@ -3555,12 +3576,11 @@ function initAdminActions() {
             workshop: targetWh === "Atolye" || targetWh.includes("Atölye") ? qty : 0,
             vehicle1: targetWh.includes("101") ? qty : 0,
             vehicle2: targetWh.includes("202") ? qty : 0,
-            price: price,
-            currency: currency,
-            originalPrice: rawPrice,
-            exchangeRate: rateUsed,
+            price: salePrice,
             warranty: `${warranty} Ay`
-          });
+          };
+          applyPurchaseCost(newItem, purchase);
+          state.stock.push(newItem);
         }
 
         saveStockToLocalStorage();
@@ -4004,7 +4024,7 @@ function initAdminActions() {
       });
     }
 
-    let colMap = { seq: -1, code: -1, name: -1, category: -1, qty: -1, price: -1, currency: -1, warranty: -1, priceHeaderCurrency: null };
+    let colMap = { seq: -1, code: -1, name: -1, category: -1, qty: -1, price: -1, buy: -1, margin: -1, currency: -1, warranty: -1, priceHeaderCurrency: null, buyHeaderCurrency: null };
     let headerMatchCount = 0;
 
     firstRow.forEach((col, idx) => {
@@ -4023,7 +4043,14 @@ function initAdminActions() {
       } else if (matchCol(col, ['adet', 'miktar', 'miktarı', 'stok', 'stok adedi', 'mevcut', 'mevcud', 'mevcudu', 'bakiye', 'sayı', 'kalan', 'envanter', 'qty', 'quantity', 'stock', 'count']) && colMap.qty === -1) {
         colMap.qty = idx;
         headerMatchCount++;
-      } else if (matchCol(col, ['fiyat', 'birim fiyat', 'birim fiyatı', 'satış fiyatı', 'tutar', 'ücret', 'maliyet', 'bedel', 'price', 'unit price', 'cost']) && colMap.price === -1) {
+      } else if (matchCol(col, ['alış fiyatı', 'alış', 'alım fiyatı', 'alım', 'alış maliyeti', 'maliyet', 'maliyet fiyatı', 'alis fiyati', 'alis', 'purchase', 'buy price', 'cost']) && colMap.buy === -1) {
+        colMap.buy = idx;
+        headerMatchCount++;
+        colMap.buyHeaderCurrency = detectCurrencyFromText(col);
+      } else if (matchCol(col, ['kâr oranı', 'kar orani', 'kâr %', 'kar %', 'kar yuzdesi', 'kâr yüzdesi', 'marj', 'margin', 'markup']) && colMap.margin === -1) {
+        colMap.margin = idx;
+        headerMatchCount++;
+      } else if (matchCol(col, ['fiyat', 'birim fiyat', 'birim fiyatı', 'satış fiyatı', 'satış', 'satis', 'tutar', 'ücret', 'bedel', 'price', 'unit price', 'sale price']) && colMap.price === -1) {
         colMap.price = idx;
         headerMatchCount++;
         // Fiyat sütunu başlığında döviz sembolü/kodu var mı? (Örn: 'Fiyat (€)', 'Birim Fiyat ($)', 'Price (EUR)')
@@ -4056,6 +4083,9 @@ function initAdminActions() {
       let pOrigPrice = 100;
       let pRate = 1.0;
       let pWar = '12';
+      let pBuy = null;
+      let pMargin = null;
+      let pSellGiven = false;
 
       if (isHeader && (colMap.name !== -1 || colMap.code !== -1)) {
         if (colMap.code !== -1 && r[colMap.code]) pCode = String(r[colMap.code]).trim();
@@ -4071,6 +4101,14 @@ function initAdminActions() {
         pCurrency = parsedCur.currency;
         pOrigPrice = parsedCur.originalPrice;
         pRate = parsedCur.exchangeRate;
+        pSellGiven = colMap.price !== -1 && String(rawPriceVal || '').trim() !== '';
+        if (colMap.buy !== -1 && String(r[colMap.buy] || '').trim() !== '') {
+          pBuy = parsePriceAndCurrency(r[colMap.buy], rawCurrVal, forcedCurrencyMode, colMap.buyHeaderCurrency);
+        }
+        if (colMap.margin !== -1 && String(r[colMap.margin] || '').trim() !== '') {
+          const mv = parseCleanNumber(r[colMap.margin]);
+          if (isFinite(mv)) pMargin = mv;
+        }
 
         if (colMap.warranty !== -1 && r[colMap.warranty]) pWar = String(r[colMap.warranty]).replace(/[^0-9]/g, '') || '12';
         
@@ -4238,7 +4276,7 @@ function initAdminActions() {
         if (!pCode) pCode = generatePartCode(pName, i);
         if (!pCategory) pCategory = guessCategory(pName);
 
-        items.push({
+        const bulkItem = {
           code: pCode,
           name: pName,
           category: pCategory,
@@ -4248,7 +4286,25 @@ function initAdminActions() {
           originalPrice: pOrigPrice || pPrice,
           exchangeRate: pRate || 1.0,
           warranty: `${pWar || '12'} Ay`
-        });
+        };
+        if (pBuy && pBuy.price > 0) {
+          bulkItem.cost = pBuy.price;
+          bulkItem.costOriginal = pBuy.originalPrice;
+          bulkItem.costCurrency = pBuy.currency || 'TRY';
+          bulkItem.costRate = pBuy.exchangeRate || 1;
+          bulkItem.priceExplicit = pSellGiven;
+          bulkItem.marginPct = pMargin;
+          if (pSellGiven) {
+            bulkItem.price = pPrice;
+          } else {
+            bulkItem.marginDefault = (pMargin === null);
+            bulkItem.price = calcSalePrice(pBuy.price, pMargin !== null ? pMargin : getDefaultMargin());
+            bulkItem.currency = bulkItem.costCurrency;
+            bulkItem.originalPrice = pBuy.originalPrice;
+            bulkItem.exchangeRate = bulkItem.costRate;
+          }
+        }
+        items.push(bulkItem);
       }
     }
 
@@ -4283,6 +4339,7 @@ function initAdminActions() {
           <td><span class="stock-cat-tag">${escapeHtml(item.category)}</span></td>
           <td style="text-align: right; font-weight: 700; color: #34D399;">+${item.qty} Adet</td>
           <td style="text-align: right;">
+            ${item.cost ? `<div style="font-size: 0.7rem; color: var(--text-muted);">Alış: ${item.cost.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺${item.priceExplicit ? '' : (item.marginDefault ? ' • ortak kâr oranı sorulacak' : ` • Kâr %${item.marginPct}`)}</div><div style="font-size: 0.7rem; color: var(--text-muted);">Satış ➔</div>` : ''}
             ${item.currency && item.currency !== 'TRY' ? `
               <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
                 <span class="currency-badge currency-badge-${item.currency.toLowerCase()}" style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700;" title="Orijinal Fiyat: ${item.currency === 'USD' ? '$' : '€'}${item.originalPrice?.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - TCMB Kuru: ${item.exchangeRate?.toFixed(2)} ₺">
@@ -4646,6 +4703,22 @@ TRAFO-220-24,220V/24V 5A Ray Tipi Güç Kaynağı,Yarı İletken & Güç,15,420.
           return;
         }
 
+        // Yalnız alış fiyatı olan kalemler için ortak kâr oranı sor
+        const needMargin = bulkParsedItems.filter(i => i.cost && !i.priceExplicit && i.marginDefault);
+        let batchMargin = getDefaultMargin();
+        if (needMargin.length) {
+          const mr = await askMarginDialog({
+            title: `${needMargin.length} kalemde yalnız ALIŞ fiyatı var, satış fiyatı yok. Bu kalemler için ortak kâr oranını girin (satış = alış + kâr).`,
+            cost: needMargin[0].cost,
+            lockCost: true,
+            batch: true,
+            margin: batchMargin
+          });
+          if (!mr) return;
+          batchMargin = mr.margin;
+          localStorage.setItem('servisai_default_margin', String(batchMargin));
+        }
+
         btnSubmitBulk.disabled = true;
         if (btnSubmitBulkText) btnSubmitBulkText.textContent = '⏳ Stoğa İşleniyor...';
 
@@ -4665,20 +4738,14 @@ TRAFO-220-24,220V/24V 5A Ray Tipi Güç Kaynağı,Yarı İletken & Güç,15,420.
           }
 
           let exist = state.stock.find(p => p.code.toLowerCase() === item.code.toLowerCase());
-          if (exist) {
-            exist.central += item.qty;
-            if (item.category && item.category !== 'Genel Parça & Sarf') exist.category = item.category;
-            if (item.price > 0) exist.price = item.price;
-            if (item.currency) exist.currency = item.currency;
-            if (item.originalPrice) exist.originalPrice = item.originalPrice;
-            if (item.exchangeRate) exist.exchangeRate = item.exchangeRate;
-            if (item.warranty) exist.warranty = item.warranty;
-          } else {
-            state.stock.push({
+          const oldQtyBefore = exist ? stockTotalQty(exist) : 0;
+          let target = exist;
+          if (!target) {
+            target = {
               code: item.code,
               name: item.name,
               category: item.category,
-              central: item.qty,
+              central: 0,
               workshop: 0,
               vehicle1: 0,
               vehicle2: 0,
@@ -4687,8 +4754,33 @@ TRAFO-220-24,220V/24V 5A Ray Tipi Güç Kaynağı,Yarı İletken & Güç,15,420.
               originalPrice: item.originalPrice || item.price,
               exchangeRate: item.exchangeRate || 1.0,
               warranty: item.warranty
-            });
+            };
+            state.stock.push(target);
+          } else {
+            if (item.category && item.category !== 'Genel Parça & Sarf') target.category = item.category;
+            if (item.warranty) target.warranty = item.warranty;
           }
+
+          if (item.cost) {
+            // Alış fiyatı verilmiş: ağırlıklı ortalama maliyet ve kâr oranı uygulanır
+            const m = item.priceExplicit ? item.marginPct : (item.marginPct !== null && item.marginPct !== undefined ? item.marginPct : batchMargin);
+            applyPurchaseCost(target, {
+              oldQty: oldQtyBefore,
+              qty: item.qty,
+              unitCost: (item.costCurrency && item.costCurrency !== 'TRY') ? item.costOriginal : item.cost,
+              currency: item.costCurrency || 'TRY',
+              fxRate: item.costRate,
+              margin: m,
+              explicitPrice: item.priceExplicit ? item.price : null
+            });
+          } else if (exist) {
+            // Eski tek fiyat sütunu: satış fiyatı olarak işlenir (alış fiyatı bilinmez)
+            if (item.price > 0) target.price = item.price;
+            if (item.currency) target.currency = item.currency;
+            if (item.originalPrice) target.originalPrice = item.originalPrice;
+            if (item.exchangeRate) target.exchangeRate = item.exchangeRate;
+          }
+          target.central = (target.central || 0) + item.qty;
 
           csvRowsForBackend.push(`${item.code},${item.name},${item.category},${item.qty},${item.price},${item.warranty.replace(/[^0-9]/g, '')}`);
           count++;
@@ -6297,6 +6389,12 @@ function addLocalPurchasedPart() {
   const techName = curTech ? curTech.name : "Saha Teknisyeni";
   const currentCode = state.activeOrder ? (state.activeOrder.code || state.activeOrder.tracking_code) : "SRV-2026-104";
   const totalCost = qty * unitPrice;
+  const marginInputEl = document.getElementById('local-part-margin');
+  let localMargin = marginInputEl ? parseFloat(marginInputEl.value) : NaN;
+  if (!isFinite(localMargin) || localMargin < 0) localMargin = getLocalPurchaseMargin();
+  localStorage.setItem('servisai_local_margin', String(localMargin));
+  const saleUnit = calcSalePrice(unitPrice, localMargin);
+  const saleTotal = Math.round(qty * saleUnit * 100) / 100;
   const movementId = "STK-MV-" + Date.now().toString().slice(-6);
 
   // 1. Stok Giriş-Çıkış Hareketi Olarak Belgeleme
@@ -6345,8 +6443,10 @@ function addLocalPurchasedPart() {
     code: "LOCAL-" + Date.now().toString().slice(-4),
     name: partName,
     qty: qty,
-    price: totalCost,
-    unitPrice: unitPrice,
+    price: saleTotal,
+    unitPrice: saleUnit,
+    cost: unitPrice,
+    marginPct: localMargin,
     source: `Yerel Tedarik (${vendorDoc})`,
     warranty: "12 Ay Tedarikçi/Parça Garantisi",
     isLocalPurchase: true,
@@ -6362,14 +6462,14 @@ function addLocalPurchasedPart() {
       part_code: "LOCAL-" + Date.now().toString().slice(-4),
       part_name: partName,
       quantity: qty,
-      unit_price: unitPrice,
+      unit_price: saleUnit,
       warranty: "12 Ay Tedarikçi Garantisi",
       source: `Yerel Tedarik (${vendorDoc})`,
       isLocalPurchase: true,
       supplierDoc: vendorDoc,
       movementId: movementId
     });
-    matchingOrder.parts_cost = (matchingOrder.parts_cost || 0) + totalCost;
+    matchingOrder.parts_cost = (matchingOrder.parts_cost || 0) + saleTotal;
     matchingOrder.total_cost = (matchingOrder.labor_cost || 600) + matchingOrder.parts_cost;
   }
 
@@ -6382,7 +6482,7 @@ function addLocalPurchasedPart() {
   priceInput.value = "";
   if (qtyInput) qtyInput.value = "1";
 
-  showToast(`🧾 ${partName} stoğa giriş-çıkış yapılarak belgelendi, işe eklendi ve ${totalCost.toLocaleString('tr-TR')} ₺ teknisyene alacak kaydedildi!`);
+  showToast(`🧾 ${partName}: alış ${totalCost.toLocaleString('tr-TR')} ₺ teknisyene alacak yazıldı; müşteriye %${localMargin} kârla ${saleTotal.toLocaleString('tr-TR')} ₺ (KDV hariç) satış eklendi.`);
 }
 
 function renderUsedParts() {
@@ -6458,9 +6558,60 @@ function renderUsedParts() {
     laborInput.value = currentLabor;
   }
 
-  const grandTotal = currentLabor + partsTotal;
-  if (partsCostEl) partsCostEl.textContent = `${partsTotal.toLocaleString('tr-TR')} ₺`;
-  if (grandTotalEl) grandTotalEl.textContent = `${grandTotal.toLocaleString('tr-TR')} ₺`;
+  // KDV hariç ara toplam + KDV = nihai bedel (KDV dahil)
+  const vatRate = (state.activeOrder && state.activeOrder.vatRate !== undefined && state.activeOrder.vatRate !== null)
+    ? parseFloat(state.activeOrder.vatRate) : getDefaultVatRate();
+  const netTotal = currentLabor + partsTotal;
+  const vatAmount = Math.round(netTotal * vatRate) / 100;
+  const grandTotal = Math.round((netTotal + vatAmount) * 100) / 100;
+  const fm = (n) => n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+  if (partsCostEl) partsCostEl.textContent = `${partsTotal.toLocaleString('tr-TR')} ₺ (KDV hariç)`;
+  if (grandTotalEl) grandTotalEl.textContent = fm(grandTotal);
+
+  // KDV seçim kutusu
+  let vatBox = document.getElementById('tech-vat-box');
+  if (!vatBox) {
+    const row = document.querySelector('.cost-summary-row');
+    if (row && row.parentNode) {
+      vatBox = document.createElement('div');
+      vatBox.id = 'tech-vat-box';
+      vatBox.style.cssText = 'display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;padding:10px 14px;border:1px dashed rgba(99,102,241,.5);border-radius:8px;font-size:.82rem;';
+      row.parentNode.insertBefore(vatBox, row.nextSibling);
+    }
+  }
+  if (vatBox) {
+    const opts = [0, 1, 10, 20].map(v => `<option value="${v}" ${Number(vatRate) === v ? 'selected' : ''}>%${v}</option>`).join('');
+    vatBox.innerHTML = `
+      <label for="tech-vat-select" style="font-weight:700;">🧾 KDV oranı:</label>
+      <select id="tech-vat-select" class="form-select form-select-sm" style="width:90px;">${opts}</select>
+      <span>Ara toplam (KDV hariç): <strong>${fm(netTotal)}</strong></span>
+      <span>KDV: <strong>${fm(vatAmount)}</strong></span>
+      <span style="color:#34d399;">Nihai bedel (KDV dahil): <strong>${fm(grandTotal)}</strong></span>`;
+    const sel = vatBox.querySelector('#tech-vat-select');
+    sel.addEventListener('change', () => {
+      const v = parseFloat(sel.value);
+      localStorage.setItem('servisai_default_vat', String(v));
+      if (state.activeOrder) {
+        state.activeOrder.vatRate = v;
+        const code = state.activeOrder.code || state.activeOrder.tracking_code;
+        const m = (state.workOrders || []).find(o => (o.tracking_code || o.code) === code);
+        if (m) m.vat_rate = v;
+        if (typeof saveWorkOrdersToLocalStorage === 'function') saveWorkOrdersToLocalStorage();
+      }
+      renderUsedParts();
+    });
+  }
+
+  // Kayıtlı iş emrini de nihai tutarla eşitle (KDV hariç alanlar korunur)
+  if (state.activeOrder) {
+    const code = state.activeOrder.code || state.activeOrder.tracking_code;
+    const m = (state.workOrders || []).find(o => (o.tracking_code || o.code) === code);
+    if (m) {
+      m.vat_rate = vatRate;
+      m.net_total = netTotal;
+      m.total_cost = grandTotal;
+    }
+  }
 
   // Müşteri ekranındaki fiyatı da güncelle
   const custPriceEl = document.querySelector('.approval-price');
@@ -6854,6 +7005,164 @@ function renderExchangeRatesInSettings() {
   }
 }
 
+// ==================== Alış Fiyatı, Kâr Oranı ve Satış Fiyatı (KDV hariç) ====================
+function getDefaultMargin() {
+  const v = parseFloat(localStorage.getItem('servisai_default_margin'));
+  return isFinite(v) ? v : 40;
+}
+function getDefaultVatRate() {
+  const v = parseFloat(localStorage.getItem('servisai_default_vat'));
+  return isFinite(v) ? v : 20;
+}
+function calcSalePrice(cost, marginPct) {
+  return Math.round((cost * (1 + marginPct / 100)) * 100) / 100;
+}
+
+// ---- Ağırlıklı ortalama maliyet ve döviz yardımcıları ----
+function stockTotalQty(it) {
+  return (it.central || 0) + (it.workshop || 0) + (it.vehicle1 || 0) + (it.vehicle2 || 0);
+}
+function getFxRate(cur) {
+  if (cur === 'USD') return (state.exchangeRates && state.exchangeRates.USD) || 38.50;
+  if (cur === 'EUR') return (state.exchangeRates && state.exchangeRates.EUR) || 41.20;
+  return 1;
+}
+function getLocalPurchaseMargin() {
+  const v = parseFloat(localStorage.getItem('servisai_local_margin'));
+  return isFinite(v) ? v : 30;
+}
+// Yeni alış sonrası ağırlıklı ortalama birim maliyeti hesaplar (aynı para biriminde ise)
+function projectAvgCost(item, p) {
+  const cur = p.currency || 'TRY';
+  const rate = cur === 'TRY' ? 1 : (p.fxRate || getFxRate(cur));
+  let unit = p.unitCost;
+  let averaged = false;
+  const sameCur = item && (item.currency || 'TRY') === cur;
+  const oldUnit = item ? (cur === 'TRY' ? (parseFloat(item.cost) || 0) : (parseFloat(item.costFx) || 0)) : 0;
+  if (item && sameCur && oldUnit > 0 && p.oldQty > 0) {
+    unit = (p.oldQty * oldUnit + p.qty * p.unitCost) / (p.oldQty + p.qty);
+    averaged = true;
+  }
+  return { unit, costTRY: Math.round(unit * rate * 100) / 100, rate, averaged };
+}
+// Alışı stok kalemine işler: maliyet, kâr oranı ve satış fiyatı
+function applyPurchaseCost(item, p) {
+  const cur = p.currency || 'TRY';
+  const proj = projectAvgCost(item, p);
+  item.currency = cur;
+  if (cur === 'TRY') {
+    item.cost = proj.costTRY;
+    delete item.costFx;
+    item.originalPrice = proj.unit;
+    item.exchangeRate = 1;
+  } else {
+    item.costFx = Math.round(proj.unit * 10000) / 10000;
+    item.cost = proj.costTRY;
+    item.originalPrice = item.costFx;
+    item.exchangeRate = proj.rate;
+  }
+  item.lastPurchaseCost = p.unitCost;
+  let margin = p.margin;
+  if (p.explicitPrice && item.cost > 0) {
+    margin = Math.round((p.explicitPrice / item.cost - 1) * 10000) / 100;
+    if (cur === 'TRY') {
+      item.price = p.explicitPrice;
+      item.priceFixed = true;
+      item.margin = margin;
+      return;
+    }
+  }
+  item.margin = margin;
+  item.price = calcSalePrice(item.cost, margin);
+  item.priceFixed = false;
+}
+// Dövizli parçaların maliyet ve satış fiyatını güncel kura göre yeniler (kullanım anındaki kur)
+function refreshFxStockPrices() {
+  (state.stock || []).forEach((it) => {
+    if (it.costFx > 0 && it.currency && it.currency !== 'TRY' && !it.priceFixed) {
+      const r = getFxRate(it.currency);
+      it.exchangeRate = r;
+      it.cost = Math.round(it.costFx * r * 100) / 100;
+      if (it.margin !== undefined && it.margin !== null) it.price = calcSalePrice(it.cost, it.margin);
+    }
+  });
+}
+
+// Alış fiyatı ve kâr yüzdesini soran küçük pencere. İptalde null, onayda {cost, margin} döner.
+function askMarginDialog(opts) {
+  return new Promise((resolve) => {
+    const old = document.getElementById('margin-dialog-overlay');
+    if (old) old.remove();
+    const fmt = (n) => (Math.round(n * 100) / 100).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+    const ov = document.createElement('div');
+    ov.id = 'margin-dialog-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.innerHTML = `
+      <div style="background:#131E36;border:1px solid rgba(99,102,241,.5);border-radius:14px;padding:20px;max-width:420px;width:100%;color:#f8fafc;box-shadow:0 10px 40px rgba(0,0,0,.5);">
+        <div style="font-weight:800;font-size:1rem;margin-bottom:4px;">💹 Kâr Oranı ve Satış Fiyatı</div>
+        <div style="font-size:.8rem;color:#94a3b8;margin-bottom:12px;">${escapeHtml(opts.title || '')}</div>
+        <label style="font-size:.78rem;color:#94a3b8;">${opts.batch ? "Örnek kalemin alış fiyatı (yalnız önizleme için)" : "Birim alış fiyatı (KDV hariç, ₺)"}</label>
+        <input id="md-cost" type="number" min="0" step="0.01" class="form-input" style="width:100%;margin:4px 0 10px;" value="${opts.cost || ''}" ${opts.lockCost ? 'readonly' : ''}>
+        <label style="font-size:.78rem;color:#94a3b8;">İstenen kâr oranı (%)</label>
+        <input id="md-margin" type="number" min="0" step="1" class="form-input" style="width:100%;margin:4px 0 10px;" placeholder="Örn: 40" value="${opts.margin !== undefined ? opts.margin : ''}">
+        <div id="md-preview" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:10px;font-size:.85rem;margin-bottom:14px;"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;">
+          <button type="button" id="md-cancel" class="btn btn-outline btn-sm">Vazgeç</button>
+          <button type="button" id="md-ok" class="btn btn-primary btn-sm">✅ Uygula</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    const cEl = ov.querySelector('#md-cost');
+    const mEl = ov.querySelector('#md-margin');
+    const pv = ov.querySelector('#md-preview');
+    const upd = () => {
+      const c = parseFloat(cEl.value) || 0;
+      const m = parseFloat(mEl.value);
+      pv.innerHTML = isFinite(m)
+        ? `Alış ${fmt(c)} + %${m} kâr = <strong style="color:#34d399;">Satış fiyatı (KDV hariç): ${fmt(calcSalePrice(c, m))}</strong>`
+        : 'Kâr oranını yazın. Örn: 40 yazarsanız alış fiyatına %40 eklenir.';
+    };
+    cEl.addEventListener('input', upd);
+    mEl.addEventListener('input', upd);
+    upd();
+    const close = (val) => { ov.remove(); resolve(val); };
+    ov.querySelector('#md-cancel').onclick = () => close(null);
+    ov.querySelector('#md-ok').onclick = () => {
+      const c = parseFloat(cEl.value);
+      const m = parseFloat(mEl.value);
+      if (!isFinite(c) || c <= 0) { alert('Lütfen alış fiyatını girin.'); return; }
+      if (!isFinite(m) || m < 0) { alert('Lütfen kâr oranını yüzde olarak girin. Örn: 40'); return; }
+      close({ cost: c, margin: m });
+    };
+    setTimeout(() => mEl.focus(), 50);
+  });
+}
+
+// Stok satırından alış fiyatı / kâr oranını sonradan düzenle
+window.editStockMargin = async function (code) {
+  const item = (state.stock || []).find((x) => x.code === code);
+  if (!item) return;
+  const isFx = item.costFx > 0 && item.currency && item.currency !== 'TRY';
+  const r = await askMarginDialog({
+    title: isFx
+      ? `${item.name} (${item.code}) • Dövizli parça: alış ${item.costFx} ${item.currency}. TL maliyet ve satış fiyatı kullanım günündeki kura göre hesaplanır.`
+      : `${item.name} (${item.code})`,
+    cost: item.cost || '',
+    lockCost: isFx,
+    margin: item.margin !== undefined ? item.margin : getDefaultMargin()
+  });
+  if (!r) return;
+  if (!isFx) item.cost = r.cost;
+  item.margin = r.margin;
+  item.priceFixed = false;
+  item.price = calcSalePrice(item.cost, r.margin);
+  localStorage.setItem('servisai_default_margin', String(r.margin));
+  saveStockToLocalStorage();
+  renderStockTable();
+  if (typeof updateVehiclePartDropdown === 'function') updateVehiclePartDropdown();
+  showToast(`💹 ${item.code}: alış ${r.cost} ₺, kâr %${r.margin}, satış ${item.price} ₺ (KDV hariç)`);
+};
+
 function updateStockCurrencyPreview() {
   const currSelect = document.getElementById('stock-currency');
   const priceInput = document.getElementById('stock-unit-price');
@@ -6864,7 +7173,7 @@ function updateStockCurrencyPreview() {
   const val = parseFloat(priceInput.value) || 0;
 
   if (currency === 'TRY') {
-    previewEl.innerHTML = `<span>💱 <strong>TL Satış Fiyatı:</strong> ${val.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺ (Yerel Para Birimi)</span>`;
+    previewEl.innerHTML = `<span>💱 <strong>TL Alış Fiyatı (KDV hariç):</strong> ${val.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺ (Yerel Para Birimi)</span>`;
   } else {
     const rate = (state.exchangeRates && state.exchangeRates[currency]) ? state.exchangeRates[currency] : (currency === 'USD' ? 38.50 : 41.20);
     const converted = Math.round((val * rate) * 100) / 100;
@@ -8242,14 +8551,17 @@ function initTechActions() {
         renderStockTable();
         updateVehiclePartDropdown();
 
-        // Parçayı aktif iş emrine ekle
+        // Parçayı aktif iş emrine ekle (dövizli parça kullanım günündeki kurla fiyatlanır)
+        refreshFxStockPrices();
         if (!state.activeOrder.usedParts) state.activeOrder.usedParts = [];
         state.activeOrder.usedParts.push({
+          fxRate: getFxRate(part.currency || 'TRY'),
           code: part.code,
           name: part.name,
           qty: 1,
           price: part.price,
           unitPrice: part.price,
+          cost: part.cost || 0,
           currency: part.currency || 'TRY',
           originalPrice: part.originalPrice || part.price,
           exchangeRate: part.exchangeRate || 1,
@@ -19011,33 +19323,23 @@ function openOnboardingWizard(step = 1) {
   wizardSelectedSector = cur.sectorKey || 'endustriyel_otomasyon';
 
   // Formları doldur
-  setVal('wizard-company-name', cur.name || 'Altostek');
-  setVal('wizard-company-city', cur.city || 'Bursa / Nilüfer');
-  setVal('wizard-company-phone', cur.phone || '+90 224 441 00 24');
-  setVal('wizard-company-email', cur.email || 'info@kocasteknik.com');
-  setVal('wizard-company-website', cur.website || 'https://kocasteknik.com');
+  // 1. adım alanları her açılışta boş başlar ("Örn:" ipuçları görünür).
+  // Tarayıcıda eski kayıtlı profil (örn. önceki denemeler) olsa bile bu alanlara taşınmaz.
+  ['wizard-company-name', 'wizard-company-city', 'wizard-company-phone',
+   'wizard-company-email', 'wizard-company-website'].forEach((id) => setVal(id, ''));
 
-  setVal('wizard-legal-name', cur.legalName || 'Altostek Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş.');
-  setVal('wizard-tax-office', cur.taxOffice || 'Nilüfer Vergi Dairesi');
-  setVal('wizard-tax-id', cur.taxId || '5760129841');
-  setVal('wizard-billing-address', cur.billingAddress || 'Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14 Osmangazi / BURSA');
-  setVal('wizard-trade-reg-no', cur.tradeRegNo || 'Bursa Tic. Sicil #98241');
-  setVal('wizard-mersis-no', cur.mersisNo || '0576012984100018');
-  setVal('wizard-efatura-scenario', cur.efaturaScenario || 'Ticari Fatura (UBL-TR 2.1)');
+  // 2-5. adım alanları da boş başlar ("Örn:" ipuçları görünür); hazır bilgiler isteğe bağlı
+  // "Seçili Sektörün Örnek Bilgilerini Doldur" düğmesiyle gelir.
+  ['wizard-legal-name', 'wizard-tax-office', 'wizard-tax-id', 'wizard-billing-address',
+   'wizard-trade-reg-no', 'wizard-mersis-no',
+   'wizard-manager-name', 'wizard-manager-title', 'wizard-manager-phone',
+   'wizard-manager-email', 'wizard-manager-pin',
+   'wizard-main-warehouse', 'wizard-main-workshop'].forEach((id) => setVal(id, ''));
+  setVal('wizard-efatura-scenario', 'Ticari Fatura (UBL-TR 2.1)');
 
-  setVal('wizard-manager-name', cur.managerName || 'Zafer Koçaş');
-  setVal('wizard-manager-title', cur.managerTitle || 'Elektronik ve Haberleşme Mühendisi / Firma Sahibi');
-  setVal('wizard-manager-phone', cur.managerPhone || '0532 999 88 77');
-  setVal('wizard-manager-email', cur.managerEmail || 'zafer@kocasteknik.com');
-  setVal('wizard-manager-pin', cur.managerPin || '1234');
-
-  setVal('wizard-main-warehouse', cur.mainWarehouse || 'Bursa Merkez Depo (DOSAB)');
-  setVal('wizard-main-workshop', cur.mainWorkshop || 'Elektronik ve Kart Test Laboratuvarı');
-
-  // Teknisyen ve Parça Listelerini Doldur
-  const tmpl = SECTOR_TEMPLATES[wizardSelectedSector] || SECTOR_TEMPLATES.endustriyel_otomasyon;
-  wizardTechList = JSON.parse(JSON.stringify(tmpl.staff));
-  wizardStockList = JSON.parse(JSON.stringify(tmpl.stock));
+  // Teknisyen ve parça listeleri boş başlar
+  wizardTechList = [];
+  wizardStockList = [];
 
   renderWizardTechTable();
   renderWizardStockTable();
@@ -19146,19 +19448,19 @@ function renderWizardTechTable() {
     html += `
       <tr>
         <td>
-          <input type="text" class="form-input form-input-sm" value="${escapeHtml(tech.name)}" onchange="updateWizardTech(${idx}, 'name', this.value)">
+          <input type="text" class="form-input form-input-sm" value="${escapeHtml(tech.name)}" placeholder="Örn: Ahmet Yılmaz" onchange="updateWizardTech(${idx}, 'name', this.value)">
         </td>
         <td>
-          <input type="text" class="form-input form-input-sm" value="${escapeHtml(tech.specialty || tech.role)}" onchange="updateWizardTech(${idx}, 'specialty', this.value)">
+          <input type="text" class="form-input form-input-sm" value="${escapeHtml(tech.specialty || tech.role || '')}" placeholder="Örn: Kart Tamiri" onchange="updateWizardTech(${idx}, 'specialty', this.value)">
         </td>
         <td>
-          <input type="text" class="form-input form-input-sm" value="${escapeHtml(tech.phone || '')}" onchange="updateWizardTech(${idx}, 'phone', this.value)">
+          <input type="text" class="form-input form-input-sm" value="${escapeHtml(tech.phone || '')}" placeholder="Örn: 0532 111 22 33" onchange="updateWizardTech(${idx}, 'phone', this.value)">
         </td>
         <td>
           <input type="text" class="form-input form-input-sm" style="text-align: center; font-weight: 700; color: #34d399;" value="${escapeHtml(tech.pin || '1234')}" maxlength="4" onchange="updateWizardTech(${idx}, 'pin', this.value)">
         </td>
         <td>
-          <input type="text" class="form-input form-input-sm" value="${escapeHtml(tech.vehiclePlate || '')}" onchange="updateWizardTech(${idx}, 'vehiclePlate', this.value)">
+          <input type="text" class="form-input form-input-sm" value="${escapeHtml(tech.vehiclePlate || '')}" placeholder="Örn: 34 ABC 123" onchange="updateWizardTech(${idx}, 'vehiclePlate', this.value)">
         </td>
         <td style="text-align: right;">
           <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteWizardTech(${idx})">✕</button>
@@ -19190,10 +19492,10 @@ function renderWizardStockTable() {
     html += `
       <tr>
         <td>
-          <input type="text" class="form-input form-input-sm" style="font-family: monospace; font-size: 0.76rem;" value="${escapeHtml(stk.code)}" onchange="updateWizardStock(${idx}, 'code', this.value)">
+          <input type="text" class="form-input form-input-sm" style="font-family: monospace; font-size: 0.76rem;" value="${escapeHtml(stk.code)}" placeholder="Örn: IGBT-600V" onchange="updateWizardStock(${idx}, 'code', this.value)">
         </td>
         <td>
-          <input type="text" class="form-input form-input-sm" value="${escapeHtml(stk.name)}" onchange="updateWizardStock(${idx}, 'name', this.value)">
+          <input type="text" class="form-input form-input-sm" value="${escapeHtml(stk.name)}" placeholder="Örn: 50A IGBT Modül" onchange="updateWizardStock(${idx}, 'name', this.value)">
         </td>
         <td>
           <input type="number" class="form-input form-input-sm" value="${stk.qty}" min="1" onchange="updateWizardStock(${idx}, 'qty', parseInt(this.value, 10))">

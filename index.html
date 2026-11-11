@@ -655,7 +655,7 @@ adr<!--
             <thead id="stock-thead">
               <tr>
                 <th style="min-width: 170px;">Parça Kodu & Tanımı</th>
-                <th style="min-width: 130px; white-space: nowrap;">Birim Fiyat</th>
+                <th style="min-width: 150px; white-space: nowrap;">Satış Fiyatı (KDV hariç)<br><small>Alış • Kâr %</small></th>
                 <th class="col-central">🏢 MERKEZ DEPO</th>
                 <th class="col-workshop">🔬 MERKEZ ATÖLYE / LAB</th>
                 <th class="col-v1">🚐 ARAÇ (34 ABC 101 - MURAT)</th>
@@ -1091,7 +1091,7 @@ adr<!--
               <div
                 style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
                 <div
-                  style="display: grid; grid-template-columns: 1.2fr 1.1fr 80px 110px auto; gap: 8px; align-items: end;"
+                  style="display: grid; grid-template-columns: 1.2fr 1.1fr 70px 105px 80px auto; gap: 8px; align-items: end;"
                   class="local-part-grid">
                   <div>
                     <label class="form-label" style="font-size: 0.74rem;">Parça Adı / Kodu *</label>
@@ -1108,9 +1108,13 @@ adr<!--
                     <input type="number" id="local-part-qty" class="form-input form-input-sm" value="1" min="1">
                   </div>
                   <div>
-                    <label class="form-label" style="font-size: 0.74rem;">Alış Tutarı (₺) *</label>
+                    <label class="form-label" style="font-size: 0.74rem;">Alış Tutarı (₺, KDV hariç) *</label>
                     <input type="number" id="local-part-price" class="form-input form-input-sm" placeholder="Örn: 480"
                       step="1" min="1">
+                  </div>
+                  <div>
+                    <label class="form-label" style="font-size: 0.74rem;" title="Müşteriye yansıtılacak kâr oranı; servis değiştirebilir">Kâr % *</label>
+                    <input type="number" id="local-part-margin" class="form-input form-input-sm" value="30" min="0" step="1" placeholder="30">
                   </div>
                   <div>
                     <button type="button" class="btn btn-primary btn-sm" id="btn-add-local-part"
@@ -2147,7 +2151,7 @@ adr<!--
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <label class="form-label" for="stock-unit-price"
                   style="margin: 0; font-weight: 700; color: var(--text-main);">
-                  💰 Birim Fiyat ve Para Birimi (Menşei Döviz) *
+                  💰 Birim ALIŞ Fiyatı ve Para Birimi (KDV hariç) *
                 </label>
                 <span class="badge badge-purple" id="stock-tcmb-badge" title="TCMB canlı kurları kullanılıyor">🇹🇷 TCMB
                   Canlı Kurlar</span>
@@ -2275,7 +2279,7 @@ adr<!--
               placeholder="Excel'den hücreleri seçip kopyalayın (Ctrl+C) ve buraya yapıştırın (Ctrl+V). Virgül koymanıza gerek yoktur:&#10;RULMAN-6204	6204-2RS Yüksek Hızlı Rulman	Mekanik & Rulman	25	180	12&#10;VENTIL-3YOL	3 Yollu Vana Motoru 24V	Mekanik & Rulman	8	850	12&#10;SIGORTA-16A	16A C Tipi Otomat Sigorta	Röle & Şalt	50	65	24"></textarea>
             <div
               style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 8px;">
-              <span class="text-xs text-muted">💡 Yapıştırdıktan sonra önizleme otomatik güncellenir. İsterseniz butona
+              <span class="text-xs text-muted">💡 Sütun başlıkları: Parça Kodu, Parça Adı, Adet, Alış Fiyatı, Satış Fiyatı (isteğe bağlı: Kâr Oranı). Yalnız alış fiyatı verirseniz kâr oranı sorulur. Yapıştırdıktan sonra önizleme otomatik güncellenir. İsterseniz butona
                 basarak da ayrıştırabilirsiniz.</span>
               <div style="display: flex; gap: 8px;">
                 <button type="button" class="btn btn-outline btn-sm" id="btn-clear-bulk-textarea">
@@ -2335,7 +2339,7 @@ adr<!--
                   <th>Parça Tanımı</th>
                   <th>Kategori</th>
                   <th style="text-align: right;">Giriş Adedi</th>
-                  <th style="text-align: right;">Birim Fiyat</th>
+                  <th style="text-align: right;">Alış ➔ Satış (KDV hariç)</th>
                   <th style="text-align: center;">Garanti</th>
                 </tr>
               </thead>
@@ -3674,22 +3678,22 @@ adr<!--
               <div class="form-group">
                 <label class="form-label" for="setting-company-name">Resmi Firma Ticari Unvanı *</label>
                 <input type="text" id="setting-company-name" class="form-input form-input-sm"
-                  value="Altostek Endüstriyel Elektronik & Otomasyon San. Tic. A.Ş."
-                  placeholder="Örn: Koçaş Elektronik San. Tic. Ltd." required>
+                  value=""
+                  placeholder="Örn: Ege Elektronik Otomasyon San. Tic. Ltd. Şti." required>
                 <span class="text-xs text-muted">Fatura ve resmi tahsilat makbuzlarında antet olarak çıkar</span>
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="setting-company-short">Marka / Servis Kısa Adı *</label>
-                <input type="text" id="setting-company-short" class="form-input form-input-sm" value="Altostek"
-                  placeholder="Örn: Koçaş Teknik Servis" required>
+                <input type="text" id="setting-company-short" class="form-input form-input-sm" value=""
+                  placeholder="Örn: Ege Teknik Servis" required>
                 <span class="text-xs text-muted">Üst menüde ve mobil teknisyen ekranında görünür</span>
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="setting-company-slogan">Faaliyet Alanı / Slogan</label>
                 <input type="text" id="setting-company-slogan" class="form-input form-input-sm"
-                  value="Endüstriyel Elektronik, Motor Sürücü ve PLC Otomasyon Servisi"
+                  value=""
                   placeholder="Örn: Endüstriyel Elektronik ve Kart Onarımı">
               </div>
 
@@ -3836,13 +3840,13 @@ adr<!--
               <div class="form-group">
                 <label class="form-label" for="setting-company-email">Kurumsal E-posta Adresi *</label>
                 <input type="email" id="setting-company-email" class="form-input form-input-sm"
-                  value="destek@altostek.com" placeholder="destek@servisiniz.com" required>
+                  value="" placeholder="Örn: destek@servisiniz.com" required>
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="setting-company-web">Web Sitesi Adresi</label>
-                <input type="url" id="setting-company-web" class="form-input form-input-sm" value="https://altostek.com"
-                  placeholder="https://www.servisiniz.com">
+                <input type="url" id="setting-company-web" class="form-input form-input-sm" value=""
+                  placeholder="Örn: https://www.servisiniz.com">
               </div>
 
               <!-- 5. Banka ve Tahsilat Bilgileri -->
@@ -5649,7 +5653,8 @@ adr<!--
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261104_2120"></script>
+  <script src="app.js?v=20261111_3"></script>
+  <script src="finance.js?v=20261111_3"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">
@@ -5880,12 +5885,12 @@ adr<!--
           <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-top: 16px;">
             <div>
               <label class="form-label">Şirket / Servis Ticari Kısa Adı *</label>
-              <input type="text" id="wizard-company-name" class="form-input" value="Altostek"
+              <input type="text" id="wizard-company-name" class="form-input" value=""
                 placeholder="Örn: Ege Soğutma Sistemleri">
             </div>
             <div>
               <label class="form-label">Merkez İl & İlçe *</label>
-              <input type="text" id="wizard-company-city" class="form-input" value="Bursa / Nilüfer"
+              <input type="text" id="wizard-company-city" class="form-input" value=""
                 placeholder="Örn: İzmir / Bornova">
             </div>
           </div>
@@ -5893,18 +5898,18 @@ adr<!--
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 12px;">
             <div>
               <label class="form-label">Telefon Numarası</label>
-              <input type="text" id="wizard-company-phone" class="form-input" value="+90 224 441 00 24"
-                placeholder="+90 232 ...">
+              <input type="text" id="wizard-company-phone" class="form-input" value=""
+                placeholder="Örn: +90 232 441 00 24">
             </div>
             <div>
               <label class="form-label">Kurumsal E-Posta</label>
-              <input type="email" id="wizard-company-email" class="form-input" value="info@kocasteknik.com"
-                placeholder="servis@sirketiniz.com">
+              <input type="email" id="wizard-company-email" class="form-input" value=""
+                placeholder="Örn: servis@sirketiniz.com">
             </div>
             <div>
               <label class="form-label">Web Sitesi</label>
-              <input type="text" id="wizard-company-website" class="form-input" value="https://kocasteknik.com"
-                placeholder="https://sirketiniz.com">
+              <input type="text" id="wizard-company-website" class="form-input" value=""
+                placeholder="Örn: https://sirketiniz.com">
             </div>
           </div>
 
@@ -5931,19 +5936,19 @@ adr<!--
           <div style="margin-bottom: 12px;">
             <label class="form-label">Resmi Şirket Fatura Ünvanı (Yasal Ad) *</label>
             <input type="text" id="wizard-legal-name" class="form-input"
-              value="Altostek Endüstriyel Elektronik ve Otomasyon Sistemleri San. ve Tic. A.Ş."
+              value=""
               placeholder="Örn: Ege Soğutma ve İklimlendirme Sistemleri San. Tic. Ltd. Şti.">
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
             <div>
               <label class="form-label">Vergi Dairesi *</label>
-              <input type="text" id="wizard-tax-office" class="form-input" value="Nilüfer Vergi Dairesi"
+              <input type="text" id="wizard-tax-office" class="form-input" value=""
                 placeholder="Örn: Bornova V.D.">
             </div>
             <div>
               <label class="form-label">Vergi Kimlik Numarası (VKN / TCKN) *</label>
-              <input type="text" id="wizard-tax-id" class="form-input" value="5760129841"
+              <input type="text" id="wizard-tax-id" class="form-input" value=""
                 placeholder="Örn: 10 haneli VKN veya 11 haneli TCKN">
             </div>
           </div>
@@ -5951,18 +5956,18 @@ adr<!--
           <div style="margin-bottom: 12px;">
             <label class="form-label">Resmi Fatura Adresi *</label>
             <textarea id="wizard-billing-address" class="form-input w-100" rows="2"
-              placeholder="Örn: Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14 Osmangazi / BURSA">Demirtaş Organize Sanayi Bölgesi (DOSAB), Yasemin Sk. No: 14 Osmangazi / BURSA</textarea>
+              placeholder="Örn: Organize Sanayi Bölgesi, 3. Sk. No: 14 Bornova / İZMİR"></textarea>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
             <div>
               <label class="form-label">Ticaret Sicil No (Opsiyonel)</label>
-              <input type="text" id="wizard-trade-reg-no" class="form-input" value="Bursa Tic. Sicil #98241"
+              <input type="text" id="wizard-trade-reg-no" class="form-input" value=""
                 placeholder="Örn: İzmir Tic. Sicil #10293">
             </div>
             <div>
               <label class="form-label">MERSİS No (Opsiyonel)</label>
-              <input type="text" id="wizard-mersis-no" class="form-input" value="0576012984100018"
+              <input type="text" id="wizard-mersis-no" class="form-input" value=""
                 placeholder="Örn: 0382910492100015">
             </div>
             <div>
@@ -5990,30 +5995,30 @@ adr<!--
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
             <div>
               <label class="form-label">Yönetici Adı Soyadı *</label>
-              <input type="text" id="wizard-manager-name" class="form-input" value="Zafer Koçaş"
+              <input type="text" id="wizard-manager-name" class="form-input" value=""
                 placeholder="Örn: Zafer Koçaş">
             </div>
             <div>
               <label class="form-label">Görevi / Unvanı *</label>
               <input type="text" id="wizard-manager-title" class="form-input"
-                value="Elektronik ve Haberleşme Mühendisi / Firma Sahibi" placeholder="Örn: Servis Müdürü">
+                value="" placeholder="Örn: Servis Müdürü">
             </div>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr 120px; gap: 12px;">
             <div>
               <label class="form-label">Yönetici Telefonu</label>
-              <input type="text" id="wizard-manager-phone" class="form-input" value="0532 999 88 77"
-                placeholder="0532 ...">
+              <input type="text" id="wizard-manager-phone" class="form-input" value=""
+                placeholder="Örn: 0532 999 88 77">
             </div>
             <div>
               <label class="form-label">Yönetici E-Postası (Giriş İçin)</label>
-              <input type="email" id="wizard-manager-email" class="form-input" value="zafer@kocasteknik.com"
-                placeholder="yonetici@sirketiniz.com">
+              <input type="email" id="wizard-manager-email" class="form-input" value=""
+                placeholder="Örn: yonetici@sirketiniz.com">
             </div>
             <div>
               <label class="form-label">Giriş PIN Kodu</label>
-              <input type="text" id="wizard-manager-pin" class="form-input" value="1234" maxlength="6"
+              <input type="text" id="wizard-manager-pin" class="form-input" value="" placeholder="Örn: 1234" maxlength="6"
                 style="font-weight: 800; text-align: center; color: #34d399;">
             </div>
           </div>
@@ -6084,12 +6089,12 @@ adr<!--
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
             <div>
               <label class="form-label">Merkez Depo Adı:</label>
-              <input type="text" id="wizard-main-warehouse" class="form-input" value="Bursa Merkez Depo (DOSAB)">
+              <input type="text" id="wizard-main-warehouse" class="form-input" value="" placeholder="Örn: Merkez Depo">
             </div>
             <div>
               <label class="form-label">Merkez Atölye / Laboratuvar Adı:</label>
               <input type="text" id="wizard-main-workshop" class="form-input"
-                value="Elektronik ve Kart Test Laboratuvarı">
+                value="" placeholder="Örn: Kart Test Laboratuvarı">
             </div>
           </div>
 
