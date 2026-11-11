@@ -10802,30 +10802,126 @@ const TURKEY_GEO_POINTS = {
   osmangazi: { name: "Osmangazi", city: "Bursa", coords: [40.2000, 29.0600] },
   bursa: { name: "Bursa", city: "Bursa", coords: [40.1885, 29.0610] },
 
-  // Diğer Büyükşehirler & Sanayi Merkezleri
-  antalya: { name: "Antalya OSB", city: "Antalya", coords: [36.9880, 30.6120] },
+  // Diğer Büyükşehirler, 81 İl ve İlçe Merkezleri (Antalya, Ege, Akdeniz, Anadolu)
+  antalya: { name: "Antalya Merkez", city: "Antalya", coords: [36.8969, 30.7133] },
+  antalya_osb: { name: "Antalya OSB", city: "Antalya", coords: [36.9880, 30.6120] },
+  // Antalya İlçeleri
+  kas: { name: "Kaş", city: "Antalya", coords: [36.2000, 29.6380] },
+  alanya: { name: "Alanya", city: "Antalya", coords: [36.5438, 31.9998] },
+  manavgat: { name: "Manavgat", city: "Antalya", coords: [36.7869, 31.4422] },
+  kemer: { name: "Kemer", city: "Antalya", coords: [36.6025, 30.5597] },
+  finike: { name: "Finike", city: "Antalya", coords: [36.2944, 30.1444] },
+  demre: { name: "Demre", city: "Antalya", coords: [36.2444, 29.9856] },
+  kumluca: { name: "Kumluca", city: "Antalya", coords: [36.3703, 30.2889] },
+  gazipasa: { name: "Gazipaşa", city: "Antalya", coords: [36.2731, 32.3164] },
+  serik: { name: "Serik", city: "Antalya", coords: [36.9172, 31.1008] },
+  kepez: { name: "Kepez", city: "Antalya", coords: [36.9317, 30.6869] },
+  muratpasa: { name: "Muratpaşa", city: "Antalya", coords: [36.8878, 30.7067] },
+  konyaalti: { name: "Konyaaltı", city: "Antalya", coords: [36.8617, 30.6383] },
+  dosemealti: { name: "Döşemealtı", city: "Antalya", coords: [37.0189, 30.6128] },
+  aksu: { name: "Aksu", city: "Antalya", coords: [36.9536, 30.8517] },
+  korkuteli: { name: "Korkuteli", city: "Antalya", coords: [37.0667, 30.1989] },
+  elmali: { name: "Elmalı", city: "Antalya", coords: [36.7344, 29.9175] },
+  akseki: { name: "Akseki", city: "Antalya", coords: [37.0478, 31.7944] },
+  gundogmus: { name: "Gündoğmuş", city: "Antalya", coords: [36.8114, 31.9989] },
+  ibradi: { name: "İbradı", city: "Antalya", coords: [37.0989, 31.5978] },
+
+  // Ege ve Akdeniz Önemli İlçeleri
+  bodrum: { name: "Bodrum", city: "Muğla", coords: [37.0383, 27.4292] },
+  fethiye: { name: "Fethiye", city: "Muğla", coords: [36.6214, 29.1164] },
+  marmaris: { name: "Marmaris", city: "Muğla", coords: [36.8547, 28.2714] },
+  datca: { name: "Datça", city: "Muğla", coords: [36.7317, 27.6853] },
+  kusadasi: { name: "Kuşadası", city: "Aydın", coords: [37.8579, 27.2610] },
+  didim: { name: "Didim", city: "Aydın", coords: [37.3750, 27.2583] },
+  cesme: { name: "Çeşme", city: "İzmir", coords: [38.3236, 26.3042] },
+  ayvalik: { name: "Ayvalık", city: "Balıkesir", coords: [39.3197, 26.6978] },
+  edremit: { name: "Edremit", city: "Balıkesir", coords: [39.5936, 27.0242] },
+  bandirma: { name: "Bandırma", city: "Balıkesir", coords: [40.3522, 27.9767] },
+
+  // 81 İl Merkezleri (Eksiksiz Türkiye Kapsamı)
   adana: { name: "Adana Hacı Sabancı OSB", city: "Adana", coords: [36.9850, 35.4500] },
-  mersin: { name: "Mersin Liman", city: "Mersin", coords: [36.8150, 34.6400] },
-  konya: { name: "Konya 1. OSB", city: "Konya", coords: [37.9540, 32.5520] },
-  gaziantep: { name: "Gaziantep 4. OSB", city: "Gaziantep", coords: [37.1250, 37.4200] },
-  kayseri: { name: "Kayseri OSB", city: "Kayseri", coords: [38.7450, 35.3850] },
-  eskisehir: { name: "Eskişehir OSB / TEI", city: "Eskişehir", coords: [39.7820, 30.5480] },
-  samsun: { name: "Samsun Medikal OSB", city: "Samsun", coords: [41.2400, 36.4350] },
-  trabzon: { name: "Trabzon Arsin OSB", city: "Trabzon", coords: [40.9550, 39.9200] },
-  diyarbakir: { name: "Diyarbakır OSB", city: "Diyarbakır", coords: [37.9850, 40.1800] },
+  adiyaman: { name: "Adıyaman", city: "Adıyaman", coords: [37.7648, 38.2786] },
+  afyonkarahisar: { name: "Afyonkarahisar", city: "Afyonkarahisar", coords: [38.7507, 30.5567] },
+  afyon: { name: "Afyonkarahisar", city: "Afyonkarahisar", coords: [38.7507, 30.5567] },
+  agri: { name: "Ağrı", city: "Ağrı", coords: [39.7191, 43.0503] },
+  aksaray: { name: "Aksaray", city: "Aksaray", coords: [38.3687, 34.0370] },
+  amasya: { name: "Amasya", city: "Amasya", coords: [40.6501, 35.8353] },
+  ardahan: { name: "Ardahan", city: "Ardahan", coords: [41.1105, 42.7022] },
+  artvin: { name: "Artvin", city: "Artvin", coords: [41.1828, 41.8183] },
+  aydin: { name: "Aydın", city: "Aydın", coords: [37.8560, 27.8416] },
+  balikesir: { name: "Balıkesir", city: "Balıkesir", coords: [39.6484, 27.8826] },
+  bartin: { name: "Bartın", city: "Bartın", coords: [41.6344, 32.3375] },
+  batman: { name: "Batman", city: "Batman", coords: [37.8812, 41.1293] },
+  bayburt: { name: "Bayburt", city: "Bayburt", coords: [40.2552, 40.2249] },
+  bilecik: { name: "Bilecik", city: "Bilecik", coords: [40.1451, 29.9799] },
+  bingol: { name: "Bingöl", city: "Bingöl", coords: [38.8853, 40.4983] },
+  bitlis: { name: "Bitlis", city: "Bitlis", coords: [38.4006, 42.1095] },
+  bolu: { name: "Bolu", city: "Bolu", coords: [40.7350, 31.6061] },
+  burdur: { name: "Burdur", city: "Burdur", coords: [37.7203, 30.2908] },
+  canakkale: { name: "Çanakkale", city: "Çanakkale", coords: [40.1553, 26.4142] },
+  cankiri: { name: "Çankırı", city: "Çankırı", coords: [40.6013, 33.6134] },
+  corum: { name: "Çorum", city: "Çorum", coords: [40.5506, 34.9556] },
   denizli: { name: "Denizli OSB", city: "Denizli", coords: [37.7900, 29.2100] },
+  diyarbakir: { name: "Diyarbakır OSB", city: "Diyarbakır", coords: [37.9850, 40.1800] },
+  duzce: { name: "Düzce", city: "Düzce", coords: [40.8438, 31.1565] },
+  edirne: { name: "Edirne", city: "Edirne", coords: [41.6772, 26.5557] },
+  elazig: { name: "Elazığ", city: "Elazığ", coords: [38.6810, 39.2264] },
+  erzincan: { name: "Erzincan", city: "Erzincan", coords: [39.7500, 39.5000] },
+  erzurum: { name: "Erzurum 1. OSB", city: "Erzurum", coords: [39.9043, 41.2678] },
+  eskisehir: { name: "Eskişehir OSB / TEI", city: "Eskişehir", coords: [39.7820, 30.5480] },
+  gaziantep: { name: "Gaziantep 4. OSB", city: "Gaziantep", coords: [37.1250, 37.4200] },
+  giresun: { name: "Giresun", city: "Giresun", coords: [40.9128, 38.3895] },
+  gumushane: { name: "Gümüşhane", city: "Gümüşhane", coords: [40.4600, 39.4717] },
+  hakkari: { name: "Hakkari", city: "Hakkari", coords: [37.5833, 43.7333] },
+  hatay: { name: "Hatay", city: "Hatay", coords: [36.2023, 36.1613] },
+  antakya: { name: "Antakya", city: "Hatay", coords: [36.2023, 36.1613] },
+  igdir: { name: "Iğdır", city: "Iğdır", coords: [39.9196, 44.0456] },
+  isparta: { name: "Isparta", city: "Isparta", coords: [37.7648, 30.5566] },
+  kahramanmaras: { name: "Kahramanmaraş", city: "Kahramanmaraş", coords: [37.5858, 36.9371]},
+  maras: { name: "Kahramanmaraş", city: "Kahramanmaraş", coords: [37.5858, 36.9371]},
+  karabuk: { name: "Karabük", city: "Karabük", coords: [41.2061, 32.6204] },
+  karaman: { name: "Karaman", city: "Karaman", coords: [37.1759, 33.2287] },
+  kars: { name: "Kars", city: "Kars", coords: [40.6013, 43.0975] },
+  kastamonu: { name: "Kastamonu", city: "Kastamonu", coords: [41.3887, 33.7827] },
+  kayseri: { name: "Kayseri OSB", city: "Kayseri", coords: [38.7450, 35.3850] },
+  kilis: { name: "Kilis", city: "Kilis", coords: [36.7184, 37.1212] },
+  kirikkale: { name: "Kırıkkale", city: "Kırıkkale", coords: [39.8468, 33.5153] },
+  kirklareli: { name: "Kırklareli", city: "Kırklareli", coords: [41.7333, 27.2167] },
+  kirsehir: { name: "Kırşehir", city: "Kırşehir", coords: [39.1425, 34.1709] },
+  konya: { name: "Konya 1. OSB", city: "Konya", coords: [37.9540, 32.5520] },
+  kutahya: { name: "Kütahya", city: "Kütahya", coords: [39.4167, 29.9833] },
+  malatya: { name: "Malatya 2. OSB", city: "Malatya", coords: [38.3552, 38.3095] },
+  manisa: { name: "Manisa OSB", city: "Manisa", coords: [38.6191, 27.4289] },
+  mardin: { name: "Mardin", city: "Mardin", coords: [37.3212, 40.7245] },
+  mersin: { name: "Mersin Liman", city: "Mersin", coords: [36.8150, 34.6400] },
+  icel: { name: "Mersin", city: "Mersin", coords: [36.8150, 34.6400] },
+  mugla: { name: "Muğla", city: "Muğla", coords: [37.2153, 28.3636] },
+  mus: { name: "Muş", city: "Muş", coords: [38.7432, 41.5064] },
+  nevsehir: { name: "Nevşehir", city: "Nevşehir", coords: [38.6244, 34.7142] },
+  nigde: { name: "Niğde", city: "Niğde", coords: [37.9667, 34.6833] },
+  ordu: { name: "Ordu", city: "Ordu", coords: [40.9839, 37.8764] },
+  osmaniye: { name: "Osmaniye", city: "Osmaniye", coords: [37.0742, 36.2467] },
+  rize: { name: "Rize", city: "Rize", coords: [41.0201, 40.5234] },
+  sakarya: { name: "Sakarya 1. OSB", city: "Sakarya", coords: [40.7569, 30.3783] },
+  adapazari: { name: "Adapazarı", city: "Sakarya", coords: [40.7569, 30.3783] },
+  samsun: { name: "Samsun Medikal OSB", city: "Samsun", coords: [41.2400, 36.4350] },
+  siirt: { name: "Siirt", city: "Siirt", coords: [37.9333, 41.9500] },
+  sinop: { name: "Sinop", city: "Sinop", coords: [42.0231, 35.1531] },
+  sivas: { name: "Sivas", city: "Sivas", coords: [39.7477, 37.0179] },
+  sanliurfa: { name: "Şanlıurfa", city: "Şanlıurfa", coords: [37.1591, 38.7969] },
+  urfa: { name: "Şanlıurfa", city: "Şanlıurfa", coords: [37.1591, 38.7969] },
+  sirnak: { name: "Şırnak", city: "Şırnak", coords: [37.5164, 42.4594] },
+  tekirdag: { name: "Tekirdağ", city: "Tekirdağ", coords: [40.9780, 27.5110] },
   corlu: { name: "Çorlu OSB", city: "Tekirdağ", coords: [41.1550, 27.8000] },
   cerkezkoy: { name: "Çerkezköy OSB", city: "Tekirdağ", coords: [41.2850, 27.9850] },
-  tekirdag: { name: "Tekirdağ", city: "Tekirdağ", coords: [40.9780, 27.5110] },
-  manisa: { name: "Manisa OSB", city: "Manisa", coords: [38.6191, 27.4289] },
-  balikesir: { name: "Balıkesir / Bandırma", city: "Balıkesir", coords: [39.6484, 27.8826] },
-  sakarya: { name: "Sakarya 1. OSB", city: "Sakarya", coords: [40.7569, 30.3783] },
-  malatya: { name: "Malatya 2. OSB", city: "Malatya", coords: [38.3552, 38.3095] },
-  erzurum: { name: "Erzurum 1. OSB", city: "Erzurum", coords: [39.9043, 41.2678] },
-  canakkale: { name: "Çanakkale", city: "Çanakkale", coords: [40.1553, 26.4142] },
-  aydin: { name: "Aydın", city: "Aydın", coords: [37.8560, 27.8416] },
-  mugla: { name: "Muğla", city: "Muğla", coords: [37.2153, 28.3636] },
-  sivas: { name: "Sivas", city: "Sivas", coords: [39.7477, 37.0179] }
+  tokat: { name: "Tokat", city: "Tokat", coords: [40.3167, 36.5500] },
+  trabzon: { name: "Trabzon Arsin OSB", city: "Trabzon", coords: [40.9550, 39.9200] },
+  tunceli: { name: "Tunceli", city: "Tunceli", coords: [39.1079, 39.5401] },
+  usak: { name: "Uşak", city: "Uşak", coords: [38.6823, 29.4082] },
+  van: { name: "Van", city: "Van", coords: [38.4891, 43.4089] },
+  yalova: { name: "Yalova", city: "Yalova", coords: [40.6552, 29.2769] },
+  yozgat: { name: "Yozgat", city: "Yozgat", coords: [39.8181, 34.8147] },
+  zonguldak: { name: "Zonguldak", city: "Zonguldak", coords: [41.4564, 31.7987] }
 };
 
 // Gerçek Türkçe Adres Metnini Coğrafi Koordinata Çözen Akıllı Geocoder
@@ -10889,6 +10985,33 @@ function geocodeTurkishAddress(addressText, fallbackCoords = null, defaultCity =
     }
   }
 
+  // TR_GEO üzerinden 81 il ve 973 ilçe dinamik eşleştirme kontrolü
+  if (!basePoint && typeof window !== 'undefined' && window.TR_GEO) {
+    for (const prov in window.TR_GEO) {
+      const pNorm = prov.toLowerCase()
+        .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+        .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+      const dists = window.TR_GEO[prov] || [];
+      for (let i = 0; i < dists.length; i++) {
+        const d = dists[i];
+        const dNorm = d.toLowerCase()
+          .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+          .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+        if (dNorm.length >= 3 && normalized.includes(dNorm)) {
+          const provPoint = TURKEY_GEO_POINTS[pNorm] || { coords: [39.0, 35.0] };
+          basePoint = { name: d, city: prov, coords: provPoint.coords };
+          break;
+        }
+      }
+      if (basePoint) break;
+      if (pNorm.length >= 3 && normalized.includes(pNorm)) {
+        const provPoint = TURKEY_GEO_POINTS[pNorm] || { coords: [39.0, 35.0] };
+        basePoint = { name: `${prov} Merkez`, city: prov, coords: provPoint.coords };
+        break;
+      }
+    }
+  }
+
   if (!basePoint) {
     // İstanbul içi bölgesel akıllı tahmin: Avrupa mı Anadolu mu?
     const isAnadolu = normalized.includes('kadikoy') || normalized.includes('atasehir') || 
@@ -10896,10 +11019,10 @@ function geocodeTurkishAddress(addressText, fallbackCoords = null, defaultCity =
                       normalized.includes('pendik') || normalized.includes('maltepe') || 
                       normalized.includes('tuzla') || normalized.includes('anadolu');
 
-    const defaultCoords = fallbackCoords || (isAnadolu ? [40.9912, 29.0278] : [41.0450, 28.9850]);
-    const defaultDistrict = isAnadolu ? "Kadıköy / Anadolu Yakası" : "Avrupa Yakası Sanayi Havzası";
+    const defaultCoords = fallbackCoords || (defaultCity !== "İstanbul" && TURKEY_GEO_POINTS[defaultCity.toLowerCase()] ? TURKEY_GEO_POINTS[defaultCity.toLowerCase()].coords : (isAnadolu ? [40.9912, 29.0278] : [41.0450, 28.9850]));
+    const defaultDistrict = isAnadolu ? "Kadıköy / Anadolu Yakası" : (defaultCity !== "İstanbul" ? `${defaultCity} Merkez` : "Avrupa Yakası Sanayi Havzası");
 
-    basePoint = { name: defaultDistrict, city: "İstanbul", coords: defaultCoords };
+    basePoint = { name: defaultDistrict, city: defaultCity, coords: defaultCoords };
   }
 
   // Aynı ilçedeki farklı binaların üst üste binmemesi için adres metninden deterministik mikro-offset
@@ -10946,7 +11069,7 @@ function resolveTravelMode(person, startGeo, destGeo, distanceKm) {
   const destCity = destGeo ? destGeo.city : 'İstanbul';
   const startDistrict = startGeo ? (startGeo.district || startCity) : startCity;
   const destDistrict = destGeo ? (destGeo.district || destCity) : destCity;
-  const isIntercity = startCity.toLowerCase() !== destCity.toLowerCase() || distanceKm > 75;
+  const isIntercity = startCity.toLowerCase() !== destCity.toLowerCase();
 
   // 1. Scooter / Motosiklet Kurye (Şehir içi)
   if (!isIntercity && (plate.includes('scooter') || plate.includes('motor') || plate.includes('kurye') || plate.includes('motosiklet'))) {
@@ -10962,16 +11085,11 @@ function resolveTravelMode(person, startGeo, destGeo, distanceKm) {
     };
   }
 
-  // 2. Uçak (Hava Yolu Seyahati)
+  // 2. Uçak (Hava Yolu Seyahati) - Sadece personele açıkça uçuş/THY tanımlanmışsa veya araçsız çok uzak (>550 km) şehirler arası intikal ise
   const isExplicitFlight = plate.includes('thy') || plate.includes('pegasus') || plate.includes('tk') || loc.includes('uçak') || plate.includes('uçuş') || plate.includes('hava');
-  const isLongFlightDistance = isIntercity && distanceKm >= 360 && !(
-    (startCity === 'İstanbul' && destCity === 'Ankara') || 
-    (startCity === 'Ankara' && destCity === 'İstanbul') ||
-    (startCity === 'İstanbul' && destCity === 'Eskişehir') ||
-    (startCity === 'Ankara' && destCity === 'Konya')
-  );
+  const isUnassignedLongFlight = isIntercity && distanceKm >= 550 && (person && (person.vehiclePlate === 'Zimmetsiz' || !person.vehiclePlate || plate.includes('uçak')));
 
-  if (isExplicitFlight || isLongFlightDistance) {
+  if (isExplicitFlight || isUnassignedLongFlight) {
     const flightNo = plate.toUpperCase().includes('TK') ? plate.toUpperCase() : `THY-TK${Math.floor(2100 + ((person ? person.id : 1) * 19) % 700)}`;
     return {
       type: 'flight',
@@ -11124,21 +11242,27 @@ function getTechRoute(person) {
   }
 
   // 3. Teknisyenin Başlangıç Noktasını Akıllıca Tespit Et
-  // KURAL: Eğer teknisyenin başka bir görevi varsa (örn: HES Tıbbi Cihazlar'daydı),
-  // intikalinin başlangıcı o önceki müşteridir.
-  // Başka bir müşteri görevi yoksa, personelin kendi kayıtlı adresinden (baseAddress) başlar.
+  // KURAL: Eğer teknisyenin aynı bölgede/şehirde aktif bir saha görevi varsa oradan başlar;
+  // yoksa personelin kendi kayıtlı ikamet/çıkış noktasından (baseAddress) başlar.
   let startLocationText = "";
   let startCustomerName = "";
 
-  // A) Öncelikle teknisyenin diğer / önceki iş emirlerini ara (HES Tıbbi Cihazlar vb.)
+  // A) Teknisyenin o anda aktif devam eden görevi var mı?
   if (allPersonJobs.length > 1) {
     const prevJob = allPersonJobs.find(j => 
       (j.tracking_code || j.code) !== activeCode &&
-      (j.customer_name || j.customer) !== targetCustomer
+      (j.customer_name || j.customer) !== targetCustomer &&
+      (j.status === 'Onarımda' || j.status === 'Yolda' || j.status === 'Parça Bekliyor')
     );
     if (prevJob) {
-      startLocationText = prevJob.customer_address || prevJob.customerAddress || "";
-      startCustomerName = prevJob.customer_name || prevJob.customer || "Önceki Müşteri Lokasyonu";
+      const prevAddr = prevJob.customer_address || prevJob.customerAddress || "";
+      const prevGeo = geocodeTurkishAddress(prevAddr);
+      const targetGeo = geocodeTurkishAddress(targetAddress);
+      const baseGeo = geocodeTurkishAddress(person.baseAddress || person.address || person.location || "");
+      if (prevGeo.city === targetGeo.city || prevGeo.city === baseGeo.city) {
+        startLocationText = prevAddr;
+        startCustomerName = prevJob.customer_name || prevJob.customer || "Önceki Müşteri Lokasyonu";
+      }
     }
   }
 
@@ -11171,17 +11295,27 @@ function getTechRoute(person) {
 
   // D) Eğer hiçbir önceki müşteri/saha görevi yoksa personelin kendi ev / merkez adresinden başlat
   if (!startLocationText) {
-    startLocationText = person.baseAddress || person.address || "İstanbul";
+    const targetGeoQuick = targetAddress ? geocodeTurkishAddress(targetAddress) : null;
+    const fallbackCity = targetGeoQuick && targetGeoQuick.city ? targetGeoQuick.city : "İstanbul";
+    startLocationText = person.baseAddress || person.address || person.location || fallbackCity;
     startCustomerName = person.name ? `${person.name} (İkamet/Merkez)` : "Teknisyen Başlangıç Noktası";
   }
 
-  const startGeo = geocodeTurkishAddress(startLocationText, [40.9800, 28.7200]);
-  const destGeo = geocodeTurkishAddress(targetAddress || (startGeo.city + " Organize Sanayi Bölgesi"), [41.0550, 29.0050]);
+  const startGeo = geocodeTurkishAddress(startLocationText);
+  const destGeo = geocodeTurkishAddress(targetAddress || (startGeo.city + " Organize Sanayi Bölgesi"), startGeo.coords, startGeo.city);
 
   // 4. Mesafe, seyahat modu ve waypoint rotası hesapla
   let distanceKm = getHaversineDistanceKm(startGeo.coords, destGeo.coords);
   if (startGeo.city === destGeo.city && startGeo.district === destGeo.district) {
-    if (distanceKm < 1 || distanceKm > 6) distanceKm = 1.0; // Aynı ilçe içi intikal
+    const sC = (startLocationText || '').toLowerCase().trim();
+    const tC = (targetAddress || '').toLowerCase().trim();
+    if (sC === tC || sC.replace(/[^a-z0-9]/g, '') === tC.replace(/[^a-z0-9]/g, '')) {
+      distanceKm = 1.0;
+    } else {
+      // Aynı ilçede farklı adresler için gerçekçi intikal mesafesi (2.0 - 4.5 km)
+      const sub = (Math.abs(startGeo.coords[0] * 1000 + destGeo.coords[1] * 1000) % 25) * 0.1;
+      distanceKm = Math.max(1.8, parseFloat((2.2 + sub).toFixed(1)));
+    }
   } else if (distanceKm < 1) {
     distanceKm = 1.0;
   }
@@ -14563,16 +14697,21 @@ function getStaffLiveLocationAndDistance(staff, targetAddress) {
   // Hedef adrese göre gerçek mesafeyi hesapla
   if (targetAddress && typeof geocodeTurkishAddress === 'function' && typeof getHaversineDistanceKm === 'function') {
     try {
-      const startGeo = geocodeTurkishAddress(locText, [40.9800, 28.7200]);
-      const destGeo = geocodeTurkishAddress(targetAddress, [41.0550, 29.0050]);
+      const destGeo = geocodeTurkishAddress(targetAddress);
+      const startGeo = geocodeTurkishAddress(locText, destGeo.coords, destGeo.city);
       let dist = getHaversineDistanceKm(startGeo.coords, destGeo.coords);
 
-      // Aynı ilçe veya aynı semtteyse gerçek yakın mesafe
+      // Aynı ilçe veya aynı semtteyse gerçekçi yakın mesafe
       if (startGeo.city && destGeo.city && startGeo.city.toLowerCase() === destGeo.city.toLowerCase()) {
         if (startGeo.district && destGeo.district && startGeo.district.toLowerCase() === destGeo.district.toLowerCase()) {
-          // İki adres aynı ilçedeyse (örn: Kadıköy - Kadıköy)
-          dist = Math.min(dist, 1.2);
-          if (dist < 0.8) dist = 1.0;
+          const sC = (locText || '').toLowerCase().trim();
+          const tC = (targetAddress || '').toLowerCase().trim();
+          if (sC === tC || sC.replace(/[^a-z0-9]/g, '') === tC.replace(/[^a-z0-9]/g, '')) {
+            dist = 1.0;
+          } else {
+            const sub = (Math.abs(Math.round(startGeo.coords[0] * 1000 + startGeo.coords[1] * 1000)) % 25) * 0.1;
+            dist = Math.max(1.8, parseFloat((2.2 + sub).toFixed(1)));
+          }
         }
       }
       return {
