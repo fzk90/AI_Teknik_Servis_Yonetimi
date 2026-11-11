@@ -2053,6 +2053,7 @@ function openAccountingReceiptModal(code) {
       unitPrice: unitPrice,
       price: totalPrice,
       isLocalPurchase: isLocal,
+      cost: parseFloat(p.cost) || 0,
       currency: p.currency || 'TRY',
       originalPrice: p.originalPrice || p.original_price,
       exchangeRate: p.exchangeRate || p.exchange_rate,
@@ -2123,7 +2124,8 @@ function openAccountingReceiptModal(code) {
     let expItemsHtml = '';
     if (localParts.length > 0) {
       localParts.forEach(lp => {
-        const lpCost = parseFloat(lp.price || 0);
+        // Teknisyen alacağı = gerçek alış tutarı (müşteriye yansıyan kârlı fiyat değil)
+        const lpCost = (parseFloat(lp.cost) > 0) ? parseFloat(lp.cost) * (lp.qty || 1) : parseFloat(lp.price || 0);
         techReimburseTotal += lpCost;
         expItemsHtml += `
           <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.08);">
@@ -6462,6 +6464,8 @@ function addLocalPurchasedPart() {
       part_code: "LOCAL-" + Date.now().toString().slice(-4),
       part_name: partName,
       quantity: qty,
+      cost: unitPrice,
+      marginPct: localMargin,
       unit_price: saleUnit,
       warranty: "12 Ay Tedarikçi Garantisi",
       source: `Yerel Tedarik (${vendorDoc})`,
@@ -6736,6 +6740,7 @@ function generateOfficialServiceReport(order) {
       unitPrice: unitPrice,
       price: totalPrice,
       isLocalPurchase: isLocal,
+      cost: parseFloat(p.cost) || 0,
       currency: p.currency || 'TRY',
       originalPrice: p.originalPrice || p.original_price,
       exchangeRate: p.exchangeRate || p.exchange_rate,
@@ -6767,7 +6772,8 @@ function generateOfficialServiceReport(order) {
   let localPartsTotal = 0;
   if (localParts.length > 0) {
     localPartsText = localParts.map(p => {
-      const pCost = parseFloat(p.price) || 0;
+      // Teknisyen alacağı = gerçek alış tutarı (kâr eklenmeden)
+      const pCost = (parseFloat(p.cost) > 0) ? parseFloat(p.cost) * (p.qty || 1) : (parseFloat(p.price) || 0);
       localPartsTotal += pCost;
       return `   • [Yerel Dış Tedarik] ${p.name} | ${p.qty || 1} Adet | Tutar: ${pCost.toLocaleString('tr-TR')} ₺ | Tedarikçi/Belge: ${p.supplierDoc || '-'} \n     └─ Stok Hareketi: ${p.movementId || 'STK-MV-Transit'} (Giriş & İşe Çıkış Belgelendi) | Teknisyene Alacak: ${pCost.toLocaleString('tr-TR')} ₺`;
     }).join('\n');
@@ -9722,6 +9728,7 @@ async function loadWorkOrderToWorkbench(trackingCode) {
       usedParts: orderData.used_parts ? orderData.used_parts.map(p => ({
         code: p.part_code || p.code,
         name: p.part_name || p.name,
+        cost: p.cost || 0,
         qty: p.quantity || p.qty || 1,
         price: p.unit_price || p.price || 450,
         unitPrice: p.unit_price || p.price || 450,
@@ -9745,21 +9752,21 @@ async function loadWorkOrderToWorkbench(trackingCode) {
     if (codeEl) codeEl.textContent = `#${state.activeOrder.code}`;
     if (titleEl) titleEl.textContent = `${brand} ${model} - ${complaint.length > 50 ? complaint.slice(0, 50) + '...' : complaint}`;
     if (custEl) custEl.textContent = `Müşteri: ${custName} • ${custAddr}`;
-    if (symptomInput) symptomInput.value = complaint;
+    // Teşhis alanı boş gelir; teknisyen "Teşhis Et" düğmesine basınca (boşsa müşteri şikayetiyle) analiz üretilir
+    if (symptomInput) symptomInput.value = '';
     if (intikalAddress) intikalAddress.textContent = `${custName} • ${custAddr}`;
-
-    // Bu cihaza ve arızaya özel yapay zeka arıza analizini dinamik üret ve yaz
-    const dynamicDiag = synthesizeAIDiagnosis(brand, model, complaint, orderData);
-    renderAIDataToOutput(dynamicDiag);
+    const aiBoxReset = document.getElementById('ai-output-box');
+    if (aiBoxReset) { aiBoxReset.style.display = 'none'; aiBoxReset.innerHTML = ''; }
+    const dynamicDiag = { probable_root_cause: '', recommended_solution: '', recommended_action: '' };
 
     // Teknisyen 3 adımlı müdahale alanlarını yükle veya akıllı önerilerle başlat
     const findingsInput = document.getElementById('tech-findings-input');
     const solutionInput = document.getElementById('tech-solution-input');
     const actionInput = document.getElementById('tech-action-input');
 
-    const initFindings = state.activeOrder.findings || dynamicDiag.probable_root_cause || '';
-    const initSolution = state.activeOrder.solution || dynamicDiag.recommended_solution || '';
-    const initAction = state.activeOrder.action || dynamicDiag.recommended_action || '';
+    const initFindings = state.activeOrder.findings || '';
+    const initSolution = state.activeOrder.solution || '';
+    const initAction = state.activeOrder.action || '';
 
     state.activeOrder.findings = initFindings;
     state.activeOrder.solution = initSolution;
@@ -19297,11 +19304,12 @@ function initOnboardingWizardEngine() {
   if (btnAddStockRow) {
     btnAddStockRow.addEventListener('click', () => {
       wizardStockList.push({
-        code: "PRC-" + Math.floor(100 + Math.random() * 900),
-        name: "Yeni Yedek Parça Kalemi",
-        qty: 10,
-        price: 250,
+        code: "",
+        name: "",
+        qty: undefined,
+        price: undefined,
         currency: "TRY",
+        margin: getDefaultMargin(),
         isImport: false
       });
       renderWizardStockTable();
@@ -19489,26 +19497,37 @@ function renderWizardStockTable() {
 
   let html = '';
   wizardStockList.forEach((stk, idx) => {
+    const cur = stk.currency || 'TRY';
+    const margin = (stk.margin !== undefined && stk.margin !== null && stk.margin !== '') ? stk.margin : getDefaultMargin();
+    const cost = parseFloat(stk.price) || 0;
+    const rate = getFxRate(cur);
+    const salePreview = calcSalePrice(cost * rate, parseFloat(margin) || 0);
     html += `
       <tr>
         <td>
-          <input type="text" class="form-input form-input-sm" style="font-family: monospace; font-size: 0.76rem;" value="${escapeHtml(stk.code)}" placeholder="Örn: IGBT-600V" onchange="updateWizardStock(${idx}, 'code', this.value)">
+          <input type="text" class="form-input form-input-sm" style="font-family: monospace; font-size: 0.76rem;" value="${escapeHtml(stk.code || '')}" placeholder="Örn: IGBT-600V" onchange="updateWizardStock(${idx}, 'code', this.value)">
         </td>
         <td>
-          <input type="text" class="form-input form-input-sm" value="${escapeHtml(stk.name)}" placeholder="Örn: 50A IGBT Modül" onchange="updateWizardStock(${idx}, 'name', this.value)">
+          <input type="text" class="form-input form-input-sm" value="${escapeHtml(stk.name || '')}" placeholder="Örn: 50A IGBT Modül" onchange="updateWizardStock(${idx}, 'name', this.value)">
         </td>
         <td>
-          <input type="number" class="form-input form-input-sm" value="${stk.qty}" min="1" onchange="updateWizardStock(${idx}, 'qty', parseInt(this.value, 10))">
+          <input type="number" class="form-input form-input-sm" value="${stk.qty === undefined ? '' : stk.qty}" min="1" placeholder="Örn: 10" onchange="updateWizardStock(${idx}, 'qty', parseInt(this.value, 10))">
         </td>
         <td>
-          <input type="number" class="form-input form-input-sm" value="${stk.price}" min="1" onchange="updateWizardStock(${idx}, 'price', parseFloat(this.value))">
+          <input type="number" class="form-input form-input-sm" value="${stk.price === undefined || stk.price === '' ? '' : stk.price}" min="0" step="0.01" placeholder="Örn: 250" onchange="updateWizardStock(${idx}, 'price', parseFloat(this.value)); renderWizardStockTable();">
         </td>
         <td>
-          <select class="form-select form-select-sm" onchange="updateWizardStock(${idx}, 'currency', this.value)">
-            <option value="TRY" ${stk.currency === 'TRY' ? 'selected' : ''}>TRY (₺)</option>
-            <option value="USD" ${stk.currency === 'USD' ? 'selected' : ''}>USD ($)</option>
-            <option value="EUR" ${stk.currency === 'EUR' ? 'selected' : ''}>EUR (€)</option>
+          <select class="form-select form-select-sm" onchange="updateWizardStock(${idx}, 'currency', this.value); renderWizardStockTable();">
+            <option value="TRY" ${cur === 'TRY' ? 'selected' : ''}>₺ TL</option>
+            <option value="USD" ${cur === 'USD' ? 'selected' : ''}>$ USD</option>
+            <option value="EUR" ${cur === 'EUR' ? 'selected' : ''}>€ EUR</option>
           </select>
+        </td>
+        <td>
+          <input type="number" class="form-input form-input-sm" value="${margin}" min="0" step="1" placeholder="Örn: 40" onchange="updateWizardStock(${idx}, 'margin', parseFloat(this.value)); renderWizardStockTable();">
+        </td>
+        <td style="font-weight: 700; color: #34d399; white-space: nowrap;" title="Satış fiyatı (KDV hariç) = alış x (1 + kâr %)">
+          ${cost > 0 ? salePreview.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺' : '-'}
         </td>
         <td style="text-align: right;">
           <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteWizardStock(${idx})">✕</button>
@@ -19619,43 +19638,42 @@ function finishAndLaunchSystem() {
     if (typeof updateStaffProfileUI === 'function') updateStaffProfileUI();
   }
 
-  // 3. Stok Envanterini Aktar (Eğer parça varsa)
-  if (wizardStockList.length > 0) {
-    const rates = state.exchangeRates || { USD: 38.50, EUR: 41.20 };
-    const newStock = wizardStockList.map((s, idx) => {
-      let finalPrice = s.price;
-      let exRate = 1.0;
-      if (s.currency === 'USD') {
-        exRate = rates.USD || 38.50;
-        finalPrice = s.price * exRate;
-      } else if (s.currency === 'EUR') {
-        exRate = rates.EUR || 41.20;
-        finalPrice = s.price * exRate;
-      }
-      return {
-        id: 'STK-' + (idx + 1),
-        code: s.code,
-        name: s.name,
-        category: profile.industry.split(',')[0],
-        total_quantity: s.qty,
-        main_warehouse_qty: Math.floor(s.qty * 0.6),
-        workshop_qty: Math.floor(s.qty * 0.2),
-        vehicles_qty: Math.floor(s.qty * 0.2),
-        unit_price_tl: finalPrice,
-        price: finalPrice,
-        originalPrice: s.price,
-        currency: s.currency || 'TRY',
-        exchangeRate: exRate,
-        isImport: s.currency !== 'TRY',
-        critical_threshold: 3,
-        warranty_months: 12
+  // 3. Stok Envanterini Aktar (Eğer parça varsa). Girilen fiyat ALIŞ fiyatıdır; satış = alış + kâr %
+  const validWizardStock = wizardStockList.filter(x => (x.name || x.code) && (parseFloat(x.price) > 0) && (parseInt(x.qty, 10) > 0));
+  if (validWizardStock.length > 0) {
+    const newStock = validWizardStock.map((s0, idx) => {
+      const qty = parseInt(s0.qty, 10) || 1;
+      const workshop = Math.floor(qty * 0.2);
+      const v1 = Math.floor(qty * 0.1);
+      const v2 = Math.floor(qty * 0.1);
+      const item = {
+        code: s0.code || ('PRC-' + (idx + 1)),
+        name: s0.name || s0.code,
+        category: (profile.industry || 'Genel Parça').split(',')[0],
+        central: qty - workshop - v1 - v2,
+        workshop: workshop,
+        vehicle1: v1,
+        vehicle2: v2,
+        warranty: '12 Ay'
       };
+      const cur = s0.currency || 'TRY';
+      applyPurchaseCost(item, {
+        oldQty: 0,
+        qty: qty,
+        unitCost: parseFloat(s0.price),
+        currency: cur,
+        fxRate: getFxRate(cur),
+        margin: (s0.margin !== undefined && s0.margin !== null && s0.margin !== '' && isFinite(parseFloat(s0.margin))) ? parseFloat(s0.margin) : getDefaultMargin()
+      });
+      return item;
     });
 
     state.stock = newStock;
-    try {
-      localStorage.setItem('servisai_stock', JSON.stringify(newStock));
-    } catch (e) {}
+    if (typeof saveStockToLocalStorage === 'function') {
+      saveStockToLocalStorage();
+    } else {
+      try { localStorage.setItem('servisai_stock', JSON.stringify(newStock)); } catch (e) {}
+    }
     if (typeof renderStockTable === 'function') renderStockTable();
   }
 

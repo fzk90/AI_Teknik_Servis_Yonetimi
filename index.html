@@ -3845,8 +3845,8 @@ adr<!--
 
               <div class="form-group">
                 <label class="form-label" for="setting-company-web">Web Sitesi Adresi</label>
-                <input type="url" id="setting-company-web" class="form-input form-input-sm" value=""
-                  placeholder="Örn: https://www.servisiniz.com">
+                <input type="text" inputmode="url" autocapitalize="off" id="setting-company-web" class="form-input form-input-sm" value=""
+                  placeholder="Örn: www.servisiniz.com veya servisiniz.com">
               </div>
 
               <!-- 5. Banka ve Tahsilat Bilgileri -->
@@ -5653,8 +5653,10 @@ adr<!--
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261111_3"></script>
+  <script src="app.js?v=20261111_4"></script>
   <script src="finance.js?v=20261111_3"></script>
+  <script src="tr_geo.js?v=1"></script>
+  <script src="geo-picker.js?v=1"></script>
 
   <!-- ==================== 4. ŞİRKET FATURA BİLGİLERİ (TEKNİSYEN DIŞ HARCAMA İBRAZI) MODALI ==================== -->
   <div class="modal-backdrop" id="company-billing-info-modal" style="display: none;">
@@ -6102,12 +6104,14 @@ adr<!--
             <table class="mini-table">
               <thead>
                 <tr>
-                  <th style="width: 120px;">Parça Kodu</th>
+                  <th style="width: 100px;">Parça Kodu</th>
                   <th>Parça Tanımı / Adı</th>
-                  <th style="width: 70px;">Miktar</th>
-                  <th style="width: 90px;">Birim Fiyat</th>
-                  <th style="width: 80px;">Döviz</th>
-                  <th style="width: 45px; text-align: right;">Sil</th>
+                  <th style="width: 62px;">Miktar</th>
+                  <th style="width: 82px;" title="KDV hariç birim alış fiyatı">Alış Fiyatı</th>
+                  <th style="width: 84px;">Para Birimi</th>
+                  <th style="width: 62px;">Kâr %</th>
+                  <th style="width: 90px;">Satış (KDV hariç)</th>
+                  <th style="width: 40px; text-align: right;">Sil</th>
                 </tr>
               </thead>
               <tbody id="wizard-stock-tbody">
