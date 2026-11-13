@@ -82,3 +82,4 @@ Bu senaryo; Loom, OBS veya benzeri bir ekran kaydediciyle video çekerken Zafer 
 > Kredi kartı gerekmeden, 14 gün boyunca sistemimizi dükkanınızda ücretsiz deneyin.  
 > Aşağıdaki linke tıklayarak hemen canlı demoyu inceleyebilir veya bana WhatsApp'tan doğrudan ulaşabilirsiniz.  
 > Hepinize bol kazançlı, bereketli işler dilerim."*
+
