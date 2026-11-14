@@ -15983,7 +15983,35 @@ function initAuthSystem() {
     if (raw) savedUser = JSON.parse(raw);
   } catch (e) {}
 
-  if (savedUser && savedUser.name && savedUser.role) {
+  // URL Parametresi Kontrolü (?demo=1 veya ilk defa gelen ziyaretçi için doğrudan canlı demo)
+  const urlParams = (typeof window !== 'undefined' && window.location) ? new URLSearchParams(window.location.search) : null;
+  const isDemoUrl = urlParams ? (urlParams.get('demo') === '1' || urlParams.get('demo') === 'true') : false;
+  const isForceLogin = urlParams ? (urlParams.has('login') || urlParams.get('auth') === '1') : false;
+
+  if (isDemoUrl || (!savedUser && !isForceLogin)) {
+    // Doğrudan Canlı Demo Moduyla Başlat (Şifre veya Giriş Engeli Olmadan Sistemi Aç)
+    if (typeof loadSampleDemoData === 'function') loadSampleDemoData(false);
+    const demoUser = {
+      id: 1,
+      name: "Zafer Koçaş",
+      email: "zafer@kocasteknik.com",
+      role: "Yönetici",
+      company: "Altostek Teknik Servis Hizmetleri",
+      avatar: "ZK"
+    };
+    state.currentUser = demoUser;
+    try {
+      localStorage.setItem('servisai_auth_user', JSON.stringify(demoUser));
+      localStorage.setItem('servisai_app_mode', 'demo');
+    } catch (e) {}
+    applyRoleAccess(demoUser);
+    if (loginModal) loginModal.style.display = 'none';
+    const adminTab = document.getElementById('btn-tab-admin');
+    if (adminTab) adminTab.click();
+    setTimeout(() => {
+      if (typeof showToast === 'function') showToast("⚡ Altostek Canlı Servis Demosu Hazır! Sistemi serbestçe inceleyebilirsiniz.", "info");
+    }, 400);
+  } else if (savedUser && savedUser.name && savedUser.role) {
     state.currentUser = savedUser;
     applyRoleAccess(state.currentUser);
   } else {
