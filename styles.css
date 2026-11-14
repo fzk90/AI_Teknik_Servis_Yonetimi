@@ -7560,3 +7560,25 @@ body.is-technician .tech-nav-only {
   display: flex !important;
 }
 
+/* ==================== Müşteri İzolasyonu (Customer Mode) ==================== */
+body.is-customer .role-nav,
+body.is-customer #btn-open-intake-modal,
+body.is-customer #btn-header-settings,
+body.is-customer .admin-subnav-bar,
+body.is-customer #admin-view,
+body.is-customer #tech-view,
+body.is-customer #reports-view,
+body.is-customer #gps-view,
+body.is-customer #inventory-view,
+body.is-customer #equipment-view {
+  display: none !important;
+}
+
+body.is-customer #customer-view {
+  display: block !important;
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 10px;
+}
+
+

@@ -764,12 +764,27 @@ function initTabs() {
     btn.addEventListener('click', () => {
       const targetId = btn.getAttribute('data-tab');
 
+      // Yetki Kontrolü: Müşteri veya Giriş Yapmamış kullanıcı iç sistem ekranlarına erişemez
+      if (!state.currentUser || state.currentUser.role === 'Müşteri') {
+        if (targetId !== 'customer-view') {
+          showToast('🔒 Bu ekrana erişmek için Servis Yöneticisi veya Teknisyen girişi gereklidir.');
+          if (typeof openLoginModal === 'function') openLoginModal('admin');
+          return;
+        }
+      }
+
       // Yetki Kontrolü: Teknisyen rolündeki kullanıcı yönetici sekmelerine erişemez
       if (state.currentUser && state.currentUser.role === 'Teknisyen') {
-        if (targetId === 'admin-view' || targetId === 'reports-view') {
+        if (targetId === 'admin-view' || targetId === 'reports-view' || targetId === 'gps-view' || targetId === 'inventory-view' || targetId === 'equipment-view') {
           showToast('🔒 Bu ekrana erişim için Şirket Yöneticisi yetkisi gereklidir.');
           return;
         }
+      }
+
+      if (targetId === 'customer-view') {
+        switchToCustomerMode();
+        showToast("🔍 Müşteri Cihaz Sorgulama Portalı açıldı.");
+        return;
       }
 
       buttons.forEach(b => b.classList.remove('active'));
@@ -16171,12 +16186,11 @@ function initAuthSystem() {
     });
   }
 
-  // Customer Portal Bypass
+  // Customer Portal Bypass (Tam Güvenlikli Müşteri İzolasyonu)
   if (btnCustomerBypass) {
     btnCustomerBypass.addEventListener('click', () => {
       if (loginModal) loginModal.style.display = 'none';
-      const custTabBtn = document.getElementById('btn-tab-customer');
-      if (custTabBtn) custTabBtn.click();
+      switchToCustomerMode();
       showToast("🔍 Müşteri Cihaz Sorgulama Portalı açıldı.");
     });
   }
@@ -16415,6 +16429,42 @@ function logoutUser() {
   openLoginModal('admin');
 }
 
+function switchToCustomerMode() {
+  state.currentUser = {
+    id: 0,
+    name: "Müşteri",
+    role: "Müşteri",
+    avatar: "👤"
+  };
+
+  document.body.classList.remove('is-admin', 'is-technician');
+  document.body.classList.add('is-customer');
+
+  const avatarEl = document.getElementById('header-user-avatar');
+  const nameEl = document.getElementById('header-user-name');
+  const topAuthIcon = document.getElementById('header-auth-icon');
+  const topAuthLabel = document.getElementById('header-auth-label');
+
+  if (avatarEl) avatarEl.textContent = '👤';
+  if (nameEl) nameEl.textContent = 'Müşteri Portalı';
+  if (topAuthIcon) topAuthIcon.textContent = '🔑';
+  if (topAuthLabel) topAuthLabel.textContent = 'Yetkili Girişi';
+
+  const panels = document.querySelectorAll('.view-panel');
+  panels.forEach(p => p.classList.remove('active'));
+  const customerPanel = document.getElementById('customer-view');
+  if (customerPanel) customerPanel.classList.add('active');
+
+  const roleButtons = document.querySelectorAll('.role-nav .role-btn');
+  roleButtons.forEach(b => b.classList.remove('active'));
+  const custBtn = document.getElementById('btn-tab-customer');
+  if (custBtn) custBtn.classList.add('active');
+
+  state.activeTab = 'customer-view';
+}
+window.switchToCustomerMode = switchToCustomerMode;
+
+
 function applyRoleAccess(user) {
   const avatarEl = document.getElementById('header-user-avatar');
   const nameEl = document.getElementById('header-user-name');
@@ -16429,14 +16479,18 @@ function applyRoleAccess(user) {
   const techSwitcherBox = document.querySelector('.tech-switcher-box');
 
   if (!user) {
-    document.body.classList.remove('is-technician');
-    document.body.classList.remove('is-admin');
+    document.body.classList.remove('is-technician', 'is-admin', 'is-customer');
     if (avatarEl) avatarEl.textContent = '🔒';
     if (nameEl) nameEl.textContent = 'Giriş Yapılmadı';
     if (authIcon) authIcon.textContent = '🔑';
     if (authText) authText.textContent = 'Giriş Yap';
     if (topAuthIcon) topAuthIcon.textContent = '🔑';
     if (topAuthLabel) topAuthLabel.textContent = 'Giriş Yap';
+    return;
+  }
+
+  if (user.role === 'Müşteri') {
+    switchToCustomerMode();
     return;
   }
 
@@ -16449,7 +16503,7 @@ function applyRoleAccess(user) {
   if (topAuthLabel) topAuthLabel.textContent = 'Çıkış / Değiştir';
 
   if (user.role === 'Yönetici') {
-    document.body.classList.remove('is-technician');
+    document.body.classList.remove('is-technician', 'is-customer');
     document.body.classList.add('is-admin');
     if (btnAdminTab) btnAdminTab.style.display = 'flex';
     if (btnReportsTab) btnReportsTab.style.display = 'flex';
@@ -16457,7 +16511,7 @@ function applyRoleAccess(user) {
     if (btnSettings) btnSettings.style.display = 'inline-flex';
     if (techSwitcherBox) techSwitcherBox.style.display = 'block';
   } else if (user.role === 'Teknisyen') {
-    document.body.classList.remove('is-admin');
+    document.body.classList.remove('is-admin', 'is-customer');
     document.body.classList.add('is-technician');
     if (btnAdminTab) btnAdminTab.style.display = 'none';
     if (btnReportsTab) btnReportsTab.style.display = 'none';
@@ -20166,3 +20220,61 @@ async function promptAddSerialNumber(code) {
 }
 window.promptAddSerialNumber = promptAddSerialNumber;
 window.scanSerialWithCamera = scanSerialWithCamera;
+
+// ==========================================
+// PWA & SERVICE WORKER ENTEGRASYONU
+// ==========================================
+function initPWA() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('FUNZerviceTech: Service Worker aktif:', reg.scope))
+        .catch(err => console.warn('FUNZerviceTech: Service Worker kayıt hatası:', err));
+    });
+  }
+
+  let deferredPrompt = null;
+  const pwaBanner = document.getElementById('pwa-install-banner');
+  const pwaInstallBtn = document.getElementById('btn-pwa-install-action');
+
+  // Uygulama zaten yüklüyse veya standalone modundaysa banner'ı gizle
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+    if (pwaBanner) pwaBanner.style.display = 'none';
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (pwaBanner && !window.matchMedia('(display-mode: standalone)').matches) {
+      pwaBanner.style.display = 'flex';
+    }
+  });
+
+  if (pwaInstallBtn) {
+    pwaInstallBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          if (pwaBanner) pwaBanner.style.display = 'none';
+          if (typeof showToast === 'function') showToast('📲 FUNZerviceTech başarıyla cihazınıza yüklendi!');
+        }
+        deferredPrompt = null;
+      } else {
+        alert("📲 FUNZerviceTech Mobil Kurulum:\n\n• Chrome / Edge kullanıyorsanız: Üstteki üç noktaya (⋮) dokunup 'Uygulamayı Yükle' veya 'Ana Ekrana Ekle' seçiniz.\n• Safari (iPhone) kullanıyorsanız: Alttaki Paylaş simgesine (kare içinde yukarı ok) dokunup 'Ana Ekrana Ekle' seçiniz.");
+      }
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    if (pwaBanner) pwaBanner.style.display = 'none';
+    console.log('FUNZerviceTech PWA yüklendi');
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPWA);
+} else {
+  initPWA();
+}
+

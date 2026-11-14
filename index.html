@@ -692,6 +692,22 @@
     </section>
 
     <section id="tech-view" class="view-panel">
+      <!-- PWA Telefona Uygulama Olarak Yükle Şeridi -->
+      <div id="pwa-install-banner"
+        style="display: flex; background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(16, 185, 129, 0.2)); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.6rem;">📲</span>
+          <div>
+            <strong style="color: #38bdf8; font-size: 0.92rem; display: block;">Telefona Uygulama Olarak Yükleyin</strong>
+            <span style="font-size: 0.78rem; color: #cbd5e1;">Ana ekranınıza ekleyin; tarayıcı açmadan doğrudan girin.</span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-success btn-sm" id="btn-pwa-install-action"
+          style="font-weight: 700; white-space: nowrap; background: #10b981; border-color: #10b981; padding: 6px 14px;">
+          ⚡ Telefona Yükle
+        </button>
+      </div>
+
       <!-- Mobil & Tablet Görünüm Sekmesi (Mobil Ekranlarda Görevler ile Tezgâh Arasında Hızlı Geçiş) -->
       <div class="tech-mobile-toggle-bar" id="tech-mobile-toggle-bar">
         <button type="button" class="tech-m-toggle-btn active" id="btn-toggle-m-jobs">
@@ -1329,6 +1345,21 @@
     <!-- ==================== 3. MÜŞTERİ CİHAZ SORGULAMA ==================== -->
     <section id="customer-view" class="view-panel">
       <div class="customer-portal-box">
+
+        <!-- Müşteri Güvenlik Üst Çubuğu (Giriş Butonlu) -->
+        <div class="customer-portal-top-bar"
+          style="display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; padding: 12px 18px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">🛡️</span>
+            <div>
+              <strong style="color: #f8fafc; font-size: 0.95rem;" id="cust-portal-company-title">FUNZerviceTech Güvenli Müşteri Takip Sistemi</strong>
+              <div style="font-size: 0.76rem; color: #94a3b8;">7/24 Canlı Onarım Aşamaları & Cihaz Durumu</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-cyan btn-sm" id="btn-cust-portal-login-switch" onclick="openLoginModal('admin')" style="font-weight: 600;">
+            <span>🔑 Personel / Yönetici Girişi</span>
+          </button>
+        </div>
 
         <div class="portal-header">
           <div class="portal-badge">Müşteri Online Takip Merkezi</div>
