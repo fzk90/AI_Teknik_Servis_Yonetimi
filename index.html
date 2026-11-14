@@ -76,10 +76,15 @@
         title="Yeni Müşteri Çağrısı ve Atölye Cihaz Kabulü">
         <span>➕ Yeni Çağrı / Cihaz Kabul</span>
       </button>
-      <div class="user-pill" id="btn-open-manager-modal" style="cursor: pointer;" title="Profil ve Yönetici Bilgileri">
+      <div class="user-pill" id="btn-open-manager-modal" style="cursor: pointer;" title="Profil ve Oturum Bilgileri">
         <span class="avatar" id="header-user-avatar">ZK</span>
         <span class="user-name" id="header-user-name">Zafer Koçaş (Yönetici)</span>
       </div>
+      <button type="button" class="btn btn-outline btn-sm" id="btn-header-auth-main"
+        title="Oturumu Kapat / Giriş Yap / Rol Değiştir" style="border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; font-weight: 600;">
+        <span id="header-auth-icon">🚪</span>
+        <span id="header-auth-label">Çıkış Yap</span>
+      </button>
       <a href="tanitim.html" target="_blank" class="btn btn-outline btn-sm"
         title="Müşteri Satış Sayfası ve PDF Broşürü" style="text-decoration: none; color: #fff;">
         <span>📄 Tanıtım & Fiyatlar</span>
@@ -4825,21 +4830,26 @@
     <div class="modal-box login-modal-box">
 
       <!-- Modal Header & Brand -->
-      <div class="login-modal-header">
+      <div class="login-modal-header" style="position: relative;">
+        <button type="button" class="modal-close-btn" id="btn-close-login-modal"
+          style="position: absolute; right: 14px; top: 14px; background: transparent; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer;" title="Kapat">&times;</button>
         <div class="login-brand-icon">
           <span>⚡</span>
         </div>
         <h2 class="login-title">FUNZerviceTech.ai Güvenlik & Yetkili Girişi</h2>
-        <p class="login-subtitle">Yapay Zeka Destekli Teknik Servis Yönetim Portalı</p>
+        <p class="login-subtitle">Yapay Zeka Destekli Teknik Servis & Operasyon Yönetim Portalı</p>
       </div>
 
       <!-- Role Mode Switcher Tabs -->
-      <div class="login-role-tabs">
+      <div class="login-role-tabs" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
         <button type="button" class="login-tab-btn active" id="tab-login-admin" data-target="pane-login-admin">
-          <span>👔 Şirket Yöneticisi</span>
+          <span>👑 Şirket Yöneticisi</span>
         </button>
         <button type="button" class="login-tab-btn" id="tab-login-tech" data-target="pane-login-tech">
           <span>🔧 Saha Teknisyeni</span>
+        </button>
+        <button type="button" class="login-tab-btn" id="tab-login-register" data-target="pane-login-register">
+          <span>✨ Ücretsiz Kayıt Ol</span>
         </button>
       </div>
 
@@ -4930,11 +4940,75 @@
         </form>
       </div>
 
-      <!-- Modal Footer: Müşteri Şifresiz Doğrudan Sorgulama Geçişi -->
-      <div class="login-modal-footer">
-        <span class="text-xs text-muted">Cihazınız serviste mi?</span>
-        <button type="button" class="btn btn-link btn-xs" id="btn-login-as-customer">
-          <span>🔍 Müşteri Cihaz Sorgulama Portalı (Şifresiz) →</span>
+      <!-- Tab 3: Yeni Servis Kaydı (14 Gün Ücretsiz Kayıt Ol) -->
+      <div class="login-tab-pane" id="pane-login-register" style="display: none;">
+        <form id="form-login-register" onsubmit="return false;">
+          <div class="form-group mb-2">
+            <label class="form-label" for="reg-company-name">Servis / Şirket Adı:</label>
+            <div class="input-with-icon">
+              <span class="input-icon">🏢</span>
+              <input type="text" id="reg-company-name" class="form-input" placeholder="Örn: Ege İklimlendirme & Soğutma" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="mb-2">
+            <div class="form-group">
+              <label class="form-label" for="reg-company-industry">Uzmanlık Alanı:</label>
+              <select id="reg-company-industry" class="form-select">
+                <option value="İklimlendirme, Soğutma & HVAC">İklimlendirme & HVAC</option>
+                <option value="Elektronik, Otomasyon & PLC">Elektronik & Otomasyon</option>
+                <option value="Endüstriyel Mutfak & Çamaşırhane">Endüstriyel Mutfak</option>
+                <option value="Jeneratör, UPS & Güç Sistemleri">Jeneratör & UPS</option>
+                <option value="Asansör & Yürüyen Merdiven">Asansör & Kaldırma</option>
+                <option value="Beyaz Eşya & Ev Aletleri">Beyaz Eşya Yetkili/Özel</option>
+                <option value="Medikal & Laboratuvar Cihazları">Medikal & Laboratuvar</option>
+                <option value="Genel Teknik Servis & Onarım">Genel Teknik Servis</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-company-city">Hizmet İli:</label>
+              <input type="text" id="reg-company-city" class="form-input" placeholder="Örn: İstanbul, İzmir, Bursa" value="İstanbul">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="mb-2">
+            <div class="form-group">
+              <label class="form-label" for="reg-admin-name">Yetkili Adı Soyadı:</label>
+              <input type="text" id="reg-admin-name" class="form-input" placeholder="Adınız Soyadınız" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-admin-phone">Telefon No:</label>
+              <input type="tel" id="reg-admin-phone" class="form-input" placeholder="05XX XXX XX XX" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="mb-3">
+            <div class="form-group">
+              <label class="form-label" for="reg-admin-email">E-Posta (Giriş İçin):</label>
+              <input type="email" id="reg-admin-email" class="form-input" placeholder="yonetici@sirketiniz.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-admin-password">Şifre Belirleyin:</label>
+              <input type="password" id="reg-admin-password" class="form-input" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <div class="login-error-alert" id="login-register-error" style="display: none;"></div>
+
+          <button type="submit" class="btn btn-success w-100 btn-login-submit" id="btn-submit-register-login"
+            style="background: #10b981; border-color: #10b981; font-weight: 700; padding: 10px;">
+            <span>🚀 14 Gün Ücretsiz Servisimi Başlat</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="login-modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.08);">
+        <button type="button" class="btn btn-outline-cyan btn-xs" id="btn-login-demo-bypass" style="font-weight: 700;">
+          <span>⚡ Örnek Demo ile Hızlı Başla (Altostek)</span>
+        </button>
+        <button type="button" class="btn btn-link btn-xs" id="btn-login-as-customer" style="color: var(--text-muted); text-decoration: none;">
+          <span>🔍 Müşteri Cihaz Sorgulama →</span>
         </button>
       </div>
 

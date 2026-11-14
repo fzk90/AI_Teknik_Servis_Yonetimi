@@ -7804,6 +7804,13 @@ function initWelcomeModal() {
 
   if (!modal) return;
 
+  // Modern Auth Gateway önceliklidir
+  const authUser = localStorage.getItem('servisai_auth_user');
+  if (!authUser) {
+    modal.style.display = 'none';
+    return;
+  }
+
   const appMode = localStorage.getItem('servisai_app_mode');
   if (!appMode) {
     modal.style.display = 'flex';
@@ -15946,7 +15953,15 @@ function initAuthSystem() {
   const techError = document.getElementById('login-tech-error');
   const keypad = document.querySelector('.mobile-pin-keypad');
 
-  // Load existing session or default to Zafer Koçaş (Yönetici)
+  const tabRegister = document.getElementById('tab-login-register');
+  const paneRegister = document.getElementById('pane-login-register');
+  const btnSubmitRegister = document.getElementById('btn-submit-register-login');
+  const btnLoginDemo = document.getElementById('btn-login-demo-bypass');
+  const btnCloseLogin = document.getElementById('btn-close-login-modal');
+  const btnHeaderAuthMain = document.getElementById('btn-header-auth-main');
+  const userPill = document.getElementById('btn-open-manager-modal');
+
+  // Load existing session or prompt for login
   let savedUser = null;
   try {
     const raw = (typeof localStorage !== 'undefined') ? localStorage.getItem('servisai_auth_user') : null;
@@ -15955,36 +15970,128 @@ function initAuthSystem() {
 
   if (savedUser && savedUser.name && savedUser.role) {
     state.currentUser = savedUser;
+    applyRoleAccess(state.currentUser);
   } else {
-    // Default initial session is Zafer Koçaş (Yönetici) for seamless out-of-the-box experience
-    state.currentUser = {
-      id: 1,
-      name: "Zafer Koçaş",
-      email: "zafer@kocasteknik.com",
-      role: "Yönetici",
-      avatar: "ZK"
-    };
+    state.currentUser = null;
+    applyRoleAccess(null);
+    setTimeout(() => {
+      openLoginModal('admin');
+    }, 300);
   }
 
-  // Apply role permissions to UI
-  applyRoleAccess(state.currentUser);
-
   // Tab Switcher inside Modal
-  if (tabAdmin && tabTech && paneAdmin && paneTech) {
-    tabAdmin.addEventListener('click', () => {
-      tabAdmin.classList.add('active');
-      tabTech.classList.remove('active');
-      paneAdmin.style.display = 'block';
-      paneTech.style.display = 'none';
-      if (adminError) adminError.style.display = 'none';
-    });
+  function switchAuthTab(activeTab, activePane) {
+    [tabAdmin, tabTech, tabRegister].forEach(t => t && t.classList.remove('active'));
+    [paneAdmin, paneTech, paneRegister].forEach(p => p && (p.style.display = 'none'));
+    if (activeTab) activeTab.classList.add('active');
+    if (activePane) activePane.style.display = 'block';
+    if (adminError) adminError.style.display = 'none';
+    if (techError) techError.style.display = 'none';
+    const regError = document.getElementById('login-register-error');
+    if (regError) regError.style.display = 'none';
+  }
 
-    tabTech.addEventListener('click', () => {
-      tabTech.classList.add('active');
-      tabAdmin.classList.remove('active');
-      paneTech.style.display = 'block';
-      paneAdmin.style.display = 'none';
-      if (techError) techError.style.display = 'none';
+  if (tabAdmin) tabAdmin.addEventListener('click', () => switchAuthTab(tabAdmin, paneAdmin));
+  if (tabTech) tabTech.addEventListener('click', () => switchAuthTab(tabTech, paneTech));
+  if (tabRegister) tabRegister.addEventListener('click', () => switchAuthTab(tabRegister, paneRegister));
+
+  // Close Login Modal Button
+  if (btnCloseLogin && loginModal) {
+    btnCloseLogin.addEventListener('click', () => {
+      loginModal.style.display = 'none';
+    });
+  }
+
+  // 14 Gün Ücretsiz Kayıt Ol Motoru
+  if (btnSubmitRegister) {
+    btnSubmitRegister.addEventListener('click', (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      const compName = (document.getElementById('reg-company-name')?.value || '').trim();
+      const compInd = document.getElementById('reg-company-industry')?.value || 'Genel Teknik Servis';
+      const compCity = (document.getElementById('reg-company-city')?.value || '').trim() || 'İstanbul';
+      const adminName = (document.getElementById('reg-admin-name')?.value || '').trim();
+      const adminPhone = (document.getElementById('reg-admin-phone')?.value || '').trim();
+      const adminEmail = (document.getElementById('reg-admin-email')?.value || '').trim();
+      const adminPwd = (document.getElementById('reg-admin-password')?.value || '').trim();
+      const regError = document.getElementById('login-register-error');
+
+      if (!compName || !adminName || !adminEmail || !adminPwd) {
+        if (regError) {
+          regError.textContent = "Lütfen Şirket Adı, Yetkili Adı, E-Posta ve Şifre alanlarını eksiksiz doldurunuz.";
+          regError.style.display = 'block';
+        }
+        return;
+      }
+
+      // Yeni firma profilini oluştur
+      const newCompany = {
+        name: compName,
+        shortName: compName.split(' ')[0] || compName,
+        industry: compInd,
+        city: compCity,
+        phone: adminPhone,
+        email: adminEmail,
+        website: "",
+        address: compCity,
+        vkn: "",
+        invoicePrefix: "SRV",
+        plan: "14 Gün Ücretsiz Deneme (Pro)",
+        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      // Temiz servis aç
+      if (typeof startCleanSlateService === 'function') startCleanSlateService();
+      if (typeof applyCompanyProfile === 'function') applyCompanyProfile(newCompany);
+
+      // Yönetici Kullanıcısını Oluştur
+      const initials = adminName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || "ZK";
+      const newUser = {
+        id: 1,
+        name: adminName,
+        email: adminEmail,
+        phone: adminPhone,
+        role: "Yönetici",
+        company: compName,
+        avatar: initials
+      };
+
+      state.currentUser = newUser;
+      try {
+        localStorage.setItem('servisai_auth_user', JSON.stringify(newUser));
+        localStorage.setItem('servisai_company_profile', JSON.stringify(newCompany));
+        localStorage.setItem('servisai_app_mode', 'clean');
+      } catch (err) {}
+
+      applyRoleAccess(newUser);
+      if (loginModal) loginModal.style.display = 'none';
+      showToast(`🎉 Tebrikler! ${compName} 14 gün ücretsiz deneme ile kuruldu. Hoş geldiniz, Sayın ${adminName}!`, "success");
+      const adminTab = document.getElementById('btn-tab-admin');
+      if (adminTab) adminTab.click();
+    });
+  }
+
+  // Demo Moduyla Hızlı Başla Butonu (Altostek)
+  if (btnLoginDemo) {
+    btnLoginDemo.addEventListener('click', () => {
+      if (typeof loadSampleDemoData === 'function') loadSampleDemoData(false);
+      const demoUser = {
+        id: 1,
+        name: "Zafer Koçaş",
+        email: "zafer@kocasteknik.com",
+        role: "Yönetici",
+        company: "Altostek Teknik Servis Hizmetleri",
+        avatar: "ZK"
+      };
+      state.currentUser = demoUser;
+      try {
+        localStorage.setItem('servisai_auth_user', JSON.stringify(demoUser));
+        localStorage.setItem('servisai_app_mode', 'demo');
+      } catch (e) {}
+      applyRoleAccess(demoUser);
+      if (loginModal) loginModal.style.display = 'none';
+      showToast("⚡ Örnek demo servisi (Altostek) ile giriş yapıldı!", "info");
+      const adminTab = document.getElementById('btn-tab-admin');
+      if (adminTab) adminTab.click();
     });
   }
 
@@ -16074,16 +16181,16 @@ function initAuthSystem() {
     });
   }
 
-  // Header Auth Button (Login / Logout)
-  if (btnHeaderAuth) {
-    btnHeaderAuth.addEventListener('click', () => {
-      if (state.currentUser) {
-        logoutUser();
-      } else {
-        openLoginModal();
-      }
-    });
-  }
+  // Header Auth Buttons & User Pill
+  const authButtons = [btnHeaderAuth, btnHeaderAuthMain, userPill];
+  authButtons.forEach(btn => {
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        openLoginModal(state.currentUser ? 'admin' : 'admin');
+      });
+    }
+  });
 }
 
 function openLoginModal(defaultTab = 'admin') {
@@ -16093,8 +16200,11 @@ function openLoginModal(defaultTab = 'admin') {
   loginModal.style.display = 'flex';
   const tabAdmin = document.getElementById('tab-login-admin');
   const tabTech = document.getElementById('tab-login-tech');
+  const tabRegister = document.getElementById('tab-login-register');
   if (defaultTab === 'tech' && tabTech) {
     tabTech.click();
+  } else if (defaultTab === 'register' && tabRegister) {
+    tabRegister.click();
   } else if (tabAdmin) {
     tabAdmin.click();
   }
@@ -16284,45 +16394,75 @@ function logoutUser() {
     }
   } catch (e) {}
 
+  document.body.classList.remove('is-technician');
+  document.body.classList.remove('is-admin');
+
   const avatarEl = document.getElementById('header-user-avatar');
   const nameEl = document.getElementById('header-user-name');
   const authIcon = document.getElementById('btn-header-auth-icon');
   const authText = document.getElementById('btn-header-auth-text');
+  const topAuthIcon = document.getElementById('header-auth-icon');
+  const topAuthLabel = document.getElementById('header-auth-label');
 
   if (avatarEl) avatarEl.textContent = '🔒';
   if (nameEl) nameEl.textContent = 'Giriş Yapılmadı';
   if (authIcon) authIcon.textContent = '🔑';
   if (authText) authText.textContent = 'Giriş Yap';
+  if (topAuthIcon) topAuthIcon.textContent = '🔑';
+  if (topAuthLabel) topAuthLabel.textContent = 'Giriş Yap';
 
   showToast("👋 Oturum başarıyla kapatıldı.");
-  openLoginModal();
+  openLoginModal('admin');
 }
 
 function applyRoleAccess(user) {
-  if (!user) return;
   const avatarEl = document.getElementById('header-user-avatar');
   const nameEl = document.getElementById('header-user-name');
   const authIcon = document.getElementById('btn-header-auth-icon');
   const authText = document.getElementById('btn-header-auth-text');
+  const topAuthIcon = document.getElementById('header-auth-icon');
+  const topAuthLabel = document.getElementById('header-auth-label');
   const btnAdminTab = document.getElementById('btn-tab-admin');
   const btnReportsTab = document.getElementById('btn-tab-reports');
   const btnIntake = document.getElementById('btn-open-intake-modal');
+  const btnSettings = document.getElementById('btn-header-settings');
   const techSwitcherBox = document.querySelector('.tech-switcher-box');
+
+  if (!user) {
+    document.body.classList.remove('is-technician');
+    document.body.classList.remove('is-admin');
+    if (avatarEl) avatarEl.textContent = '🔒';
+    if (nameEl) nameEl.textContent = 'Giriş Yapılmadı';
+    if (authIcon) authIcon.textContent = '🔑';
+    if (authText) authText.textContent = 'Giriş Yap';
+    if (topAuthIcon) topAuthIcon.textContent = '🔑';
+    if (topAuthLabel) topAuthLabel.textContent = 'Giriş Yap';
+    return;
+  }
 
   const avatar = user.avatar || (user.name ? user.name.slice(0, 2).toUpperCase() : 'US');
   if (avatarEl) avatarEl.textContent = avatar;
   if (nameEl) nameEl.textContent = `${user.name} (${user.role})`;
   if (authIcon) authIcon.textContent = '🚪';
   if (authText) authText.textContent = 'Çıkış Yap';
+  if (topAuthIcon) topAuthIcon.textContent = '🚪';
+  if (topAuthLabel) topAuthLabel.textContent = 'Çıkış / Değiştir';
 
   if (user.role === 'Yönetici') {
+    document.body.classList.remove('is-technician');
+    document.body.classList.add('is-admin');
     if (btnAdminTab) btnAdminTab.style.display = 'flex';
     if (btnReportsTab) btnReportsTab.style.display = 'flex';
     if (btnIntake) btnIntake.style.display = 'inline-flex';
+    if (btnSettings) btnSettings.style.display = 'inline-flex';
     if (techSwitcherBox) techSwitcherBox.style.display = 'block';
   } else if (user.role === 'Teknisyen') {
+    document.body.classList.remove('is-admin');
+    document.body.classList.add('is-technician');
     if (btnAdminTab) btnAdminTab.style.display = 'none';
     if (btnReportsTab) btnReportsTab.style.display = 'none';
+    if (btnIntake) btnIntake.style.display = 'none';
+    if (btnSettings) btnSettings.style.display = 'none';
     if (techSwitcherBox) techSwitcherBox.style.display = 'none';
     state.activeTechId = user.id;
     const selectActiveTech = document.getElementById('select-active-tech');
@@ -16332,6 +16472,11 @@ function applyRoleAccess(user) {
     const techProfileInfo = document.getElementById('tech-profile-info');
     if (techProfileInfo) {
       techProfileInfo.innerHTML = `Teknisyen: <strong>${escapeHtml(user.name)}</strong> • Araç: <strong>${escapeHtml(user.vehiclePlate || 'Zimmetsiz')}</strong>`;
+    }
+    // Switch to tech view automatically
+    const techTab = document.getElementById('btn-tab-tech');
+    if (techTab && (!state.activeTab || state.activeTab === 'admin-view')) {
+      techTab.click();
     }
   }
 }

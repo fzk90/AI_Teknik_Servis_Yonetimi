@@ -7542,3 +7542,21 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
+
+/* ==================== 30. Rol Tabanlı Erişim Kısıtlamaları (RBAC) ==================== */
+body.is-technician #btn-tab-admin,
+body.is-technician #btn-tab-reports,
+body.is-technician #btn-open-intake-modal,
+body.is-technician #btn-header-settings,
+body.is-technician .admin-only,
+body.is-technician .financial-sensitive,
+body.is-technician .cost-column,
+body.is-technician .profit-column,
+body.is-technician .tech-hide-cost {
+  display: none !important;
+}
+
+body.is-technician .tech-nav-only {
+  display: flex !important;
+}
+
