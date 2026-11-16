@@ -243,20 +243,25 @@ const state = {
   ],
   currentManager: { id: 1, name: "Zafer Koçaş", title: "Genel Müdür & Servis Direktörü", email: "zafer@kocasteknik.com", phone: "0532 210 00 00", role: "Süper Yönetici (Tüm Yetkiler)", avatar: "ZK" },
 
-  // Parça ve Çoklu Depo / Atölye / Araç Stok Matrisi
+  // Parça ve Çoklu Depo / Atölye / Araç Stok Matrisi (TCMB Döviz ve TL Korumalı)
   stock: [
-    { code: "IGBT-600V-40A", name: "600V 40A IGBT Güç Transistörü", category: "Yarı İletken & Güç", central: 45, workshop: 10, vehicle1: 2, vehicle2: 0, price: 450, warranty: "12 Ay" },
-    { code: "KOND-470UF", name: "470uF 450V Düşük ESR Kondansatör", category: "Pasif & Trafo", central: 120, workshop: 25, vehicle1: 5, vehicle2: 8, price: 120, warranty: "6 Ay" },
-    { code: "ROLE-24V-16A", name: "24V 16A Güç Rölesi", category: "Röle & Şalt", central: 60, workshop: 12, vehicle1: 3, vehicle2: 1, price: 180, warranty: "12 Ay" },
-    { code: "SMD-OPTO-817", name: "PC817 Optokuplör Entegre", category: "Elektronik & Kart", central: 200, workshop: 40, vehicle1: 8, vehicle2: 12, price: 45, warranty: "12 Ay" },
-    { code: "SENS-NTC-10K", name: "NTC 10K Sıcaklık Sensörü", category: "Sensör & Termal", central: 30, workshop: 8, vehicle1: 1, vehicle2: 4, price: 95, warranty: "6 Ay" },
-    { code: "RULMAN-6204", name: "6204-2RS Yüksek Hızlı Rulman", category: "Mekanik & Rulman", central: 65, workshop: 15, vehicle1: 4, vehicle2: 2, price: 180, warranty: "12 Ay" },
-    { code: "VENTIL-3YOL", name: "3 Yollu Vana Motoru 220V", category: "Mekanik & Rulman", central: 18, workshop: 6, vehicle1: 1, vehicle2: 0, price: 750, warranty: "12 Ay" },
-    { code: "TERMOSTAT-K59", name: "K59 Otomatik Emniyet Termostatı", category: "Sensör & Termal", central: 40, workshop: 10, vehicle1: 0, vehicle2: 3, price: 140, warranty: "6 Ay" },
-    { code: "SIGORTA-16A", name: "16A C Tipi Ray Otomat Sigorta", category: "Röle & Şalt", central: 85, workshop: 20, vehicle1: 6, vehicle2: 8, price: 85, warranty: "24 Ay" },
-    { code: "FAN-KOND-10UF", name: "10uF 400V Motor Daimi Kondansatör", category: "Pasif & Trafo", central: 50, workshop: 14, vehicle1: 3, vehicle2: 2, price: 60, warranty: "12 Ay" },
-    { code: "TRAFO-220-24", name: "220V/24V 5A Ray Tipi Güç Kaynağı", category: "Yarı İletken & Güç", central: 22, workshop: 5, vehicle1: 1, vehicle2: 1, price: 420, warranty: "12 Ay" },
-    { code: "KLEMENS-WAGO", name: "3 Girişli Yaylı Klemens Paketi", category: "Röle & Şalt", central: 300, workshop: 80, vehicle1: 25, vehicle2: 30, price: 15, warranty: "24 Ay" }
+    { code: "IGBT-600V-40A", name: "Semikron 1200V 50A IGBT Güç Modülü (İthal)", category: "Yarı İletken & Güç", central: 45, workshop: 10, vehicle1: 4, vehicle2: 2, currency: "USD", originalPrice: 45, exchangeRate: 38.50, price: 1732.50, isImport: true, warranty: "24 Ay" },
+    { code: "PLC-SIEMENS-1200", name: "Siemens S7-1200 8xDI Dijital Giriş Modülü", category: "Elektronik & Kart", central: 15, workshop: 5, vehicle1: 2, vehicle2: 1, currency: "EUR", originalPrice: 120, exchangeRate: 41.20, price: 4944.00, isImport: true, warranty: "24 Ay" },
+    { code: "INVERTER-FAN-SCH", name: "Schneider ATV Sürücü Soğutma Fanı 24V", category: "Sensör & Termal", central: 25, workshop: 8, vehicle1: 3, vehicle2: 2, currency: "EUR", originalPrice: 85, exchangeRate: 41.20, price: 3502.00, isImport: true, warranty: "12 Ay" },
+    { code: "ENCODER-HEID-1387", name: "Heidenhain ERN 1387 Açısal Döner Enkoder", category: "Sensör & Termal", central: 8, workshop: 3, vehicle1: 1, vehicle2: 0, currency: "USD", originalPrice: 280, exchangeRate: 38.50, price: 10780.00, isImport: true, warranty: "12 Ay" },
+    { code: "SERVO-AMP-FANUC", name: "Fanuc Alpha iSV Servo Güç Modülü 40A", category: "Yarı İletken & Güç", central: 6, workshop: 2, vehicle1: 1, vehicle2: 0, currency: "USD", originalPrice: 650, exchangeRate: 38.50, price: 25025.00, isImport: true, warranty: "24 Ay" },
+    { code: "SMPS-MEANWELL-24V", name: "MeanWell 24V 10A Pano Tipi Güç Kaynağı", category: "Yarı İletken & Güç", central: 20, workshop: 6, vehicle1: 3, vehicle2: 2, currency: "USD", originalPrice: 35, exchangeRate: 38.50, price: 1347.50, isImport: true, warranty: "24 Ay" },
+    { code: "KOND-470UF", name: "470uF 450V Düşük ESR Kondansatör", category: "Pasif & Trafo", central: 120, workshop: 25, vehicle1: 5, vehicle2: 8, currency: "TRY", price: 120, warranty: "6 Ay" },
+    { code: "ROLE-24V-16A", name: "24V 16A Güç Rölesi", category: "Röle & Şalt", central: 60, workshop: 12, vehicle1: 3, vehicle2: 1, currency: "TRY", price: 180, warranty: "12 Ay" },
+    { code: "SMD-OPTO-817", name: "PC817 Optokuplör Entegre", category: "Elektronik & Kart", central: 200, workshop: 40, vehicle1: 8, vehicle2: 12, currency: "TRY", price: 45, warranty: "12 Ay" },
+    { code: "SENS-NTC-10K", name: "NTC 10K Sıcaklık Sensörü", category: "Sensör & Termal", central: 30, workshop: 8, vehicle1: 1, vehicle2: 4, currency: "TRY", price: 95, warranty: "6 Ay" },
+    { code: "RULMAN-6204", name: "6204-2RS Yüksek Hızlı Rulman", category: "Mekanik & Rulman", central: 65, workshop: 15, vehicle1: 4, vehicle2: 2, currency: "TRY", price: 180, warranty: "12 Ay" },
+    { code: "VENTIL-3YOL", name: "3 Yollu Vana Motoru 220V", category: "Mekanik & Rulman", central: 18, workshop: 6, vehicle1: 1, vehicle2: 0, currency: "TRY", price: 750, warranty: "12 Ay" },
+    { code: "TERMOSTAT-K59", name: "K59 Otomatik Emniyet Termostatı", category: "Sensör & Termal", central: 40, workshop: 10, vehicle1: 0, vehicle2: 3, currency: "TRY", price: 140, warranty: "6 Ay" },
+    { code: "SIGORTA-16A", name: "16A C Tipi Ray Otomat Sigorta", category: "Röle & Şalt", central: 85, workshop: 20, vehicle1: 6, vehicle2: 8, currency: "TRY", price: 85, warranty: "24 Ay" },
+    { code: "FAN-KOND-10UF", name: "10uF 400V Motor Daimi Kondansatör", category: "Pasif & Trafo", central: 50, workshop: 14, vehicle1: 3, vehicle2: 2, currency: "TRY", price: 60, warranty: "12 Ay" },
+    { code: "TRAFO-220-24", name: "220V/24V 5A Ray Tipi Güç Kaynağı", category: "Yarı İletken & Güç", central: 22, workshop: 5, vehicle1: 1, vehicle2: 1, currency: "TRY", price: 420, warranty: "12 Ay" },
+    { code: "KLEMENS-WAGO", name: "3 Girişli Yaylı Klemens Paketi", category: "Röle & Şalt", central: 300, workshop: 80, vehicle1: 25, vehicle2: 30, currency: "TRY", price: 15, warranty: "24 Ay" }
   ],
 
   // Servis Yedek Parça Kategorileri (Özelleştirilebilir ve Yeni Eklenebilir)
@@ -326,8 +331,8 @@ const state = {
     status: "Onarımda",
     complaint: "Cihaz giriş voltajı normal fakat 5 saniye sonra yüksek akım çekerek aşırı ısınıyor ve koruma rölesi devreyi kesiyor.",
     findings: "Delta Electronics VFD-075 güç katındaki IGBT anahtarlama modülünde (U3) aşırı ısınma ve kolektör-emitör kaçak akımı saptandı. Yüksek akım çekimi koruma rölesini tetikleyerek devreyi kesiyor.",
-    solution: "Arızalı IGBT-600V-40A güç transistörü sökülüp yenilenecek, gate tetikleme dirençleri (10 Ohm) ve snubber devresi filtre kondansatörü test edilecek, soğutucu blok termal macunu tazelenecektir.",
-    action: "Hasarlı IGBT transistör devreden ayrıldı, yeni IGBT-600V-40A montajı yapıldı. Gate sinyalleri osiloskopla doğrulandı, 540V DC bara gerilimi kararlı kılındı ve cihaz 30 dakika tam yük testine tabi tutularak sorunsuz çalıştı.",
+    solution: "Arızalı Semikron IGBT güç modülü ($45 İthal) sökülüp yenilenecek, gate tetikleme dirençleri (10 Ohm) ve snubber devresi filtre kondansatörü test edilecek, soğutucu blok termal macunu tazelenecektir.",
+    action: "Hasarlı IGBT modülü devreden ayrıldı, yeni Semikron 1200V 50A IGBT modülü montajı yapıldı. Gate sinyalleri osiloskopla doğrulandı, 540V DC bara gerilimi kararlı kılındı ve cihaz 30 dakika tam yük testine tabi tutularak sorunsuz çalıştı.",
     workSteps: [
       "Multimetre diyot kademesinde IGBT kolektör-emitör aralığında kısa devre ve sızıntı akımı ölçümü yapıldı.",
       "Gate tetikleme dirençlerinin (R12, R14) nominal 10 Ohm değerinde olduğu test edildi.",
@@ -336,7 +341,18 @@ const state = {
     ],
     laborCost: 600,
     usedParts: [
-      { code: "IGBT-600V-40A", name: "IGBT-600V-40A Güç Transistörü", qty: 1, price: 450, warranty: "1 Yıl Parça Garantisi", source: "Mobil Araç Stoğu (34 ABC 101)" }
+      { 
+        code: "IGBT-600V-40A", 
+        name: "Semikron 1200V 50A IGBT Güç Modülü (İthal)", 
+        qty: 1, 
+        price: 1732.50, 
+        unitPrice: 1732.50, 
+        currency: "USD", 
+        originalPrice: 45, 
+        exchangeRate: 38.50, 
+        warranty: "24 Ay Garanti", 
+        source: "Mobil Araç Stoğu (34 ABC 101)" 
+      }
     ],
     customerApproved: false
   },
@@ -2830,6 +2846,11 @@ function renderStockTable() {
       if (!isCritical) return false;
     }
 
+    // Dövizli / İthal Parça Filtresi
+    if (filter.currencyOnly) {
+      if (!item.currency || item.currency === 'TRY') return false;
+    }
+
     return true;
   });
 
@@ -2923,6 +2944,12 @@ function renderStockTable() {
           btnCrit.classList.remove('active');
           btnCrit.setAttribute('data-active', 'false');
           btnCrit.innerHTML = `<span>⚠️ Kritik / Bitenler</span>`;
+        }
+        const btnCurr = document.getElementById('btn-filter-currency');
+        if (btnCurr) {
+          btnCurr.classList.remove('active');
+          btnCurr.setAttribute('data-active', 'false');
+          btnCurr.innerHTML = `<span>💱 İthal / Dövizli ($/€)</span>`;
         }
         renderStockTable();
       });
@@ -3127,6 +3154,21 @@ function initStockFilterControls() {
 
   if (btnCritical) btnCritical.addEventListener('click', toggleCritical);
   if (criticalCard) criticalCard.addEventListener('click', toggleCritical);
+
+  // 5b. Dövizli / İthal Parça Filtresi Toggle
+  const btnCurrency = document.getElementById('btn-filter-currency');
+  const toggleCurrency = () => {
+    state.stockFilter.currencyOnly = !state.stockFilter.currencyOnly;
+    if (btnCurrency) {
+      btnCurrency.classList.toggle('active', state.stockFilter.currencyOnly);
+      btnCurrency.setAttribute('data-active', state.stockFilter.currencyOnly ? 'true' : 'false');
+      btnCurrency.innerHTML = state.stockFilter.currencyOnly 
+        ? `<span>✅ İthal ($/€) Açık</span>`
+        : `<span>💱 İthal / Dövizli ($/€)</span>`;
+    }
+    renderStockTable();
+  };
+  if (btnCurrency) btnCurrency.addEventListener('click', toggleCurrency);
 
   // 6. Lokasyon Görünüm Filtresi (Popup Dropdown)
   if (locViewFilter) {
@@ -14064,7 +14106,7 @@ function loadStockFromLocalStorage() {
     const saved = localStorage.getItem('servisai_stock');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
         state.stock = parsed;
       }
     } else if (appMode === 'clean') {
@@ -14072,6 +14114,125 @@ function loadStockFromLocalStorage() {
     }
   } catch (e) {
     if (appMode === 'clean') state.stock = [];
+  }
+
+  // Dövizli İthal Parça Girişlerini ve TCMB Kurlarını Senkronize Et
+  migrateStockCurrencyConfig();
+}
+
+function migrateStockCurrencyConfig() {
+  const usdRate = (state.exchangeRates && state.exchangeRates.USD) ? state.exchangeRates.USD : 38.50;
+  const eurRate = (state.exchangeRates && state.exchangeRates.EUR) ? state.exchangeRates.EUR : 41.20;
+
+  if (!state.stock || !Array.isArray(state.stock) || state.stock.length === 0) return;
+
+  let changed = false;
+  state.stock.forEach(item => {
+    if (!item) return;
+    const nameLower = (item.name || '').toLowerCase();
+    const codeUpper = (item.code || '').toUpperCase();
+
+    // Semikron / 600V IGBT modülü kontrolü
+    if (codeUpper.includes('IGBT') || nameLower.includes('semikron') || nameLower.includes('igbt')) {
+      if (!item.currency || item.currency === 'TRY' || !item.originalPrice) {
+        item.name = 'Semikron 1200V 50A IGBT Güç Modülü (İthal)';
+        item.currency = 'USD';
+        item.originalPrice = 45;
+        item.exchangeRate = usdRate;
+        item.price = Math.round(45 * usdRate * 100) / 100;
+        item.isImport = true;
+        item.warranty = item.warranty || '24 Ay';
+        changed = true;
+      }
+    } else if (codeUpper.includes('SIEMENS') || nameLower.includes('siemens') || codeUpper.includes('PLC')) {
+      if (!item.currency || item.currency === 'TRY' || !item.originalPrice) {
+        item.name = 'Siemens S7-1200 8xDI Dijital Giriş Modülü';
+        item.currency = 'EUR';
+        item.originalPrice = 120;
+        item.exchangeRate = eurRate;
+        item.price = Math.round(120 * eurRate * 100) / 100;
+        item.isImport = true;
+        changed = true;
+      }
+    } else if (codeUpper.includes('FAN') && (nameLower.includes('schneider') || nameLower.includes('sürücü'))) {
+      if (!item.currency || item.currency === 'TRY' || !item.originalPrice) {
+        item.name = 'Schneider ATV Sürücü Soğutma Fanı 24V';
+        item.currency = 'EUR';
+        item.originalPrice = 85;
+        item.exchangeRate = eurRate;
+        item.price = Math.round(85 * eurRate * 100) / 100;
+        item.isImport = true;
+        changed = true;
+      }
+    } else if (codeUpper.includes('HEID') || nameLower.includes('enkoder') || nameLower.includes('heidenhain')) {
+      if (!item.currency || item.currency === 'TRY' || !item.originalPrice) {
+        item.currency = 'USD';
+        item.originalPrice = 280;
+        item.exchangeRate = usdRate;
+        item.price = Math.round(280 * usdRate * 100) / 100;
+        item.isImport = true;
+        changed = true;
+      }
+    } else if (codeUpper.includes('FANUC') || nameLower.includes('fanuc')) {
+      if (!item.currency || item.currency === 'TRY' || !item.originalPrice) {
+        item.currency = 'USD';
+        item.originalPrice = 650;
+        item.exchangeRate = usdRate;
+        item.price = Math.round(650 * usdRate * 100) / 100;
+        item.isImport = true;
+        changed = true;
+      }
+    } else if (codeUpper.includes('MEANWELL') || nameLower.includes('meanwell')) {
+      if (!item.currency || item.currency === 'TRY' || !item.originalPrice) {
+        item.currency = 'USD';
+        item.originalPrice = 35;
+        item.exchangeRate = usdRate;
+        item.price = Math.round(35 * usdRate * 100) / 100;
+        item.isImport = true;
+        changed = true;
+      }
+    } else if (!item.currency) {
+      item.currency = 'TRY';
+      changed = true;
+    }
+  });
+
+  // Eğer Semikron hiç listede yoksa başa ekle
+  if (!state.stock.some(s => (s.code || '').toUpperCase().includes('IGBT'))) {
+    state.stock.unshift({
+      code: "IGBT-600V-40A",
+      name: "Semikron 1200V 50A IGBT Güç Modülü (İthal)",
+      category: "Yarı İletken & Güç",
+      central: 45,
+      workshop: 10,
+      vehicle1: 4,
+      vehicle2: 2,
+      currency: "USD",
+      originalPrice: 45,
+      exchangeRate: usdRate,
+      price: Math.round(45 * usdRate * 100) / 100,
+      isImport: true,
+      warranty: "24 Ay"
+    });
+    changed = true;
+  }
+
+  // Aktif iş emrindeki parçayı da senkronize et
+  if (state.activeOrder && state.activeOrder.usedParts) {
+    state.activeOrder.usedParts.forEach(p => {
+      if ((p.code && p.code.includes('IGBT')) || (p.name && p.name.toLowerCase().includes('igbt'))) {
+        p.name = 'Semikron 1200V 50A IGBT Güç Modülü (İthal)';
+        p.currency = 'USD';
+        p.originalPrice = 45;
+        p.exchangeRate = usdRate;
+        p.price = 1732.50;
+        p.unitPrice = 1732.50;
+      }
+    });
+  }
+
+  if (changed) {
+    saveStockToLocalStorage();
   }
 }
 
