@@ -19833,6 +19833,9 @@ function initOnboardingWizardEngine() {
       wizardStockList.push({
         code: "",
         name: "",
+        central: 5,
+        workshop: 2,
+        perVehicle: 1,
         qty: undefined,
         price: undefined,
         currency: "TRY",
@@ -19934,6 +19937,12 @@ function goToWizardStep(step) {
   if (btnNext) btnNext.style.display = (step < 7) ? 'inline-block' : 'none';
   if (btnFinish) btnFinish.style.display = (step === 7) ? 'inline-block' : 'none';
 
+  // 5. Adımda Araç Depolarını ve Stok Dağılımını Güncelle
+  if (step === 5) {
+    if (typeof renderWizardVehicleWarehousesPreview === 'function') renderWizardVehicleWarehousesPreview();
+    if (typeof renderWizardStockTable === 'function') renderWizardStockTable();
+  }
+
   // 7. Adımda Canlı Özeti Güncelle
   if (step === 7) {
     updateWizardSummary();
@@ -20018,9 +20027,36 @@ window.deleteWizardTech = function(idx) {
   renderWizardTechTable();
 };
 
+function renderWizardVehicleWarehousesPreview() {
+  const container = document.getElementById('wizard-vehicle-warehouses-preview');
+  if (!container) return;
+
+  const validTechs = (wizardTechList || []).filter(t => t.vehiclePlate && t.vehiclePlate.trim());
+  if (validTechs.length === 0) {
+    container.innerHTML = `<span style="color: #94a3b8; font-style: italic;">⚠️ Henüz zimmetli araç yok (4. Adımdan teknisyen ekleyin)</span>`;
+    return;
+  }
+
+  let html = '';
+  validTechs.forEach((t, i) => {
+    const plateOnly = t.vehiclePlate.includes('-') ? t.vehiclePlate.split('-')[0].trim() : t.vehiclePlate;
+    const shortName = t.name ? (t.name.split(' ')[0] + ' ' + (t.name.split(' ')[1] ? t.name.split(' ')[1][0] + '.' : '')) : `Teknisyen ${i+1}`;
+    html += `
+      <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 4px; padding: 2px 7px; color: #7dd3fc; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;" title="${escapeHtml(t.name)} — ${escapeHtml(t.vehiclePlate)}">
+        🚗 <span>${escapeHtml(plateOnly)}</span> <small style="color: #cbd5e1; font-weight: normal;">(${escapeHtml(shortName)})</small>
+      </span>
+    `;
+  });
+  html += `<span style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; margin-left: auto;">(${validTechs.length} Mobil Araç Deposu)</span>`;
+  container.innerHTML = html;
+}
+
 function renderWizardStockTable() {
   const tbody = document.getElementById('wizard-stock-tbody');
   if (!tbody) return;
+
+  const validTechs = (wizardTechList || []).filter(t => t.vehiclePlate && t.vehiclePlate.trim());
+  const vCount = validTechs.length > 0 ? validTechs.length : Math.max(1, (wizardTechList || []).length);
 
   let html = '';
   wizardStockList.forEach((stk, idx) => {
@@ -20029,16 +20065,46 @@ function renderWizardStockTable() {
     const cost = parseFloat(stk.price) || 0;
     const rate = getFxRate(cur);
     const salePreview = calcSalePrice(cost * rate, parseFloat(margin) || 0);
+
+    // İlk yüklemede central / workshop / perVehicle ayrıştır
+    if (stk.central === undefined && stk.workshop === undefined && stk.perVehicle === undefined) {
+      if (stk.qty !== undefined && stk.qty !== null && stk.qty !== '') {
+        const q = parseInt(stk.qty, 10) || 6;
+        stk.perVehicle = Math.max(1, Math.floor(q * 0.15)) || 1;
+        stk.workshop = Math.max(1, Math.floor(q * 0.25)) || 1;
+        stk.central = Math.max(0, q - stk.workshop - (stk.perVehicle * vCount));
+      } else {
+        stk.central = 5;
+        stk.workshop = 2;
+        stk.perVehicle = 1;
+      }
+    }
+
+    const cVal = parseInt(stk.central, 10) || 0;
+    const wVal = parseInt(stk.workshop, 10) || 0;
+    const vVal = parseInt(stk.perVehicle, 10) || 0;
+    const totQty = cVal + wVal + (vVal * vCount);
+    stk.qty = totQty;
+
     html += `
       <tr>
         <td>
-          <input type="text" class="form-input form-input-sm" style="font-family: monospace; font-size: 0.76rem;" value="${escapeHtml(stk.code || '')}" placeholder="Örn: IGBT-600V" onchange="updateWizardStock(${idx}, 'code', this.value)">
+          <input type="text" class="form-input form-input-sm" style="font-family: monospace; font-size: 0.74rem;" value="${escapeHtml(stk.code || '')}" placeholder="Örn: IGBT-600V" onchange="updateWizardStock(${idx}, 'code', this.value)">
         </td>
         <td>
           <input type="text" class="form-input form-input-sm" value="${escapeHtml(stk.name || '')}" placeholder="Örn: 50A IGBT Modül" onchange="updateWizardStock(${idx}, 'name', this.value)">
         </td>
         <td>
-          <input type="number" class="form-input form-input-sm" value="${stk.qty === undefined ? '' : stk.qty}" min="1" placeholder="Örn: 10" onchange="updateWizardStock(${idx}, 'qty', parseInt(this.value, 10))">
+          <input type="number" class="form-input form-input-sm" style="text-align: center;" value="${cVal}" min="0" placeholder="0" title="Merkez Depo Adedi" onchange="updateWizardStock(${idx}, 'central', parseInt(this.value, 10) || 0); renderWizardStockTable();">
+        </td>
+        <td>
+          <input type="number" class="form-input form-input-sm" style="text-align: center;" value="${wVal}" min="0" placeholder="0" title="Merkez Atölye / Lab Adedi" onchange="updateWizardStock(${idx}, 'workshop', parseInt(this.value, 10) || 0); renderWizardStockTable();">
+        </td>
+        <td>
+          <input type="number" class="form-input form-input-sm" style="text-align: center; border-color: rgba(56, 189, 248, 0.5); background: rgba(56, 189, 248, 0.08); font-weight: 700; color: #38bdf8;" value="${vVal}" min="0" placeholder="0" title="Her teknisyen aracına (${vCount} araç) zimmetlenecek adet" onchange="updateWizardStock(${idx}, 'perVehicle', parseInt(this.value, 10) || 0); renderWizardStockTable();">
+        </td>
+        <td style="text-align: center;" title="Merkez (${cVal}) + Atölye (${wVal}) + ${vCount} Araç x ${vVal} adet (${vCount * vVal})">
+          <span style="font-weight: 800; color: #38bdf8; font-size: 0.86rem; background: rgba(56, 189, 248, 0.12); padding: 2px 6px; border-radius: 4px;">${totQty}</span>
         </td>
         <td>
           <input type="number" class="form-input form-input-sm" value="${stk.price === undefined || stk.price === '' ? '' : stk.price}" min="0" step="0.01" placeholder="Örn: 250" onchange="updateWizardStock(${idx}, 'price', parseFloat(this.value)); renderWizardStockTable();">
@@ -20053,7 +20119,7 @@ function renderWizardStockTable() {
         <td>
           <input type="number" class="form-input form-input-sm" value="${margin}" min="0" step="1" placeholder="Örn: 40" onchange="updateWizardStock(${idx}, 'margin', parseFloat(this.value)); renderWizardStockTable();">
         </td>
-        <td style="font-weight: 700; color: #34d399; white-space: nowrap;" title="Satış fiyatı (KDV hariç) = alış x (1 + kâr %)">
+        <td style="font-weight: 700; color: #34d399; font-size: 0.8rem; white-space: nowrap;" title="Satış fiyatı (KDV hariç) = alış x (1 + kâr %)">
           ${cost > 0 ? salePreview.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺' : '-'}
         </td>
         <td style="text-align: right;">
@@ -20111,7 +20177,10 @@ function updateWizardSummary() {
   if (elVc) elVc.textContent = `${wizardTechList.filter(t => t.vehiclePlate).length} Araç`;
 
   const elSc = document.getElementById('summary-stock-count');
-  if (elSc) elSc.textContent = `${wizardStockList.length} Kalem Parça`;
+  if (elSc) {
+    const totalUnits = wizardStockList.reduce((acc, stk) => acc + (parseInt(stk.qty, 10) || 0), 0);
+    elSc.textContent = `${wizardStockList.length} Kalem (${totalUnits} Adet Parça)`;
+  }
 
   const elR = document.getElementById('summary-rate');
   if (elR) elR.textContent = `${stdRate} ₺`;
@@ -20145,7 +20214,7 @@ function finishAndLaunchSystem() {
   // 1. Şirket Profilini Uygula & Fatura Bilgilerini Bağla
   applyCompanyProfile(profile);
 
-  // 2. Teknisyenleri Kadroya Aktar (Eğer girildiyse)
+  // 2. Teknisyenleri Kadroya Aktar ve Araç Filosunu Senkronize Et
   if (wizardTechList.length > 0) {
     const updatedStaff = wizardTechList.map((t, idx) => ({
       id: 100 + idx,
@@ -20162,31 +20231,80 @@ function finishAndLaunchSystem() {
     }));
 
     state.staff = updatedStaff;
+    try { localStorage.setItem('servisai_staff', JSON.stringify(updatedStaff)); } catch (e) {}
     if (typeof updateStaffProfileUI === 'function') updateStaffProfileUI();
+
+    // Saha Araç Filosunu Eşitle (Mobil Araç Depoları)
+    const updatedVehicles = wizardTechList.map((t, idx) => {
+      const fullPlate = t.vehiclePlate || `34 PLK 0${idx+1} - Servis Aracı`;
+      const plate = fullPlate.includes('-') ? fullPlate.split('-')[0].trim() : fullPlate.trim();
+      const model = fullPlate.includes('-') ? fullPlate.split('-')[1].trim() : 'Servis Aracı';
+      return {
+        id: idx + 1,
+        plate: plate,
+        model: model,
+        driverId: 100 + idx,
+        driverName: t.name,
+        type: 'Araç',
+        status: 'Aktif',
+        battery: 85,
+        km: 45000 + idx * 12500
+      };
+    });
+    state.vehicles = updatedVehicles;
+    try { localStorage.setItem('servisai_vehicles', JSON.stringify(updatedVehicles)); } catch (e) {}
+    if (typeof renderStaffList === 'function') renderStaffList();
   }
 
-  // 3. Stok Envanterini Aktar (Eğer parça varsa). Girilen fiyat ALIŞ fiyatıdır; satış = alış + kâr %
-  const validWizardStock = wizardStockList.filter(x => (x.name || x.code) && (parseFloat(x.price) > 0) && (parseInt(x.qty, 10) > 0));
+  // 3. Stok Envanterini ve Araç Depolarını Aktar
+  const validTechs = (wizardTechList || []).filter(t => t.vehiclePlate && t.vehiclePlate.trim());
+  const vCount = validTechs.length > 0 ? validTechs.length : Math.max(1, (wizardTechList || []).length);
+
+  const validWizardStock = wizardStockList.filter(x => {
+    const c = parseInt(x.central, 10) || 0;
+    const w = parseInt(x.workshop, 10) || 0;
+    const v = parseInt(x.perVehicle, 10) || 0;
+    const tot = c + w + (v * vCount);
+    return (x.name || x.code) && (parseFloat(x.price) > 0) && (tot > 0 || (parseInt(x.qty, 10) > 0));
+  });
+
   if (validWizardStock.length > 0) {
     const newStock = validWizardStock.map((s0, idx) => {
-      const qty = parseInt(s0.qty, 10) || 1;
-      const workshop = Math.floor(qty * 0.2);
-      const v1 = Math.floor(qty * 0.1);
-      const v2 = Math.floor(qty * 0.1);
+      const central = (s0.central !== undefined && !isNaN(parseInt(s0.central, 10))) ? parseInt(s0.central, 10) : Math.max(0, (parseInt(s0.qty, 10) || 10) - 4);
+      const workshop = (s0.workshop !== undefined && !isNaN(parseInt(s0.workshop, 10))) ? parseInt(s0.workshop, 10) : 2;
+      const perVeh = (s0.perVehicle !== undefined && !isNaN(parseInt(s0.perVehicle, 10))) ? parseInt(s0.perVehicle, 10) : 1;
+      const totalQty = central + workshop + (perVeh * vCount);
+
       const item = {
         code: s0.code || ('PRC-' + (idx + 1)),
         name: s0.name || s0.code,
         category: (profile.industry || 'Genel Parça').split(',')[0],
-        central: qty - workshop - v1 - v2,
+        central: central,
         workshop: workshop,
-        vehicle1: v1,
-        vehicle2: v2,
+        vehicle1: perVeh,
+        vehicle2: perVeh,
         warranty: '12 Ay'
       };
+
+      // Tüm araçlara ve plakalara zimmet kaydet
+      if (state.vehicles && state.vehicles.length > 0) {
+        state.vehicles.forEach((v, vIdx) => {
+          item[`vehicle${vIdx + 1}`] = perVeh;
+          item[`veh_${v.id}`] = perVeh;
+          if (v.plate) {
+            item[v.plate] = perVeh;
+            item[`veh_${v.plate}`] = perVeh;
+          }
+          if (v.driverId) {
+            item[`tech_${v.driverId}`] = perVeh;
+          }
+        });
+      }
+
       const cur = s0.currency || 'TRY';
       applyPurchaseCost(item, {
         oldQty: 0,
-        qty: qty,
+        qty: totalQty,
         unitCost: parseFloat(s0.price),
         currency: cur,
         fxRate: getFxRate(cur),
@@ -20202,6 +20320,7 @@ function finishAndLaunchSystem() {
       try { localStorage.setItem('servisai_stock', JSON.stringify(newStock)); } catch (e) {}
     }
     if (typeof renderStockTable === 'function') renderStockTable();
+    if (typeof renderStockLocationPills === 'function') renderStockLocationPills();
   }
 
   // 4. Servis Tarifelerini Uygula

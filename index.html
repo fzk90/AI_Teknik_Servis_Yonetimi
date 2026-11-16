@@ -5901,7 +5901,7 @@
   <!-- ==================== 5. İLK KURULUM & ŞİRKET YAPILANDIRMA SİHİRBAZI MODALI ==================== -->
   <div class="modal-backdrop" id="onboarding-wizard-modal" style="display: none;">
     <div class="modal-card"
-      style="max-width: 880px; width: 95%; border: 1px solid rgba(168, 85, 247, 0.4); box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(168, 85, 247, 0.25);">
+      style="max-width: 980px; width: 96%; border: 1px solid rgba(168, 85, 247, 0.4); box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(168, 85, 247, 0.25);">
       <div class="modal-header"
         style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(30, 41, 59, 0.95) 100%); border-bottom: 1px solid rgba(168, 85, 247, 0.3);">
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -6206,36 +6206,53 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 12px; margin-bottom: 14px;">
             <div>
-              <label class="form-label">Merkez Depo Adı:</label>
+              <label class="form-label">🏢 Merkez Depo Adı:</label>
               <input type="text" id="wizard-main-warehouse" class="form-input" value="" placeholder="Örn: Merkez Depo">
             </div>
             <div>
-              <label class="form-label">Merkez Atölye / Laboratuvar Adı:</label>
+              <label class="form-label">🔬 Merkez Atölye / Lab:</label>
               <input type="text" id="wizard-main-workshop" class="form-input"
                 value="" placeholder="Örn: Kart Test Laboratuvarı">
             </div>
+            <div>
+              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🚗 Mobil Saha Araç Depoları:</span>
+                <span style="font-size: 0.72rem; color: #38bdf8; font-weight: normal;">(4. Adımdaki Araçlar)</span>
+              </label>
+              <div id="wizard-vehicle-warehouses-preview"
+                style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 6px 10px; font-size: 0.76rem; min-height: 38px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <!-- Dinamik JavaScript doldurur -->
+              </div>
+            </div>
           </div>
 
-          <div style="max-height: 250px; overflow-y: auto;">
+          <div style="max-height: 260px; overflow-y: auto;">
             <table class="mini-table">
               <thead>
                 <tr>
-                  <th style="width: 100px;">Parça Kodu</th>
+                  <th style="width: 95px;">Parça Kodu</th>
                   <th>Parça Tanımı / Adı</th>
-                  <th style="width: 62px;">Miktar</th>
+                  <th style="width: 62px;" title="Merkez Ana Depo stoğu">🏢 Merkez</th>
+                  <th style="width: 62px;" title="Atölye / Laboratuvar stoğu">🔬 Atölye</th>
+                  <th style="width: 76px;" title="Her saha teknisyeni aracının bagajına konulacak adet">🚗 Araç Başı</th>
+                  <th style="width: 58px;" title="Toplam stok = Merkez + Atölye + (Araç Başı x Araç Sayısı)">Toplam</th>
                   <th style="width: 82px;" title="KDV hariç birim alış fiyatı">Alış Fiyatı</th>
                   <th style="width: 84px;">Para Birimi</th>
-                  <th style="width: 62px;">Kâr %</th>
-                  <th style="width: 90px;">Satış (KDV hariç)</th>
-                  <th style="width: 40px; text-align: right;">Sil</th>
+                  <th style="width: 58px;">Kâr %</th>
+                  <th style="width: 92px;">Satış (KDV hariç)</th>
+                  <th style="width: 36px; text-align: right;">Sil</th>
                 </tr>
               </thead>
               <tbody id="wizard-stock-tbody">
                 <!-- Dinamik JavaScript doldurur -->
               </tbody>
             </table>
+          </div>
+          <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+            <span style="color: #38bdf8; font-weight: 700;">💡 İpucu:</span>
+            <span>'Araç Başı' sütununa girdiğiniz adet, 4. Adımda tanımlanan tüm teknisyen araçlarının bagajına (mobil araç deposuna) otomatik zimmetlenir. Toplam stok anlık hesaplanır.</span>
           </div>
         </div>
 
