@@ -5,12 +5,21 @@
   İzinsiz kopyalama, dağıtma, ticari kullanım veya tersine mühendislik yasaktır.
 -->
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FUNZerviceTech.ai - Yapay Zeka Destekli Teknik Servis Yönetim Sistemi</title>
+  <script>
+    // Tema Tercihini Hızlı Yükle (FOUC Önleyici)
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('servisai_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } catch(e) {}
+    })();
+  </script>
   <meta name="author" content="Zafer Koçaş">
   <meta name="copyright" content="Copyright (c) 2026 Zafer Koçaş. Tüm Hakları Saklıdır.">
   <meta name="robots" content="noindex, nofollow, noarchive">
@@ -83,8 +92,13 @@
         <span id="header-auth-icon">🚪</span>
         <span id="header-auth-label">Çıkış Yap</span>
       </button>
+      <button type="button" class="btn btn-outline btn-sm theme-toggle-btn" id="btn-theme-toggle"
+        title="Gündüz / Gece Modu (Açık / Koyu Tema)">
+        <span id="theme-toggle-icon">🌙</span>
+        <span id="theme-toggle-label">Koyu Mod</span>
+      </button>
       <a href="tanitim.html" target="_blank" class="btn btn-outline btn-sm"
-        title="Müşteri Satış Sayfası ve PDF Broşürü" style="text-decoration: none; color: #fff;">
+        title="Müşteri Satış Sayfası ve PDF Broşürü" style="text-decoration: none; color: var(--text-main);">
         <span>📄 Tanıtım & Fiyatlar</span>
       </a>
       <button class="btn btn-outline btn-sm" id="btn-header-settings"
@@ -803,19 +817,24 @@
             <!-- 2. Satır: Canlı Zamanlama Bilgisi & Operasyonel Aksiyon Butonları -->
             <div
               style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-              <div class="trigger-left" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+              <div class="trigger-left" style="margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span class="pulse-dot" id="tech-journey-pulse"
                   style="width: 10px; height: 10px; background: #8B5CF6;"></span>
                 <div class="journey-meta-info">
-                  <span style="font-size: 0.84rem; color: #f8fafc;"><strong>Müşteri Adresine İntikal:</strong> <span
-                      id="tech-intikal-address" style="color: #38bdf8;">—</span></span>
+                  <span style="font-size: 0.88rem; color: var(--text-main);"><strong>Müşteri Adresi:</strong> <span
+                      id="tech-intikal-address" style="color: #0284c7; font-weight: 600;">—</span></span>
                   <div class="tech-journey-timing-row mt-1" id="tech-journey-timing-row"
-                    style="font-size: 0.78rem; color: #94a3b8;">
+                    style="font-size: 0.8rem; color: var(--text-muted);">
                     <span id="tech-time-departed-text">İntikal Bekliyor (Henüz görev atanmadı)</span>
                     <span id="tech-time-duration-text"
-                      style="margin-left: 8px; font-weight: 600; color: #38bdf8;"></span>
+                      style="margin-left: 8px; font-weight: 600; color: #0284c7;"></span>
                   </div>
                 </div>
+                <button type="button" id="btn-tech-open-maps" onclick="openTechGoogleMaps()" class="btn btn-sm"
+                  style="background: #0284c7; color: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);"
+                  title="Müşteri adresini Google Haritalar'da açıp canlı navigasyon başlat">
+                  <span>🗺️ Yol Tarifi (Google Maps)</span>
+                </button>
               </div>
 
               <!-- Saha Yaşam Döngüsü Aksiyon Butonları -->

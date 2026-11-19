@@ -768,8 +768,73 @@ document.addEventListener('DOMContentLoaded', () => {
   initCompanyBillingCardEngine();
   initOnboardingWizardEngine();
   initWelcomeModal();
+  initThemeSwitcher();
   syncInitialDataFromBackend();
 });
+
+// ==================== Tema Yönetimi (Light / Dark Mode) ====================
+function updateThemeUI(theme) {
+  const icon = document.getElementById('theme-toggle-icon');
+  const label = document.getElementById('theme-toggle-label');
+  const btn = document.getElementById('btn-theme-toggle');
+  
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    if (icon) icon.textContent = '☀️';
+    if (label) label.textContent = 'Açık Mod';
+    if (btn) btn.title = 'Aydınlık / Açık Temaya Geç';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    if (icon) icon.textContent = '🌙';
+    if (label) label.textContent = 'Koyu Mod';
+    if (btn) btn.title = 'Karanlık / Gece Temasına Geç';
+  }
+}
+
+function initThemeSwitcher() {
+  const savedTheme = localStorage.getItem('servisai_theme') || 'light';
+  updateThemeUI(savedTheme);
+
+  const btn = document.getElementById('btn-theme-toggle');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('servisai_theme', next);
+      updateThemeUI(next);
+      if (typeof showToast === 'function') {
+        showToast(next === 'light' ? '☀️ Açık & ferah kurumsal tema aktif edildi.' : '🌙 Karanlık & gece teması aktif edildi.', 'info');
+      }
+    });
+  }
+}
+window.initThemeSwitcher = initThemeSwitcher;
+window.updateThemeUI = updateThemeUI;
+
+// ==================== Teknisyen Canlı Navigasyon (Google Maps) ====================
+function openTechGoogleMaps() {
+  let addr = '';
+  const addrSpan = document.getElementById('tech-intikal-address');
+  if (addrSpan && addrSpan.textContent) {
+    addr = addrSpan.textContent.trim();
+  }
+  if (!addr || addr === '—' || addr === '-') {
+    if (state.activeOrder && state.activeOrder.customerAddress) {
+      addr = state.activeOrder.customerAddress;
+    }
+  }
+  if (!addr || addr === '—' || addr === '-') {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Bu iş emrinde kayıtlı geçerli bir müşteri adresi bulunamadı.', 'warning');
+    } else {
+      alert('Bu iş emrinde kayıtlı geçerli bir müşteri adresi bulunamadı.');
+    }
+    return;
+  }
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`;
+  window.open(url, '_blank');
+}
+window.openTechGoogleMaps = openTechGoogleMaps;
 
 // ==================== Role / Tab Navigation ====================
 function initTabs() {
@@ -814,25 +879,28 @@ function initTabs() {
 
       state.activeTab = targetId;
       if (targetId === 'tech-view') {
+        document.body.classList.add('tech-tab-active');
         populateActiveTechDropdown();
         clearTechWorkbench();
-  renderTechJobs();
-      } else if (targetId === 'admin-view') {
-        renderIncomingCalls();
-  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
-        if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
-        updateFleetKPI();
-        updateActiveOrdersKPI();
-      } else if (targetId === 'reports-view') {
-        updateReportStaffDropdown();
-        if (typeof initCustomSelect === 'function') {
-          initCustomSelect(document.getElementById('report-type-select'));
-          initCustomSelect(document.getElementById('report-staff-filter'));
-          initCustomSelect(document.getElementById('report-status-filter'));
+        renderTechJobs();
+      } else {
+        document.body.classList.remove('tech-tab-active');
+        if (targetId === 'admin-view') {
+          renderIncomingCalls();
+          if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
+          updateFleetKPI();
+          updateActiveOrdersKPI();
+        } else if (targetId === 'reports-view') {
+          updateReportStaffDropdown();
+          if (typeof initCustomSelect === 'function') {
+            initCustomSelect(document.getElementById('report-type-select'));
+            initCustomSelect(document.getElementById('report-staff-filter'));
+            initCustomSelect(document.getElementById('report-status-filter'));
+          }
+          executeCustomReport();
+        } else if (targetId === 'equipment-view') {
+          renderEquipmentRegistry();
         }
-        executeCustomReport();
-      } else if (targetId === 'equipment-view') {
-        renderEquipmentRegistry();
       }
       showToast(`Ekran Değiştirildi: ${btn.querySelector('span:last-child').textContent}`);
     });
