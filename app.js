@@ -1136,29 +1136,36 @@ function renderStaffList() {
       e.stopPropagation();
       const id = parseInt(e.currentTarget.getAttribute('data-id'));
       
+      // 1. Canlı Saha GPS Harita ekranına geç
+      if (typeof switchToAdminSection === 'function') {
+        switchToAdminSection('gps-view');
+      }
+
+      // 2. Harita görünümünü hazırla
       const realMap = document.getElementById('real-google-map');
       const vectorMap = document.getElementById('vector-map');
       if (realMap) realMap.style.display = 'block';
       if (vectorMap) vectorMap.style.display = 'none';
 
       if (typeof initLeafletMap === 'function') {
-        initLeafletMap();
+        try { initLeafletMap(); } catch (_) {}
       }
 
-      selectMapTech(id);
-      
       setTimeout(() => {
-        if (leafletMapState && leafletMapState.map) {
-          leafletMapState.map.invalidateSize();
+        if (typeof selectMapTech === 'function') {
+          selectMapTech(id);
         }
-      }, 80);
+        if (leafletMapState && leafletMapState.map) {
+          try { leafletMapState.map.invalidateSize(); } catch (_) {}
+        }
+        const gpsCard = document.getElementById('gps-tracking-card');
+        if (gpsCard) {
+          gpsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
 
       const person = state.staff.find(s => s.id === id);
       if (person) {
-        const gpsCard = document.getElementById('gps-tracking-card');
-        if (gpsCard) {
-          gpsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
         showToast(`📍 ${person.name} (${person.vehiclePlate}) canlı takip haritasına odaklandı.`);
       }
     });
@@ -12190,44 +12197,44 @@ function initStaffJobsModal() {
       // 1. Modalı derhal gizle
       modal.style.display = 'none';
 
-      // 2. Yönetici & Kontrol Paneli sekmesine geç (harita admin-view içindedir)
-      const adminBtn = document.getElementById('btn-tab-admin');
-      if (adminBtn) {
-        adminBtn.click();
+      // 2. Canlı Saha GPS Harita ekranına geç (gps-view)
+      if (typeof switchToAdminSection === 'function') {
+        switchToAdminSection('gps-view');
       }
 
-      // 3. Haritanın boyutunu Leaflet kütüphanesine yeniden hesaplat
-      if (leafletMapState && leafletMapState.map) {
-        setTimeout(() => {
-          try {
-            leafletMapState.map.invalidateSize();
-          } catch (mErr) {
-            console.warn("Harita invalidateSize uyarısı:", mErr);
-          }
-        }, 50);
+      // 3. Harita görünümünü hazırla
+      const realMap = document.getElementById('real-google-map');
+      const vectorMap = document.getElementById('vector-map');
+      if (realMap) realMap.style.display = 'block';
+      if (vectorMap) vectorMap.style.display = 'none';
+
+      if (typeof initLeafletMap === 'function') {
+        try { initLeafletMap(); } catch (_) {}
       }
 
-      // 4. Hedef teknisyeni haritada seç ve odakla
-      if (targetTechId) {
-        setTimeout(() => {
-          try {
-            selectMapTech(targetTechId);
-            const p = state.staff.find(s => s.id === targetTechId);
-            if (p) {
-              showToast(`📍 Harita odağı ${p.name} (${p.vehiclePlate}) personeline çevrildi.`);
-            }
-          } catch (tErr) {
+      // 4. Hedef teknisyeni haritada seç, boyutu güncelle ve harita kartına kaydır
+      setTimeout(() => {
+        if (targetTechId && typeof selectMapTech === 'function') {
+          try { selectMapTech(targetTechId); } catch (tErr) {
             console.error("selectMapTech çalıştırılırken hata:", tErr);
           }
-        }, 120);
-      }
+        }
+        if (leafletMapState && leafletMapState.map) {
+          try { leafletMapState.map.invalidateSize(); } catch (mErr) {
+            console.warn("Harita invalidateSize uyarısı:", mErr);
+          }
+        }
+        const gpsCard = document.getElementById('gps-tracking-card');
+        if (gpsCard) {
+          gpsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
 
-      // 5. Harita ve telemetri kartına yumuşak kaydır
-      const gpsCard = document.getElementById('gps-tracking-card');
-      if (gpsCard) {
-        setTimeout(() => {
-          gpsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 160);
+      if (targetTechId) {
+        const p = state.staff.find(s => s.id === targetTechId);
+        if (p) {
+          showToast(`📍 Harita odağı ${p.name} (${p.vehiclePlate}) personeline çevrildi.`);
+        }
       }
     });
   }
@@ -15499,7 +15506,7 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
                         s.status === 'Görevde' ? 'badge-primary' : 'badge-warning';
 
     return `
-      <div class="assign-tech-card ${isSelected ? 'is-selected' : ''}" data-staff-id="${s.id}" style="${isSource ? 'opacity: 0.7;' : ''}">
+      <div class="assign-tech-card ${isSelected ? 'is-selected' : ''} ${isSource ? 'is-source-staff' : ''}" data-staff-id="${s.id}">
         <div class="assign-tech-left">
           <div class="assign-radio-indicator"></div>
           <div class="assign-tech-avatar" style="${isWStaff ? 'background: linear-gradient(135deg, rgba(6,182,212,0.3), rgba(59,130,246,0.3)); color: #38bdf8;' : ''}">${s.avatar || s.name.split(' ').map(n=>n[0]).join('')}</div>
@@ -15511,7 +15518,7 @@ function openDispatchAssignModal(targetCode, sourceStaffId = null) {
               ${isSource ? '<span class="badge badge-secondary" style="font-size: 0.7rem;">(Mevcut Görevli - Devrediliyor)</span>' : ''}
               <span class="badge ${statusBadge}">${s.status}</span>
             </div>
-            <span class="assign-tech-sub">${s.role} (${s.specialty || 'Atölye/Saha'}) • ${vehicleStation} • 📍 <strong>${distText} km</strong> uzakta <em style="color:#94a3b8; font-size:0.75rem;">(${locLabel})</em></span>
+            <span class="assign-tech-sub">${s.role} (${s.specialty || 'Atölye/Saha'}) • ${vehicleStation} • 📍 <strong>${distText} km</strong> uzakta <em class="assign-tech-loc-label" style="font-size:0.75rem;">(${locLabel})</em></span>
           </div>
         </div>
         <div class="assign-tech-right">

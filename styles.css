@@ -8517,6 +8517,177 @@ body.tech-tab-active #btn-header-settings {
   text-overflow: ellipsis;
 }
 
+/* ==================== 36. Saha Personeli Atanan İşler & Sevk Modalları Aydınlatması ==================== */
+.assign-modal-complaint-box {
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-muted);
+}
+
+/* Atanan Saha İşleri Modalı (#staff-jobs-modal) Açık Tema */
+:root:not([data-theme="dark"]) .staff-jobs-modal-box {
+  background: #ffffff !important;
+}
+
+:root:not([data-theme="dark"]) .staff-modal-kpi-strip {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:root:not([data-theme="dark"]) .staff-modal-kpi-strip .strip-label {
+  color: #64748b !important;
+}
+
+:root:not([data-theme="dark"]) .staff-modal-kpi-strip .strip-value {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-card:hover {
+  background: #f8fafc !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-code {
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-device {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-customer {
+  color: #334155 !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-customer strong {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-complaint {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 3px solid #0284c7 !important;
+  color: #1e293b !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-complaint strong {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-findings {
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-duration-row {
+  color: #0369a1 !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-actions {
+  border-top: 1px solid #f1f5f9 !important;
+}
+
+:root:not([data-theme="dark"]) .staff-job-cost {
+  color: #0d9488 !important;
+  font-weight: 700 !important;
+}
+
+/* Saha Uzmanı Seçimi & Sevk Modalı (#dispatch-assign-modal) Açık Tema */
+:root:not([data-theme="dark"]) #dispatch-assign-modal .modal-box {
+  background: #ffffff !important;
+}
+
+:root:not([data-theme="dark"]) .assign-order-summary-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+:root:not([data-theme="dark"]) .assign-order-summary-box strong {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .assign-order-summary-box span.text-dim {
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .assign-order-summary-box span.text-muted {
+  color: #64748b !important;
+}
+
+:root:not([data-theme="dark"]) .assign-modal-complaint-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 3px solid #0284c7 !important;
+  color: #1e293b !important;
+}
+
+:root:not([data-theme="dark"]) .assign-modal-complaint-box strong {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .assign-tech-card {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+:root:not([data-theme="dark"]) .assign-tech-card:hover {
+  background: #f8fafc !important;
+  border-color: #0284c7 !important;
+}
+
+:root:not([data-theme="dark"]) .assign-tech-card.is-selected {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 1px #0284c7 !important;
+}
+
+:root:not([data-theme="dark"]) .assign-tech-name {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+:root:not([data-theme="dark"]) .assign-tech-sub {
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .assign-tech-sub strong {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .assign-tech-sub em {
+  color: #64748b !important;
+}
+
+:root:not([data-theme="dark"]) .badge-recommended {
+  background: #fef9c3 !important;
+  color: #854d0e !important;
+  border: 1px solid #fde047 !important;
+}
+
+.assign-tech-card.is-source-staff {
+  border-style: dashed;
+}
+:root:not([data-theme="dark"]) .assign-tech-card.is-source-staff {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+.assign-tech-loc-label {
+  color: #94a3b8;
+}
+:root:not([data-theme="dark"]) .assign-tech-loc-label {
+  color: #64748b !important;
+}
+
 
 
 
