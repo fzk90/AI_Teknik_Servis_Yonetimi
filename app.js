@@ -19681,6 +19681,157 @@ const SECTOR_TEMPLATES = {
       { code: "SNS-NTC", name: "Daldırma / Klipsli NTC Sıcaklık Sensörü 10k", qty: 30, price: 85, currency: "TRY", isImport: false },
       { code: "TRB-AKIS", name: "Hall Sensörlü Kombi Akış Türbini / Şalteri", qty: 15, price: 210, currency: "TRY", isImport: false }
     ]
+  },
+  fitness_spor_cihazlari: {
+    name: "ProGym & Kondisyon Teknik",
+    legalName: "ProGym Spor ve Kondisyon Ekipmanları Teknik Servis Hizmetleri Ltd. Şti.",
+    industry: "Life Fitness, Koşu Bandı, Eliptik & Ağırlık İstasyonları Onarımı",
+    taxOffice: "Kadıköy Vergi Dairesi",
+    taxId: "7219048123",
+    billingAddress: "Fahrettin Kerim Gökay Cad. No: 84 Kadıköy / İSTANBUL",
+    city: "İstanbul / Kadıköy",
+    phone: "+90 216 345 70 80",
+    email: "servis@progymteknik.com",
+    website: "https://progymteknik.com",
+    managerName: "Zafer Koçaş",
+    managerTitle: "Spor Ekipmanları Teknik Servis Müdürü",
+    managerPhone: "0532 999 88 77",
+    managerEmail: "zafer@progymteknik.com",
+    mainWarehouse: "Kadıköy Merkez Parça & Palet Deposu",
+    mainWorkshop: "Motor Sürücü ve Konsol Elektronik Test Laboratuvarı",
+    rates: { light: 450, standard: 850, heavy: 1650 },
+    staff: [
+      { name: "Selim Arslan", role: "Kardiyo & Koşu Bandı Uzmanı", specialty: "Motor Sürücü, Palet & Eğim Motoru", phone: "0532 110 20 30", pin: "1101", vehiclePlate: "34 GYM 01 - Ford Transit Custom" },
+      { name: "Hakan Yılmaz", role: "Mekanik & Ağırlık İstasyonu Teknikeri", specialty: "Çelik Halat, Makara & Hidrolik Piston", phone: "0533 220 30 40", pin: "1102", vehiclePlate: "34 GYM 02 - Fiat Doblo Maxi" },
+      { name: "Burak Kaya", role: "Elektronik Konsol Teknisyeni", specialty: "Dokunmatik Ekran & Güç Kartları", phone: "0534 330 40 50", pin: "1103", vehiclePlate: "34 GYM 03 - Renault Kangoo" }
+    ],
+    stock: [
+      { code: "PLT-LIFE95T", name: "Life Fitness 95T Uyumlu Özel Dokuma Koşu Bandı Paleti", qty: 8, price: 145, currency: "USD", isImport: true },
+      { code: "INV-DRV-PWM", name: "Koşu Bandı Alt Motor Sürücü Kartı (PWM/Inverter)", qty: 5, price: 195, currency: "USD", isImport: true },
+      { code: "YAG-SILIKON", name: "Saf Silikon Koşu Bandı Palet Yağlama Sıvısı (1000 ml)", qty: 30, price: 290, currency: "TRY", isImport: false },
+      { code: "HLT-CELIK-50", name: "7x19 Naylon Kaplı Spor Salonu Çelik Halatı (50m Rulo)", qty: 6, price: 1950, currency: "TRY", isImport: false },
+      { code: "RLM-SKF6004", name: "Koşu Bandı Ön/Arka Rulo SKF 6004-2RSH C3 Rulman", qty: 20, price: 18, currency: "EUR", isImport: true },
+      { code: "MTR-EGIM-110", name: "Kardiyo Eğim (Incline) Aktüatör Motoru 220V", qty: 4, price: 120, currency: "USD", isImport: true }
+    ]
+  },
+  otomotiv_motosiklet: {
+    name: "MotoTech & Oto Bakım Servisi",
+    legalName: "MotoTech Otomotiv Motosiklet Bakım Onarım San. Tic. Ltd. Şti.",
+    industry: "Motosiklet, Scooter, Hafif Ticari & Özel Oto Servisi",
+    taxOffice: "Ümraniye Vergi Dairesi",
+    taxId: "5829103847",
+    billingAddress: "Dudullu Organize Sanayi Bölgesi Oto Sanatkarları Sitesi No: 42 Ümraniye / İSTANBUL",
+    city: "İstanbul / Ümraniye",
+    phone: "+90 216 420 10 20",
+    email: "servis@mototech.com",
+    website: "https://mototech.com",
+    managerName: "Murat Usta",
+    managerTitle: "Baş Teknisyen / Servis Müdürü",
+    managerPhone: "0533 555 44 33",
+    managerEmail: "murat@mototech.com",
+    mainWarehouse: "Dudullu Merkez Yedek Parça Ambarı",
+    mainWorkshop: "Diyagnostik Test, Lift & Mekanik Onarım Atölyesi",
+    rates: { light: 350, standard: 700, heavy: 1400 },
+    staff: [
+      { name: "Caner Kılıç", role: "Motosiklet & Scooter Ustası", specialty: "Varyatör, Debriyaj & Enjeksiyon Senkronu", phone: "0535 441 55 66", pin: "2101", vehiclePlate: "34 MTO 01 - Doblo Servis" },
+      { name: "Serkan Demir", role: "Oto Elektrik & OBD Uzmanı", specialty: "OBD-II Arıza Teşhis & Beyin/Kablo Onarımı", phone: "0536 552 66 77", pin: "2102", vehiclePlate: "34 MTO 02 - Transit Custom" }
+    ],
+    stock: [
+      { code: "BLT-BREMBO", name: "Brembo Karbon Seramik Ön Fren Balata Takımı", qty: 14, price: 42, currency: "EUR", isImport: true },
+      { code: "YAG-MOTUL4T", name: "Motul 7100 10W-40 4T Tam Sentetik Motor Yağı (4L)", qty: 20, price: 1480, currency: "TRY", isImport: false },
+      { code: "BJI-NGK-IR", name: "NGK Laser Iridium CPR8EAIX-9 Buji Seti", qty: 35, price: 16, currency: "USD", isImport: true },
+      { code: "KYS-BANDO", name: "Bando Maxi Scooter Güçlendirilmiş Tahrik Kayışı", qty: 8, price: 68, currency: "EUR", isImport: true },
+      { code: "AKU-YUASA", name: "Yuasa YTX9-BS 12V 8Ah Bakımsız Jel Akü", qty: 12, price: 1650, currency: "TRY", isImport: false },
+      { code: "FLT-HIFLO", name: "Hiflofiltro HF303 Yüksek Debi Yağ Filtresi", qty: 25, price: 340, currency: "TRY", isImport: false }
+    ]
+  },
+  endustriyel_mutfak: {
+    name: "GastroTek Endüstriyel Mutfak",
+    legalName: "GastroTek Endüstriyel Mutfak Soğutma ve Çamaşırhane San. Tic. A.Ş.",
+    industry: "Konveksiyonel Fırın, Sanayi Bulaşık, Buz Makinesi Servisi",
+    taxOffice: "Beyoğlu Vergi Dairesi",
+    taxId: "6491028471",
+    billingAddress: "Perpa Ticaret Merkezi A Blok Kat: 11 No: 1540 Şişli / İSTANBUL",
+    city: "İstanbul / Şişli",
+    phone: "+90 212 320 80 90",
+    email: "servis@gastrotek.com",
+    website: "https://gastrotek.com",
+    managerName: "Levent Şefik",
+    managerTitle: "Servis Operasyon Yöneticisi",
+    managerPhone: "0532 411 22 88",
+    managerEmail: "levent@gastrotek.com",
+    mainWarehouse: "Perpa Gastro Yedek Parça Deposu",
+    mainWorkshop: "Kazan, Rezistans & Elektronik Kart Test İstasyonu",
+    rates: { light: 500, standard: 900, heavy: 1750 },
+    staff: [
+      { name: "Cemil Güler", role: "Fırın & Gazlı Ekipman Ustası", specialty: "Konveksiyonel Fırın, Termostat & Brülör", phone: "0533 661 77 88", pin: "3101", vehiclePlate: "34 GST 01 - Ford Transit" },
+      { name: "Erhan Koç", role: "Bulaşık & Yıkama Sistemleri Teknikeri", specialty: "Yıkama Pompası, Dozaj & Rezistans", phone: "0534 772 88 99", pin: "3102", vehiclePlate: "34 GST 02 - Fiat Fiorino" }
+    ],
+    stock: [
+      { code: "RZS-FRN-9KW", name: "Rational / Unox Uyumlu 9kW Konveksiyonel Fırın Rezistansı", qty: 6, price: 115, currency: "EUR", isImport: true },
+      { code: "PMP-DOZAJ", name: "Seko Deterjan & Parlatıcı Peristaltik Dozaj Pompası", qty: 8, price: 65, currency: "EUR", isImport: true },
+      { code: "VNA-SELENOID", name: "Ceme 3/4 Su Giriş Çiftli Selenoid Vana 220V", qty: 15, price: 420, currency: "TRY", isImport: false },
+      { code: "TRM-LIMIT", name: "EGO 3 Fazlı 360°C Emniyet Limit Termostatı", qty: 12, price: 38, currency: "EUR", isImport: true },
+      { code: "PMP-YIKAMA", name: "Fir 0.75kW Sanayi Bulaşık Makinesi Yıkama Motoru", qty: 4, price: 180, currency: "EUR", isImport: true },
+      { code: "CNTA-KAPI", name: "Fırın Manyetik Isıya Dayanıklı Silikon Kapı Contası (Metre)", qty: 20, price: 210, currency: "TRY", isImport: false }
+    ]
+  },
+  jenerator_kompresor: {
+    name: "GüçTek Jeneratör & Kompresör",
+    legalName: "GüçTek Enerji Jeneratör ve Basınçlı Hava Sistemleri Ltd. Şti.",
+    industry: "Dizel Jeneratörler, Senkronizasyon & Vidalı Kompresör Servisi",
+    taxOffice: "Ostim Vergi Dairesi",
+    taxId: "4820193851",
+    billingAddress: "Ostim Organize Sanayi Bölgesi 1234. Sk. No: 18 Yenimahalle / ANKARA",
+    city: "Ankara / Ostim",
+    phone: "+90 312 385 40 50",
+    email: "servis@guctekenerji.com",
+    website: "https://guctekenerji.com",
+    managerName: "Kerem Güçlü",
+    managerTitle: "Elektrik Mühendisi / Genel Koordinatör",
+    managerPhone: "0533 300 40 50",
+    managerEmail: "kerem@guctekenerji.com",
+    mainWarehouse: "Ostim Ağır Enerji Ekipman Deposu",
+    mainWorkshop: "AVR, Alternatör ve Dizel Pompa Test Ünitesi",
+    rates: { light: 600, standard: 1100, heavy: 2200 },
+    staff: [
+      { name: "Yusuf Çetin", role: "Jeneratör & Otomasyon Uzmanı", specialty: "Datakom / DeepSea Kontrol Kartı & Senkron", phone: "0535 881 99 00", pin: "4101", vehiclePlate: "06 GEN 01 - Ford Transit 4x4" },
+      { name: "Tarık Aydın", role: "Vidalı Kompresör Teknikeri", specialty: "Vida Grubu, Yağ Seperatörü & Emiş Valfi", phone: "0536 992 00 11", pin: "4102", vehiclePlate: "06 GEN 02 - Isuzu D-Max" }
+    ],
+    stock: [
+      { code: "AVR-SX460", name: "Stamford Uyumlu SX460 Otomatik Voltaj Regülatörü (AVR)", qty: 8, price: 75, currency: "USD", isImport: true },
+      { code: "KNT-DSE6120", name: "Deep Sea DSE6120 Otomatik Şebeke Arıza Kontrol Modülü", qty: 4, price: 340, currency: "USD", isImport: true },
+      { code: "FLT-SEPERATOR", name: "Vidalı Kompresör Spin-On Yağ Seperatör Filtresi", qty: 10, price: 85, currency: "EUR", isImport: true },
+      { code: "YAG-KOMPRESOR", name: "Shell Corena S4 R 46 Sentetik Kompresör Yağı (20L)", qty: 6, price: 4200, currency: "TRY", isImport: false },
+      { code: "SARJ-12V5A", name: "Datakom SMPS-125 Din Ray Tipi Akü Şarj Redresörü", qty: 12, price: 680, currency: "TRY", isImport: false },
+      { code: "ISITICI-BLOK", name: "Dizel Motor 1000W Termostatlı Blok Su Isıtıcısı", qty: 9, price: 950, currency: "TRY", isImport: false }
+    ]
+  },
+  ozel_teknik_servis: {
+    name: "Özel Teknik Servis",
+    legalName: "Özel Mühendislik ve Teknik Servis Hizmetleri Ltd. Şti.",
+    industry: "Çok Sektörlü / Özel Cihaz ve Ekipman Teknik Servisi",
+    taxOffice: "Merkez Vergi Dairesi",
+    taxId: "1234567890",
+    billingAddress: "Merkez Sanayi Sitesi 1. Cad. No: 10",
+    city: "İstanbul / Merkez",
+    phone: "+90 212 000 00 00",
+    email: "servis@sirketiniz.com",
+    website: "https://sirketiniz.com",
+    managerName: "Zafer Koçaş",
+    managerTitle: "Teknik Servis Müdürü",
+    managerPhone: "0532 000 00 00",
+    managerEmail: "zafer@sirketiniz.com",
+    mainWarehouse: "Merkez Depo",
+    mainWorkshop: "Merkez Atölye ve Test İstasyonu",
+    rates: { light: 450, standard: 800, heavy: 1600 },
+    staff: [
+      { name: "Uzman Teknisyen", role: "Saha & Atölye Sorumlusu", specialty: "Genel Teşhis & Mekanik-Elektronik Onarım", phone: "0532 111 22 33", pin: "1234", vehiclePlate: "34 SRV 01 - Doblo" }
+    ],
+    stock: [
+      { code: "PRC-GENEL-1", name: "Genel Değişim Parçası / Sarf Malzeme", qty: 10, price: 350, currency: "TRY", isImport: false },
+      { code: "PRC-GENEL-2", name: "Özel İthal Yedek Parça / Modül", qty: 5, price: 50, currency: "USD", isImport: true }
+    ]
   }
 };
 
