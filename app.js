@@ -5100,7 +5100,7 @@ function openStockTransferModal(partCode = null, preSelectTo = null, preSelectFr
   const qtyInput = document.getElementById('input-transfer-qty');
 
   // Parçaları doldur
-  if (partSelect && state.stock) {
+  if (partSelect && state.stock && state.stock.length > 0) {
     partSelect.innerHTML = state.stock.map(p => `
       <option value="${p.code}">${p.name} (${p.code}) - Birim: ${p.price} ₺</option>
     `).join('');
@@ -5112,27 +5112,61 @@ function openStockTransferModal(partCode = null, preSelectTo = null, preSelectFr
   // Lokasyonları dinamik doldur
   const populateLocOptions = (selectEl, defaultVal) => {
     if (!selectEl) return;
+    const compProfile = state.companyProfile || {};
+    const mainWh = compProfile.mainWarehouse || 'Merkez Ana Depo';
+    const mainWs = compProfile.mainWorkshop || 'Merkez Atölye / Laboratuvar';
     let html = `
-      <option value="central">🏢 Merkez Ana Depo (Ataşehir)</option>
-      <option value="workshop">🔬 Merkez Atölye / Laboratuvar</option>
-      <option value="vehicle1">🚗 Servis Aracı 1 (34 ABC 101 - Murat Aydın)</option>
-      <option value="vehicle2">🚗 Servis Aracı 2 (34 DEF 202 - Caner Güler)</option>
+      <option value="central">🏢 ${mainWh}</option>
+      <option value="workshop">🔬 ${mainWs}</option>
     `;
     if (state.vehicles && state.vehicles.length > 0) {
       state.vehicles.forEach(v => {
-        if (v.plate !== '34 ABC 101' && v.plate !== '34 DEF 202') {
-          html += `<option value="veh_${v.id || v.plate}">🚗 ${v.plate} (${v.driverName || 'Havuz Aracı'})</option>`;
-        }
+        const vKey = (v.plate.includes('101') && !v.id) ? 'vehicle1' :
+                     (v.plate.includes('202') && !v.id) ? 'vehicle2' :
+                     `veh_${v.id || v.plate}`;
+        html += `<option value="${vKey}">🚗 ${v.plate} (${v.driverName || 'Havuz Aracı'})</option>`;
       });
+    } else {
+      html += `
+        <option value="vehicle1">🚗 Servis Aracı 1 (34 ABC 101 - Murat Aydın)</option>
+        <option value="vehicle2">🚗 Servis Aracı 2 (34 DEF 202 - Caner Güler)</option>
+      `;
     }
     selectEl.innerHTML = html;
     if (defaultVal) {
-      selectEl.value = defaultVal;
+      const hasOption = Array.from(selectEl.options).some(o => o.value === defaultVal);
+      if (hasOption) {
+        selectEl.value = defaultVal;
+      } else {
+        const cleanVal = String(defaultVal).replace('veh_', '');
+        const matched = Array.from(selectEl.options).find(o => o.value.includes(cleanVal));
+        if (matched) selectEl.value = matched.value;
+      }
     }
   };
 
   populateLocOptions(fromSelect, preSelectFrom || 'central');
-  populateLocOptions(toSelect, preSelectTo || 'vehicle1');
+
+  // Hedef lokasyon seçimi
+  let targetDefault = preSelectTo;
+  if (!targetDefault) {
+    if (fromSelect.value === 'central') {
+      targetDefault = (fromSelect.options && fromSelect.options.length > 2) ? fromSelect.options[2].value : 'workshop';
+    } else {
+      targetDefault = 'central';
+    }
+  }
+  populateLocOptions(toSelect, targetDefault);
+
+  // Kaynak ile hedef aynı olmasın
+  if (fromSelect.value === toSelect.value) {
+    for (let opt of toSelect.options) {
+      if (opt.value !== fromSelect.value) {
+        toSelect.value = opt.value;
+        break;
+      }
+    }
+  }
 
   if (qtyInput) qtyInput.value = '1';
 
@@ -5166,39 +5200,93 @@ function initStockTransferModal() {
 
   const locLabels = {
     central: "Merkez Ana Depo",
-    vehicle1: "34 ABC 101 (Murat Aydın)",
-    vehicle2: "34 DEF 202 (Caner Güler)",
+    vehicle1: "Servis Aracı 1",
+    vehicle2: "Servis Aracı 2",
     workshop: "Merkez Atölye"
   };
 
   const getLocLabel = (locKey) => {
-    if (locLabels[locKey]) return locLabels[locKey];
+    const compProfile = state.companyProfile || {};
+    if (locKey === 'central') return compProfile.mainWarehouse || "Merkez Ana Depo";
+    if (locKey === 'workshop') return compProfile.mainWorkshop || "Merkez Atölye / Lab";
+    if (locKey === 'vehicle1') {
+      const v1 = (state.vehicles || [])[0];
+      return v1 ? `${v1.plate} (${v1.driverName || 'Havuz'})` : "Servis Aracı 1";
+    }
+    if (locKey === 'vehicle2') {
+      const v2 = (state.vehicles || [])[1];
+      return v2 ? `${v2.plate} (${v2.driverName || 'Havuz'})` : "Servis Aracı 2";
+    }
     if (locKey && locKey.startsWith('veh_')) {
       const vId = locKey.replace('veh_', '');
       const veh = (state.vehicles || []).find(v => String(v.id) === vId || v.plate === vId);
       if (veh) return `${veh.plate} (${veh.driverName || 'Havuz Aracı'})`;
     }
+    if (locLabels[locKey]) return locLabels[locKey];
     return locKey || 'Bilinmeyen Lokasyon';
   };
 
   const getStockQty = (part, locKey) => {
     if (!part) return 0;
-    if (locKey === 'central') return part.central || 0;
-    if (locKey === 'vehicle1') return part.vehicle1 || 0;
-    if (locKey === 'vehicle2') return part.vehicle2 || 0;
-    if (locKey === 'workshop') return part.workshop !== undefined ? part.workshop : 10;
-    if (part[locKey] !== undefined) return part[locKey];
+    if (locKey === 'central') return parseInt(part.central, 10) || 0;
+    if (locKey === 'workshop') return parseInt(part.workshop !== undefined ? part.workshop : 10, 10) || 0;
+    if (locKey === 'vehicle1') {
+      if (part.vehicle1 !== undefined) return parseInt(part.vehicle1, 10) || 0;
+      const v1 = (state.vehicles || [])[0];
+      if (v1 && typeof getItemVehicleStock === 'function') return getItemVehicleStock(part, v1);
+    }
+    if (locKey === 'vehicle2') {
+      if (part.vehicle2 !== undefined) return parseInt(part.vehicle2, 10) || 0;
+      const v2 = (state.vehicles || [])[1];
+      if (v2 && typeof getItemVehicleStock === 'function') return getItemVehicleStock(part, v2);
+    }
+    if (locKey && locKey.startsWith('veh_')) {
+      const vId = locKey.replace('veh_', '');
+      const veh = (state.vehicles || []).find(v => String(v.id) === vId || v.plate === vId);
+      if (veh && typeof getItemVehicleStock === 'function') {
+        return getItemVehicleStock(part, veh);
+      }
+    }
+    if (part[locKey] !== undefined) return parseInt(part[locKey], 10) || 0;
     return 0;
   };
 
   const setStockQty = (part, locKey, delta) => {
     if (!part) return;
-    if (locKey === 'central') part.central = Math.max(0, (part.central || 0) + delta);
-    else if (locKey === 'vehicle1') part.vehicle1 = Math.max(0, (part.vehicle1 || 0) + delta);
-    else if (locKey === 'vehicle2') part.vehicle2 = Math.max(0, (part.vehicle2 || 0) + delta);
-    else if (locKey === 'workshop') part.workshop = Math.max(0, (part.workshop !== undefined ? part.workshop : 10) + delta);
-    else {
-      part[locKey] = Math.max(0, (part[locKey] || 0) + delta);
+    if (locKey === 'central') {
+      part.central = Math.max(0, (parseInt(part.central, 10) || 0) + delta);
+    } else if (locKey === 'workshop') {
+      part.workshop = Math.max(0, (parseInt(part.workshop !== undefined ? part.workshop : 10, 10) || 0) + delta);
+    } else if (locKey === 'vehicle1') {
+      part.vehicle1 = Math.max(0, (parseInt(part.vehicle1, 10) || 0) + delta);
+      const v1 = (state.vehicles || [])[0];
+      if (v1) {
+        if (v1.plate) part[v1.plate] = Math.max(0, (parseInt(part[v1.plate], 10) || 0) + delta);
+        if (v1.plate) part[`veh_${v1.plate}`] = Math.max(0, (parseInt(part[`veh_${v1.plate}`], 10) || 0) + delta);
+        if (v1.id !== undefined) part[`veh_${v1.id}`] = Math.max(0, (parseInt(part[`veh_${v1.id}`], 10) || 0) + delta);
+      }
+    } else if (locKey === 'vehicle2') {
+      part.vehicle2 = Math.max(0, (parseInt(part.vehicle2, 10) || 0) + delta);
+      const v2 = (state.vehicles || [])[1];
+      if (v2) {
+        if (v2.plate) part[v2.plate] = Math.max(0, (parseInt(part[v2.plate], 10) || 0) + delta);
+        if (v2.plate) part[`veh_${v2.plate}`] = Math.max(0, (parseInt(part[`veh_${v2.plate}`], 10) || 0) + delta);
+        if (v2.id !== undefined) part[`veh_${v2.id}`] = Math.max(0, (parseInt(part[`veh_${v2.id}`], 10) || 0) + delta);
+      }
+    } else {
+      part[locKey] = Math.max(0, (parseInt(part[locKey], 10) || 0) + delta);
+      if (locKey && locKey.startsWith('veh_')) {
+        const vId = locKey.replace('veh_', '');
+        const veh = (state.vehicles || []).find(v => String(v.id) === vId || v.plate === vId);
+        if (veh) {
+          if (veh.plate) part[veh.plate] = Math.max(0, (parseInt(part[veh.plate], 10) || 0) + delta);
+          if (veh.plate) part[`veh_${veh.plate}`] = Math.max(0, (parseInt(part[`veh_${veh.plate}`], 10) || 0) + delta);
+          if (veh.id !== undefined) part[`veh_${veh.id}`] = Math.max(0, (parseInt(part[`veh_${veh.id}`], 10) || 0) + delta);
+          if (veh.driverId) part[`tech_${veh.driverId}`] = Math.max(0, (parseInt(part[`tech_${veh.driverId}`], 10) || 0) + delta);
+          const vIdx = (state.vehicles || []).findIndex(v => v.plate === veh.plate);
+          if (vIdx >= 0) part[`vehicle${vIdx + 1}`] = Math.max(0, (parseInt(part[`vehicle${vIdx + 1}`], 10) || 0) + delta);
+        }
+      }
     }
   };
 
@@ -5310,11 +5398,14 @@ function initStockTransferModal() {
       saveStockToLocalStorage();
       renderStockTable();
       updateVehiclePartDropdown();
+      if (typeof renderFleetMobileWarehouses === 'function') renderFleetMobileWarehouses();
+      if (typeof renderFleetCards === 'function') renderFleetCards();
+      if (typeof updateCriticalStockKPI === 'function') updateCriticalStockKPI();
 
       modal.style.display = 'none';
       const fromName = getLocLabel(fromLoc);
       const toName = getLocLabel(toLoc);
-      showToast(`🔄 ${qty} adet ${part.name}, ${fromName} ➔ ${toName} lokasyonuna başarıyla transfer edildi!`);
+      showToast(`🔄 ${qty} adet ${part.name}, ${fromName} ➔ ${toName} lokasyonuna başarıyla transfer edildi!`, 'success');
 
       // Canlı Backend API Çağrısı (Arka planda asenkron)
       fetch(`${API_BASE_URL}/api/stock/transfer`, {
