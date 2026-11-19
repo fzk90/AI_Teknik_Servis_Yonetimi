@@ -21176,17 +21176,26 @@ function initBossSecretTriggers() {
     }
   } catch (e) {}
 
-  // 3. Logo Üçlü Tıklama (Hem Login Ekranı hem Ana Ekran Logoları)
+  // 3. Logo Gizli Tıklama (Android Geliştirici Modu gibi Peş Peşe 5 Hızlı Tıklama)
   let clickCount = 0;
   let clickTimer = null;
+  const REQUIRED_CLICKS = 5;
 
-  function registerTripleClick(selector) {
+  function registerBossSecretClicks(selector) {
     document.querySelectorAll(selector).forEach(el => {
-      el.addEventListener('click', () => {
+      el.addEventListener('click', (e) => {
+        // Çift tıklama sayımını (bubbling) kesin olarak önle
+        e.stopPropagation();
+
         clickCount++;
         clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => { clickCount = 0; }, 600);
-        if (clickCount >= 3) {
+
+        // İki tıklama arasında en fazla 450ms süre tanınır (aralıksız 5 hızlı tık gerekir)
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+        }, 450);
+
+        if (clickCount >= REQUIRED_CLICKS) {
           clickCount = 0;
           openBossModal();
         }
@@ -21194,9 +21203,9 @@ function initBossSecretTriggers() {
     });
   }
 
-  registerTripleClick('.brand');
-  registerTripleClick('.login-portal-brand');
-  registerTripleClick('.brand-icon');
+  // Sadece logonun doğrudan resmine/kutusuna tanımla (çevreleyici ana kutular hariç)
+  registerBossSecretClicks('.brand-icon');
+  registerBossSecretClicks('.login-portal-logo-box');
 }
 
 if (document.readyState === 'loading') {
