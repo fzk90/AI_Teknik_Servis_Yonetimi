@@ -7940,6 +7940,161 @@ body.tech-tab-active #btn-header-settings {
   color: #1d4ed8;
 }
 
+/* ==================== 34. Teknisyen Ekranı Açık Tema Aydınlatması (Tezgâh / AI / Masraf) ==================== */
+/* 1. Yapay Zeka Arıza Teşhis & Müdahale Kutusu */
+:root:not([data-theme="dark"]) .ai-assistant-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+}
+
+:root:not([data-theme="dark"]) .ai-title {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .ai-assistant-box label,
+:root:not([data-theme="dark"]) .ai-input-group label {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+:root:not([data-theme="dark"]) .ai-textarea-wrapper textarea {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .ai-textarea-wrapper textarea:focus {
+  background: #ffffff !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+}
+
+:root:not([data-theme="dark"]) .ai-output {
+  background: #f0fdf4 !important;
+  border: 1px solid #86efac !important;
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .ai-analysis-content p,
+:root:not([data-theme="dark"]) .ai-analysis-content li {
+  color: #1e293b !important;
+}
+
+/* 2. Sesli Saha Müdahale Asistanı Çubuğu */
+:root:not([data-theme="dark"]) .tech-voice-bar {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%) !important;
+  border: 1px solid #bfdbfe !important;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.08) !important;
+}
+
+:root:not([data-theme="dark"]) .tech-voice-title {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .tech-voice-desc {
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .tech-voice-transcript-banner {
+  border-top-color: #cbd5e1 !important;
+}
+
+/* 3. Teşhis 3 Adımlı Kartlar (Sorunun Tespiti, Çözüm, Müdahale) */
+:root:not([data-theme="dark"]) .tech-diagnosis-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+}
+
+:root:not([data-theme="dark"]) .tech-diagnosis-card:focus-within {
+  background: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+}
+
+:root:not([data-theme="dark"]) .tech-diag-header strong {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .tech-diag-hint {
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .tech-diag-textarea {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .tech-diag-textarea:focus {
+  background: #ffffff !important;
+  border-color: #0284c7 !important;
+}
+
+:root:not([data-theme="dark"]) .btn-voice-mini {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+/* 4. Teknisyen Yolculuk & Masraf Formu */
+:root:not([data-theme="dark"]) .tech-expenses-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+}
+
+:root:not([data-theme="dark"]) .tech-expenses-box .section-title,
+:root:not([data-theme="dark"]) .tech-expenses-box h3 {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .tech-expenses-box .section-subtitle,
+:root:not([data-theme="dark"]) .tech-expenses-box p {
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .tech-expenses-box form,
+:root:not([data-theme="dark"]) .expense-form-grid {
+  background: #f8fafc !important;
+  border-radius: 8px !important;
+}
+
+:root:not([data-theme="dark"]) .tech-expenses-box label.form-label {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+:root:not([data-theme="dark"]) .tech-expenses-box .table,
+:root:not([data-theme="dark"]) .tech-expenses-box table {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .tech-expenses-box th {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+:root:not([data-theme="dark"]) .tech-expenses-box td {
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+/* 5. İş Adımları Günlüğü */
+:root:not([data-theme="dark"]) .tech-work-steps-panel {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+}
+
+:root:not([data-theme="dark"]) .tech-work-steps-header h4 {
+  color: #0f172a !important;
+}
+
+
 
 
 
