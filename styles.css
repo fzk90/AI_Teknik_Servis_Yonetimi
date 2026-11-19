@@ -7608,6 +7608,8 @@ body {
 }
 
 /* ==================== 30. Rol Tabanlı Erişim Kısıtlamaları (RBAC) ==================== */
+body.is-technician .role-nav,
+body.is-technician .tenant-switcher-badge,
 body.is-technician #btn-tab-admin,
 body.is-technician #btn-tab-reports,
 body.is-technician #btn-open-intake-modal,
@@ -7786,8 +7788,28 @@ body.is-customer #customer-view {
 /* ==================== 32. Saha Teknisyeni Odak & Dokunmatik Ergonomi ==================== */
 /* Teknisyen sekmesi seçildiğinde üst yönetici çubuklarını sadeleştir */
 body.tech-tab-active .admin-subnav-bar,
-body.tech-tab-active #btn-open-intake-modal {
+body.tech-tab-active #btn-open-intake-modal,
+body.tech-tab-active .tenant-switcher-badge,
+body.tech-tab-active #btn-header-settings {
   display: none !important;
+}
+
+/* Teknisyen Seçici Kutusunun Açık Tema Uyumu */
+:root:not([data-theme="dark"]) .tech-switcher-box {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+}
+
+:root:not([data-theme="dark"]) .tech-switcher-box label {
+  color: #0369a1 !important;
+  font-weight: 700 !important;
+}
+
+:root:not([data-theme="dark"]) .tech-switcher-box select {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
 }
 
 /* Sahada Eldiven ve Tek El Kullanımı İçin Büyük Dokunmatik Butonlar */
