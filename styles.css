@@ -8094,6 +8094,139 @@ body.tech-tab-active #btn-header-settings {
   color: #0f172a !important;
 }
 
+/* ==================== 35. Servis Araçları & Mobil Depo Yönetimi Açık Tema Aydınlatması ==================== */
+/* 1. Servis Araçları (Filo) Modalı */
+:root:not([data-theme="dark"]) .fleet-modal-box {
+  background: #ffffff !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-form-panel {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-form-title {
+  color: #0369a1 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-vehicle-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-vehicle-card:hover {
+  background: #f8fafc !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-vehicle-body {
+  color: #334155 !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-vehicle-footer {
+  border-top: 1px dashed #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+:root:not([data-theme="dark"]) .veh-action-summary-card,
+:root:not([data-theme="dark"]) .staff-veh-summary-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .staff-vehicle-chip {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+/* 2. Mobil Araç Stokları & Envanter Ekranı (#inventory-view) */
+:root:not([data-theme="dark"]) .stock-kpi-bar {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+:root:not([data-theme="dark"]) .stock-kpi-label {
+  color: #64748b !important;
+}
+
+:root:not([data-theme="dark"]) .stock-kpi-val {
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .stock-search-input {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .stock-search-input:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+}
+
+:root:not([data-theme="dark"]) .category-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .category-pill:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+:root:not([data-theme="dark"]) .category-pill.active {
+  background: #e0f2fe !important;
+  border-color: #0284c7 !important;
+  color: #0369a1 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.2) !important;
+}
+
+:root:not([data-theme="dark"]) .location-pill {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+:root:not([data-theme="dark"]) .location-pill:hover {
+  background: #f8fafc !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+:root:not([data-theme="dark"]) .location-pill.active {
+  background: #eff6ff !important;
+  border-color: #2563eb !important;
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.2) !important;
+}
+
+:root:not([data-theme="dark"]) .stock-table-wrapper {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+}
+
+:root:not([data-theme="dark"]) .stock-footer-bar {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .stock-footer-info strong {
+  color: #0f172a !important;
+}
+
+
 
 
 
