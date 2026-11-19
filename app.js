@@ -21761,3 +21761,35 @@ if (document.readyState === 'loading') {
   initBossSecretTriggers();
 }
 
+// ==================== Tanıtım Videosu Modal Fonksiyonları ====================
+function openAppVideoModal() {
+  const modal = document.getElementById('app-video-modal');
+  const video = document.getElementById('app-tanitim-video-player');
+  if (modal) {
+    modal.style.display = 'flex';
+    if (video) {
+      try {
+        video.currentTime = 0;
+        video.play();
+      } catch (_) {}
+    }
+  }
+}
+
+function closeAppVideoModal() {
+  const modal = document.getElementById('app-video-modal');
+  const video = document.getElementById('app-tanitim-video-player');
+  if (video) {
+    try {
+      video.pause();
+    } catch (_) {}
+  }
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+window.openAppVideoModal = openAppVideoModal;
+window.closeAppVideoModal = closeAppVideoModal;
+
+

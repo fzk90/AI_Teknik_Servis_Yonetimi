@@ -9136,6 +9136,7 @@ body.tech-tab-active #btn-header-settings {
 .assign-tech-card.is-source-staff {
   border-style: dashed;
 }
+
 :root:not([data-theme="dark"]) .assign-tech-card.is-source-staff {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
@@ -9144,6 +9145,7 @@ body.tech-tab-active #btn-header-settings {
 .assign-tech-loc-label {
   color: #94a3b8;
 }
+
 :root:not([data-theme="dark"]) .assign-tech-loc-label {
   color: #64748b !important;
 }
