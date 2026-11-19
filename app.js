@@ -16225,43 +16225,24 @@ function initAuthSystem() {
     if (raw) savedUser = JSON.parse(raw);
   } catch (e) {}
 
-  // URL Parametresi Kontrolü (?demo=1 veya ilk defa gelen ziyaretçi için doğrudan canlı demo)
-  const urlParams = (typeof window !== 'undefined' && window.location) ? new URLSearchParams(window.location.search) : null;
-  const isDemoUrl = urlParams ? (urlParams.get('demo') === '1' || urlParams.get('demo') === 'true') : false;
-  const isForceLogin = urlParams ? (urlParams.has('login') || urlParams.get('auth') === '1') : false;
+  const portalScreen = document.getElementById('app-login-screen');
 
-  if (isDemoUrl || (!savedUser && !isForceLogin)) {
-    // Doğrudan Canlı Demo Moduyla Başlat (Şifre veya Giriş Engeli Olmadan Sistemi Aç)
-    if (typeof loadSampleDemoData === 'function') loadSampleDemoData(false);
-    const demoUser = {
-      id: 1,
-      name: "Zafer Koçaş",
-      email: "zafer@kocasteknik.com",
-      role: "Yönetici",
-      company: "Altostek Teknik Servis Hizmetleri",
-      avatar: "ZK"
-    };
-    state.currentUser = demoUser;
-    try {
-      localStorage.setItem('servisai_auth_user', JSON.stringify(demoUser));
-      localStorage.setItem('servisai_app_mode', 'demo');
-    } catch (e) {}
-    applyRoleAccess(demoUser);
-    if (loginModal) loginModal.style.display = 'none';
-    const adminTab = document.getElementById('btn-tab-admin');
-    if (adminTab) adminTab.click();
-    setTimeout(() => {
-      if (typeof showToast === 'function') showToast("⚡ Altostek Canlı Servis Demosu Hazır! Sistemi serbestçe inceleyebilirsiniz.", "info");
-    }, 400);
-  } else if (savedUser && savedUser.name && savedUser.role) {
+  if (savedUser && savedUser.name && savedUser.role) {
+    // Cihaza önceden kaydedilmiş oturum var: Doğrudan uygulamaya gir
     state.currentUser = savedUser;
     applyRoleAccess(state.currentUser);
+    if (portalScreen) portalScreen.style.display = 'none';
+    if (savedUser.role === 'Teknisyen') {
+      const techTab = document.getElementById('btn-tab-tech');
+      if (techTab) techTab.click();
+    }
   } else {
+    // İlk giriş veya çıkış yapılmış: TC Kimlik & Şifre Giriş Ekranını Aç
     state.currentUser = null;
     applyRoleAccess(null);
-    setTimeout(() => {
-      openLoginModal('admin');
-    }, 300);
+    if (portalScreen) {
+      portalScreen.style.display = 'flex';
+    }
   }
 
   // Tab Switcher inside Modal
@@ -16680,24 +16661,173 @@ function logoutUser() {
 
   document.body.classList.remove('is-technician');
   document.body.classList.remove('is-admin');
+  document.body.classList.remove('tech-tab-active');
 
-  const avatarEl = document.getElementById('header-user-avatar');
-  const nameEl = document.getElementById('header-user-name');
-  const authIcon = document.getElementById('btn-header-auth-icon');
-  const authText = document.getElementById('btn-header-auth-text');
-  const topAuthIcon = document.getElementById('header-auth-icon');
-  const topAuthLabel = document.getElementById('header-auth-label');
+  applyRoleAccess(null);
 
-  if (avatarEl) avatarEl.textContent = '🔒';
-  if (nameEl) nameEl.textContent = 'Giriş Yapılmadı';
-  if (authIcon) authIcon.textContent = '🔑';
-  if (authText) authText.textContent = 'Giriş Yap';
-  if (topAuthIcon) topAuthIcon.textContent = '🔑';
-  if (topAuthLabel) topAuthLabel.textContent = 'Giriş Yap';
+  const portalScreen = document.getElementById('app-login-screen');
+  if (portalScreen) {
+    portalScreen.style.display = 'flex';
+  } else {
+    openLoginModal('admin');
+  }
 
-  showToast("👋 Oturum başarıyla kapatıldı.");
-  openLoginModal('admin');
+  if (typeof showToast === 'function') {
+    showToast("🚪 Oturum kapatıldı. Yeni giriş bekleniyor.", "info");
+  }
 }
+window.logoutUser = logoutUser;
+window.logoutApp = logoutUser;
+
+// ==================== TC Kimlik & Şifre Portalı Fonksiyonları ====================
+let currentPortalRole = 'Yönetici';
+
+function switchPortalRole(role) {
+  currentPortalRole = role;
+  const btnAdmin = document.getElementById('btn-portal-role-admin');
+  const btnTech = document.getElementById('btn-portal-role-tech');
+  if (role === 'Yönetici') {
+    if (btnAdmin) btnAdmin.classList.add('active');
+    if (btnTech) btnTech.classList.remove('active');
+  } else {
+    if (btnTech) btnTech.classList.add('active');
+    if (btnAdmin) btnAdmin.classList.remove('active');
+  }
+}
+
+function handleTcInput(el) {
+  if (!el) return;
+  el.value = el.value.replace(/\D/g, '').slice(0, 11);
+  const pwdEl = document.getElementById('portal-password');
+  // Kullanıcı kolaylığı: İlk 4 rakam girildiğinde şifre kutusuna otomatik doldur
+  if (pwdEl && el.value.length >= 4) {
+    pwdEl.value = el.value.slice(0, 4);
+  }
+}
+
+function togglePortalPwd() {
+  const pwd = document.getElementById('portal-password');
+  if (pwd) {
+    pwd.type = pwd.type === 'password' ? 'text' : 'password';
+  }
+}
+
+function quickFillPortal(type) {
+  const tcEl = document.getElementById('portal-tc-no');
+  const pwdEl = document.getElementById('portal-password');
+  if (type === 'admin') {
+    switchPortalRole('Yönetici');
+    if (tcEl) tcEl.value = '12345678901';
+    if (pwdEl) pwdEl.value = '1234';
+  } else {
+    switchPortalRole('Teknisyen');
+    if (tcEl) tcEl.value = '23456789012';
+    if (pwdEl) pwdEl.value = '2345';
+  }
+  handlePortalLogin();
+}
+
+function handlePortalLogin(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const tcEl = document.getElementById('portal-tc-no');
+  const pwdEl = document.getElementById('portal-password');
+  const errEl = document.getElementById('portal-login-error');
+  const portalScreen = document.getElementById('app-login-screen');
+
+  const tc = (tcEl ? tcEl.value : '').trim();
+  const pwd = (pwdEl ? pwdEl.value : '').trim();
+
+  if (tc.length !== 11) {
+    if (errEl) {
+      errEl.textContent = '⚠️ TC Kimlik Numarası tam 11 rakam olmalıdır.';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  // Kural: Şifre TC Kimlik numarasının ilk 4 rakamı olmalıdır
+  if (pwd !== tc.slice(0, 4)) {
+    if (errEl) {
+      errEl.textContent = `❌ Hatalı Şifre! Şifreniz TC Kimlik numaranızın ilk 4 rakamı (${tc.slice(0, 4)}) olmalıdır.`;
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  if (errEl) errEl.style.display = 'none';
+
+  let user = null;
+  if (currentPortalRole === 'Yönetici') {
+    user = {
+      id: 1,
+      tc: tc,
+      name: (tc === '12345678901') ? "Zafer Koçaş" : `Yönetici (${tc.slice(-4)})`,
+      email: "zafer@kocasteknik.com",
+      role: "Yönetici",
+      company: "Altostek Teknik Servis Hizmetleri",
+      avatar: "ZK"
+    };
+  } else {
+    const defaultTech = (state.staff && state.staff.length > 0) ? state.staff[0] : null;
+    user = {
+      id: defaultTech ? defaultTech.id : 2,
+      tc: tc,
+      name: (tc === '23456789012') ? "Murat Aydın" : (defaultTech ? defaultTech.name : `Teknisyen (${tc.slice(-4)})`),
+      email: "murat.aydin@servis.com",
+      role: "Teknisyen",
+      specialty: "Saha Teknisyeni",
+      vehiclePlate: "34 ABC 101",
+      avatar: "MA"
+    };
+  }
+
+  state.currentUser = user;
+  try {
+    localStorage.setItem('servisai_auth_user', JSON.stringify(user));
+  } catch (_) {}
+
+  applyRoleAccess(user);
+
+  if (portalScreen) portalScreen.style.display = 'none';
+
+  if (user.role === 'Teknisyen') {
+    const techTab = document.getElementById('btn-tab-tech');
+    if (techTab) techTab.click();
+  } else {
+    const adminTab = document.getElementById('btn-tab-admin');
+    if (adminTab) adminTab.click();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(`✅ Giriş Başarılı: Hoş geldiniz, ${user.name}! (Cihazınız hatırlandı)`);
+  }
+}
+
+function triggerPwaInstall() {
+  if (window.deferredPrompt) {
+    window.deferredPrompt.prompt();
+    window.deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        if (typeof showToast === 'function') showToast('📲 FUNZerviceTech logosu ana ekranınıza eklendi!');
+      }
+      window.deferredPrompt = null;
+    });
+  } else {
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIos) {
+      alert("📲 Safari (iPhone/iPad) Kısayol Kurulumu:\n\n1. Ekranın altındaki 'Paylaş' (kare içinde yukarı ok) butonuna dokunun.\n2. Aşağı kaydırıp 'Ana Ekrana Ekle' seçeneğini seçin.\n3. Logomuz telefonunuza uygulama olarak eklenecektir.");
+    } else {
+      alert("📲 Bilgisayar / Android Kısayol Kurulumu:\n\n1. Tarayıcınızın adres çubuğundaki 'Yükle' simgesine (veya sağ üstteki 3 noktaya) tıklayın.\n2. 'Uygulamayı Yükle' veya 'Masaüstüne Kısayol Ekle' deyin.\n3. Artık web adresi yazmadan doğrudan masaüstü ikonundan tek tıkla açabilirsiniz.");
+    }
+  }
+}
+
+window.switchPortalRole = switchPortalRole;
+window.handleTcInput = handleTcInput;
+window.togglePortalPwd = togglePortalPwd;
+window.quickFillPortal = quickFillPortal;
+window.handlePortalLogin = handlePortalLogin;
+window.triggerPwaInstall = triggerPwaInstall;
 
 function switchToCustomerMode() {
   state.currentUser = {
@@ -20634,6 +20764,7 @@ function initPWA() {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    window.deferredPrompt = e;
     if (pwaBanner && !window.matchMedia('(display-mode: standalone)').matches) {
       pwaBanner.style.display = 'flex';
     }

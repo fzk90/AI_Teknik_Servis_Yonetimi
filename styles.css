@@ -8226,6 +8226,140 @@ body.tech-tab-active #btn-header-settings {
   color: #0f172a !important;
 }
 
+/* ==================== 36. Tam Ekran Giriş Portalı (TC Kimlik & Şifre) ==================== */
+.login-portal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  animation: fadeIn 0.3s ease;
+}
+
+.login-portal-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 28px 24px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.login-portal-brand {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-portal-logo-box {
+  width: 58px;
+  height: 58px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.25);
+}
+
+.login-portal-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.login-portal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.login-portal-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.login-portal-role-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: var(--bg-subtle);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.portal-role-btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.portal-role-btn:hover {
+  color: var(--text-main);
+}
+
+.portal-role-btn.active {
+  background: var(--bg-card);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.portal-quick-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.portal-quick-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.portal-quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.portal-quick-btn {
+  font-size: 0.76rem !important;
+  padding: 6px 8px !important;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
 
 
 

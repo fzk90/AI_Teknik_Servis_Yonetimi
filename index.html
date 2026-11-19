@@ -39,10 +39,88 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261119_1007">
+  <link rel="stylesheet" href="styles.css?v=20261119_1020">
 </head>
 
 <body>
+  <!-- ==================== ANA GİRİŞ & YETKİLENDİRME EKRANI (TC KİMLİK PORTALI) ==================== -->
+  <div id="app-login-screen" class="login-portal-backdrop" style="display: none;">
+    <div class="login-portal-card">
+      <!-- Logo ve Başlık -->
+      <div class="login-portal-brand">
+        <div class="login-portal-logo-box">
+          <img src="logo.jpg" alt="FUNZerviceTech.ai" class="login-portal-logo">
+        </div>
+        <h1 class="login-portal-title">FUNZerviceTech<span>.ai</span></h1>
+        <p class="login-portal-subtitle">Yapay Zeka Destekli Endüstriyel Teknik Servis Yönetimi</p>
+      </div>
+
+      <!-- Rol Seçim Sekmesi (Yönetici / Teknisyen) -->
+      <div class="login-portal-role-tabs">
+        <button type="button" class="portal-role-btn active" id="btn-portal-role-admin" onclick="switchPortalRole('Yönetici')">
+          <span>👑 Şirket Yöneticisi</span>
+        </button>
+        <button type="button" class="portal-role-btn" id="btn-portal-role-tech" onclick="switchPortalRole('Teknisyen')">
+          <span>🔧 Saha Teknisyeni</span>
+        </button>
+      </div>
+
+      <!-- Giriş Formu -->
+      <form id="form-portal-login" class="login-portal-form" onsubmit="handlePortalLogin(event)">
+        <!-- TC Kimlik Numarası -->
+        <div class="form-group mb-3">
+          <label class="form-label" for="portal-tc-no">TC Kimlik Numarası (11 Rakam):</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🪪</span>
+            <input type="text" id="portal-tc-no" class="form-input" placeholder="Örn: 12345678901" maxlength="11" pattern="\d{11}" inputmode="numeric" required oninput="handleTcInput(this)" autocomplete="username">
+          </div>
+          <span class="text-xs text-muted" id="portal-tc-hint">Sistemdeki benzersiz kullanıcı kimlik numaranız</span>
+        </div>
+
+        <!-- Giriş Şifresi (İlk 4 Hane) -->
+        <div class="form-group mb-3">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="form-label" for="portal-password">Giriş Şifresi:</label>
+            <span class="text-xs" style="color: #0284c7; font-weight: 600;">(TC No'nuzun İlk 4 Rakamı)</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="portal-password" class="form-input" placeholder="••••" maxlength="4" inputmode="numeric" required autocomplete="current-password">
+            <button type="button" class="btn-toggle-pwd" onclick="togglePortalPwd()" title="Şifreyi Göster/Gizle">👁️</button>
+          </div>
+        </div>
+
+        <div id="portal-login-error" class="login-error-alert" style="display: none; margin-bottom: 12px;"></div>
+
+        <!-- Giriş Butonu -->
+        <button type="submit" class="btn btn-primary w-100 btn-login-submit" id="btn-portal-submit" style="min-height: 46px; font-size: 1rem; font-weight: 700;">
+          <span>🔐 Güvenli Giriş Yap</span>
+        </button>
+      </form>
+
+      <!-- Hızlı Demo Giriş Kısayolları -->
+      <div class="portal-quick-section mt-3">
+        <span class="portal-quick-title">⚡ Test & Demo İnceleme Kısayolları (Tek Tık):</span>
+        <div class="portal-quick-grid">
+          <button type="button" class="btn btn-outline btn-sm portal-quick-btn" onclick="quickFillPortal('admin')">
+            <span>👑 Zafer Koçaş (Yönetici)</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm portal-quick-btn" onclick="quickFillPortal('tech')">
+            <span>🔧 Murat Aydın (Teknisyen)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Masaüstü & Telefon İkonu / Kısayol Ekleme -->
+      <div class="portal-install-bar mt-3 pt-3" style="border-top: 1px dashed var(--border-color); text-align: center;">
+        <button type="button" class="btn btn-outline btn-sm w-100" id="btn-portal-install-pwa" onclick="triggerPwaInstall()" style="font-weight: 600; padding: 8px 12px;">
+          <span>📲 Logomuzu Masaüstüne / Telefona İkon Olarak Ekle</span>
+        </button>
+        <span class="text-xs text-muted mt-1" style="display: block;">Adres yazmadan doğrudan masaüstü ikonundan tek tıkla açın</span>
+      </div>
+
+    </div>
+  </div>
   <!-- Header / Navigation -->
   <header class="app-header">
     <div class="brand">
@@ -87,10 +165,14 @@
         <span class="avatar" id="header-user-avatar">ZK</span>
         <span class="user-name" id="header-user-name">Zafer Koçaş (Yönetici)</span>
       </div>
-      <button type="button" class="btn btn-outline btn-sm" id="btn-header-auth-main"
-        title="Oturumu Kapat / Giriş Yap / Rol Değiştir" style="border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; font-weight: 600;">
+      <button type="button" class="btn btn-outline btn-sm" id="btn-header-auth-main" onclick="logoutApp()"
+        title="Oturumu Kapat ve Giriş Ekranına Dön" style="border-color: rgba(239, 68, 68, 0.4); color: #ef4444; font-weight: 600;">
         <span id="header-auth-icon">🚪</span>
         <span id="header-auth-label">Çıkış Yap</span>
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" id="btn-header-pwa-install" onclick="triggerPwaInstall()"
+        title="Uygulamayı Masaüstüne veya Telefon Ana Ekranına İkon Olarak Ekle" style="font-weight: 600;">
+        <span>📲 Masaüstü İkonu</span>
       </button>
       <button type="button" class="btn btn-outline btn-sm theme-toggle-btn" id="btn-theme-toggle"
         title="Gündüz / Gece Modu (Açık / Koyu Tema)">
@@ -5782,7 +5864,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261119_1007"></script>
+  <script src="app.js?v=20261119_1020"></script>
   <script src="finance.js?v=20261111_3"></script>
   <script src="tr_geo.js?v=1"></script>
   <script src="geo-picker.js?v=1"></script>
