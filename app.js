@@ -17737,7 +17737,11 @@ function saveNewEquipment() {
   const serial = (document.getElementById('new-eq-serial')?.value || '').trim();
   const brand = (document.getElementById('new-eq-brand')?.value || '').trim();
   const model = (document.getElementById('new-eq-model')?.value || '').trim();
-  const category = document.getElementById('new-eq-category')?.value || 'Genel Endüstriyel Cihaz';
+  let category = document.getElementById('new-eq-category')?.value || 'Genel Endüstriyel Cihaz';
+  if (category === 'custom') {
+    const customCat = (document.getElementById('new-eq-custom-category')?.value || '').trim();
+    category = customCat || 'Özel Endüstriyel Cihaz';
+  }
   const customer = (document.getElementById('new-eq-customer')?.value || '').trim();
   const phone = (document.getElementById('new-eq-phone')?.value || '').trim();
   const address = (document.getElementById('new-eq-address')?.value || '').trim();
@@ -17908,6 +17912,40 @@ function initEquipmentActions() {
   if (newEqModal) {
     newEqModal.addEventListener('click', (e) => {
       if (e.target === newEqModal) newEqModal.style.display = 'none';
+    });
+  }
+
+  // Yeni Cihaz Kategorisi Elle Giriş Yönetimi
+  const newEqCatSelect = document.getElementById('new-eq-category');
+  const newEqCustomWrap = document.getElementById('new-eq-custom-cat-wrap');
+  const newEqCustomInput = document.getElementById('new-eq-custom-category');
+  const btnToggleNewEqCustom = document.getElementById('btn-toggle-new-eq-custom-cat');
+
+  if (newEqCatSelect && newEqCustomWrap && newEqCustomInput) {
+    newEqCatSelect.addEventListener('change', () => {
+      if (newEqCatSelect.value === 'custom') {
+        newEqCustomWrap.style.display = 'block';
+        newEqCustomInput.focus();
+        if (btnToggleNewEqCustom) btnToggleNewEqCustom.textContent = '📋 Listeden Seç';
+      } else {
+        newEqCustomWrap.style.display = 'none';
+        if (btnToggleNewEqCustom) btnToggleNewEqCustom.textContent = '✍️ Elle Yaz';
+      }
+    });
+  }
+
+  if (btnToggleNewEqCustom && newEqCatSelect && newEqCustomWrap && newEqCustomInput) {
+    btnToggleNewEqCustom.addEventListener('click', () => {
+      if (newEqCatSelect.value === 'custom') {
+        newEqCatSelect.value = 'Frekans İnverteri & Güç Kartı';
+        newEqCustomWrap.style.display = 'none';
+        btnToggleNewEqCustom.textContent = '✍️ Elle Yaz';
+      } else {
+        newEqCatSelect.value = 'custom';
+        newEqCustomWrap.style.display = 'block';
+        newEqCustomInput.focus();
+        btnToggleNewEqCustom.textContent = '📋 Listeden Seç';
+      }
     });
   }
 }

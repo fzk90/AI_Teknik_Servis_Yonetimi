@@ -39,7 +39,7 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261119_1130">
+  <link rel="stylesheet" href="styles.css?v=20261119_1150">
 </head>
 
 <body>
@@ -2045,7 +2045,13 @@
             <input type="text" id="new-eq-model" class="form-control" placeholder="Örn: VFD-075 7.5kW Sürücü" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Cihaz Kategorisi</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="form-label" style="margin: 0;">Cihaz Kategorisi</label>
+              <button type="button" class="btn btn-outline btn-xs" id="btn-toggle-new-eq-custom-cat"
+                style="font-size: 0.72rem; padding: 2px 8px; color: var(--accent-cyan); border-color: rgba(56,189,248,0.4);">
+                ✍️ Elle Yaz
+              </button>
+            </div>
             <select id="new-eq-category" class="form-select">
               <option value="Frekans İnverteri & Güç Kartı">Frekans İnverteri & Güç Kartı</option>
               <option value="PLC & Endüstriyel Otomasyon">PLC & Endüstriyel Otomasyon</option>
@@ -2053,7 +2059,12 @@
               <option value="İklimlendirme & Soğutma">İklimlendirme & Soğutma</option>
               <option value="Sensör & Termal Kontrol">Sensör & Termal Kontrol</option>
               <option value="Genel Endüstriyel Cihaz">Genel Endüstriyel Cihaz</option>
+              <option value="custom">✍️ Diğer / Elle Kategori Yaz...</option>
             </select>
+            <div id="new-eq-custom-cat-wrap" style="display: none; margin-top: 6px;">
+              <input type="text" id="new-eq-custom-category" class="form-control"
+                placeholder="✍️ Özel cihaz kategorisini yazınız (Örn: CNC Torna, Dental Otoklav, Kaynak Makinesi...)">
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Sahip Müşteri / Firma *</label>
@@ -5933,7 +5944,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261119_1130"></script>
+  <script src="app.js?v=20261119_1150"></script>
   <script src="finance.js?v=20261111_3"></script>
   <script src="tr_geo.js?v=1"></script>
   <script src="geo-picker.js?v=1"></script>

@@ -399,10 +399,16 @@
 
           <!-- Cihaz Kategorisi ve Marka/Model -->
           <div class="form-group">
-            <label class="form-label">
-              <span>Cihaz Kategorisi</span>
-              <span class="req">*</span>
-            </label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="form-label" style="margin: 0;">
+                <span>Cihaz Kategorisi</span>
+                <span class="req">*</span>
+              </label>
+              <button type="button" id="btn-toggle-custom-cat"
+                style="background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.35); color: #93c5fd; font-size: 0.74rem; font-weight: 600; padding: 2px 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+                ✍️ Elle Yaz
+              </button>
+            </div>
             <select id="device-category" class="form-select" required>
               <option value="İnvertör / AC Sürücü">⚡ İnvertör / AC Motor Sürücü (VFD)</option>
               <option value="PLC & Otomasyon Kartı">🧠 PLC & Endüstriyel Otomasyon Kartı</option>
@@ -411,7 +417,17 @@
               <option value="Güç Kaynağı / SMPS / UPS">🔋 Güç Kaynağı / SMPS Devresi / UPS</option>
               <option value="Medikal & Laboratuvar Cihazı">🔬 Medikal & Laboratuvar Cihazı</option>
               <option value="Diğer Endüstriyel Ekipman">⚙️ Diğer Endüstriyel Ekipman</option>
+              <option value="custom">✍️ Diğer / Elle Kategori Yaz...</option>
             </select>
+            <!-- Dinamik Elle Kategori Giriş Kutusu -->
+            <div id="custom-cat-box" style="display: none; margin-top: 8px;">
+              <input type="text" id="custom-device-category" class="form-input"
+                placeholder="✍️ Lütfen cihaz kategorisini yazınız (Örn: CNC Torna, Dental Otoklav, Kaynak Makinesi, Redresör...)"
+                style="border-color: #38bdf8; background: rgba(14, 165, 233, 0.08);">
+              <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px;">
+                💡 Açılır listede bulamadığınız cihaz türünü serbestçe belirtebilirsiniz.
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -531,6 +547,44 @@
         });
       });
 
+      // Cihaz Kategorisi Dinamik Elle Giriş Yönetimi
+      const catSelect = document.getElementById('device-category');
+      const customCatBox = document.getElementById('custom-cat-box');
+      const customCatInput = document.getElementById('custom-device-category');
+      const btnToggleCustomCat = document.getElementById('btn-toggle-custom-cat');
+
+      if (catSelect && customCatBox && customCatInput) {
+        catSelect.addEventListener('change', function() {
+          if (this.value === 'custom') {
+            customCatBox.style.display = 'block';
+            customCatInput.required = true;
+            customCatInput.focus();
+            if (btnToggleCustomCat) btnToggleCustomCat.textContent = '📋 Listeden Seç';
+          } else {
+            customCatBox.style.display = 'none';
+            customCatInput.required = false;
+            if (btnToggleCustomCat) btnToggleCustomCat.textContent = '✍️ Elle Yaz';
+          }
+        });
+      }
+
+      if (btnToggleCustomCat && catSelect && customCatBox && customCatInput) {
+        btnToggleCustomCat.addEventListener('click', function() {
+          if (catSelect.value === 'custom') {
+            catSelect.value = 'İnvertör / AC Sürücü';
+            customCatBox.style.display = 'none';
+            customCatInput.required = false;
+            btnToggleCustomCat.textContent = '✍️ Elle Yaz';
+          } else {
+            catSelect.value = 'custom';
+            customCatBox.style.display = 'block';
+            customCatInput.required = true;
+            customCatInput.focus();
+            btnToggleCustomCat.textContent = '📋 Listeden Seç';
+          }
+        });
+      }
+
       const form = document.getElementById('public-service-form');
       const formContainer = document.getElementById('form-container');
       const successView = document.getElementById('success-view');
@@ -544,7 +598,14 @@
         const custCity = document.getElementById('cust-city').value.trim();
         const custEmail = document.getElementById('cust-email').value.trim();
         const custAddress = document.getElementById('cust-address').value.trim();
-        const deviceCategory = document.getElementById('device-category').value;
+        
+        // Kategori Kontrolü (Açılır liste veya Elle Giriş)
+        let deviceCategory = document.getElementById('device-category').value;
+        if (deviceCategory === 'custom') {
+          const customVal = (document.getElementById('custom-device-category')?.value || '').trim();
+          deviceCategory = customVal ? customVal : 'Diğer Ekipman (Elle Giriş)';
+        }
+
         const deviceModel = document.getElementById('device-model').value.trim();
         const deviceSerial = document.getElementById('device-serial').value.trim() || 'SN-BELİRSİZ';
         const faultDesc = document.getElementById('fault-description').value.trim();
@@ -608,6 +669,9 @@
 
       document.getElementById('btn-new-ticket').addEventListener('click', function() {
         form.reset();
+        if (customCatBox) customCatBox.style.display = 'none';
+        if (customCatInput) customCatInput.required = false;
+        if (btnToggleCustomCat) btnToggleCustomCat.textContent = '✍️ Elle Yaz';
         successView.style.display = 'none';
         formContainer.style.display = 'block';
       });
