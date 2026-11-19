@@ -39,7 +39,7 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261119_1150">
+  <link rel="stylesheet" href="styles.css?v=20261119_1215">
 </head>
 
 <body>
@@ -121,71 +121,79 @@
 
     </div>
   </div>
-  <!-- Header / Navigation -->
+  <!-- Header / Navigation (Modern, Sade ve Ferah Kurumsal Kokpit) -->
   <header class="app-header">
+    <!-- Sol Kısım: Logo + Şirket SaaS Kartı + Yönetici / Personel Bilgisi -->
     <div class="brand">
-      <div class="brand-icon" style="padding: 0; overflow: hidden; background: transparent; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);">
+      <div class="brand-icon" style="padding: 0; overflow: hidden; background: transparent; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 0 14px rgba(56, 189, 248, 0.35); width: 44px; height: 44px; min-width: 44px; border-radius: 12px;">
         <img src="logo.jpg" alt="FUNZerviceTech.ai" style="width: 100%; height: 100%; object-fit: cover; display: block;">
       </div>
       <div class="brand-text">
-        <span class="brand-title">FUNZerviceTech<span style="color: #38bdf8;">.ai</span></span>
-        <button type="button" class="tenant-switcher-badge" id="btn-open-tenant-modal"
-          title="Çoklu Şirket (SaaS Tenant) Değiştir / Yönet">
-          <span class="tenant-dot"></span>
-          <span id="header-tenant-name">Altostek</span>
-          <span class="tenant-plan-tag">Kurumsal SaaS</span>
-        </button>
+        <!-- 1. Satır: Marka ve Firma / SaaS Rozeti -->
+        <div class="brand-top-row">
+          <span class="brand-title">FUNZerviceTech<span style="color: #38bdf8;">.ai</span></span>
+          <button type="button" class="tenant-switcher-badge" id="btn-open-tenant-modal"
+            title="Çoklu Şirket (SaaS Tenant) Değiştir / Yönet">
+            <span class="tenant-dot"></span>
+            <span id="header-tenant-name">Altostek</span>
+            <span class="tenant-plan-tag">Kurumsal SaaS</span>
+          </button>
+        </div>
+        <!-- 2. Satır: Oturum Açan Yönetici / Personel Çipi -->
+        <div class="header-user-subline" id="btn-open-manager-modal" title="Profil ve Oturum Bilgileri (Tıklayıp Düzenleyin)">
+          <span class="avatar" id="header-user-avatar">ZK</span>
+          <span class="user-name" id="header-user-name">Zafer Koçaş (Yönetici)</span>
+          <span class="user-subline-caret">▾</span>
+        </div>
       </div>
     </div>
 
-    <!-- Role Switcher Tabs -->
+    <!-- Orta Kısım: Ana Operasyon Masaları (Role Switcher Tabs) -->
     <nav class="role-nav" aria-label="Kullanıcı Rolü Seçimi">
-      <button class="role-btn active" data-tab="admin-view" id="btn-tab-admin">
+      <button class="role-btn active" data-tab="admin-view" id="btn-tab-admin" title="Yönetici Sevk & Kontrol Masası">
         <span class="icon">📊</span>
-        <span>Yönetici & Kontrol Paneli</span>
+        <span>Yönetici Paneli</span>
       </button>
-      <button class="role-btn" data-tab="tech-view" id="btn-tab-tech">
+      <button class="role-btn" data-tab="tech-view" id="btn-tab-tech" title="Teknisyen Saha ve Görev Masası">
         <span class="icon">🔧</span>
-        <span>Teknisyen Saha Ekranı</span>
+        <span>Teknisyen Saha</span>
         <span class="badge" id="assigned-jobs-badge">0 İş</span>
       </button>
-      <button class="role-btn" data-tab="customer-view" id="btn-tab-customer">
+      <button class="role-btn" data-tab="customer-view" id="btn-tab-customer" title="Müşteri Cihaz Sorgulama Portalı">
         <span class="icon">🔍</span>
-        <span>Müşteri Cihaz Sorgulama</span>
+        <span>Cihaz Sorgulama</span>
       </button>
     </nav>
 
-    <!-- Header Meta & Status (Derli Toplu ve Ferah Eylemler) -->
+    <!-- Sağ Kısım: Modern İkon Aksiyon Butonları (Mouse Üzerine Gelince Açıklamalı) & Çıkış -->
     <div class="header-actions">
-      <button class="btn btn-primary btn-sm" id="btn-open-intake-modal"
-        title="Yeni Müşteri Çağrısı ve Atölye Cihaz Kabulü">
-        <span>➕ Yeni Çağrı / Cihaz Kabul</span>
+      <!-- ➕ Yeni Çağrı / Servis Kabul İkon Butonu -->
+      <button type="button" class="hdr-icon-btn hdr-primary-btn" id="btn-open-intake-modal"
+        title="➕ Yeni Müşteri Çağrısı ve Atölye Cihaz Kabulü">
+        <span class="hdr-btn-icon">➕</span>
       </button>
-      <div class="user-pill" id="btn-open-manager-modal" style="cursor: pointer;" title="Profil ve Oturum Bilgileri">
-        <span class="avatar" id="header-user-avatar">ZK</span>
-        <span class="user-name" id="header-user-name">Zafer Koçaş (Yönetici)</span>
-      </div>
-      <button type="button" class="btn btn-outline btn-sm" id="btn-header-auth-main" onclick="logoutApp()"
-        title="Oturumu Kapat ve Giriş Ekranına Dön" style="border-color: rgba(239, 68, 68, 0.4); color: #ef4444; font-weight: 600;">
-        <span id="header-auth-icon">🚪</span>
-        <span id="header-auth-label">Çıkış Yap</span>
-      </button>
-      <button type="button" class="btn btn-outline btn-sm" id="btn-header-pwa-install" onclick="triggerPwaInstall()"
-        title="Uygulamayı Masaüstüne veya Telefon Ana Ekranına İkon Olarak Ekle" style="font-weight: 600;">
-        <span>📲 Masaüstü İkonu</span>
-      </button>
-      <button type="button" class="btn btn-outline btn-sm theme-toggle-btn" id="btn-theme-toggle"
+
+      <!-- 🌙 / ☀️ Koyu & Açık Tema Değiştirici İkon Buton -->
+      <button type="button" class="hdr-icon-btn theme-toggle-btn" id="btn-theme-toggle"
         title="Gündüz / Gece Modu (Açık / Koyu Tema)">
-        <span id="theme-toggle-icon">🌙</span>
-        <span id="theme-toggle-label">Koyu Mod</span>
+        <span id="theme-toggle-icon" class="hdr-btn-icon">🌙</span>
+        <span id="theme-toggle-label" style="display: none;">Koyu Mod</span>
       </button>
-      <a href="tanitim.html" target="_blank" class="btn btn-outline btn-sm"
-        title="Müşteri Satış Sayfası ve PDF Broşürü" style="text-decoration: none; color: var(--text-main);">
-        <span>📄 Tanıtım & Fiyatlar</span>
-      </a>
-      <button class="btn btn-outline btn-sm" id="btn-header-settings"
-        title="Sistem Ayarları, Şirket Bilgileri & Tarifeler">
-        <span>⚙️ Ayarlar</span>
+
+      <!-- ⚙️ Sistem Ayarları İkon Buton -->
+      <button type="button" class="hdr-icon-btn" id="btn-header-settings"
+        title="⚙️ Sistem Ayarları, Firma Bilgileri, Masaüstü İkonu & Tarifeler">
+        <span class="hdr-btn-icon">⚙️</span>
+      </button>
+
+      <!-- Dikey Zarif Ayırıcı Çizgi -->
+      <div class="hdr-divider"></div>
+
+      <!-- 🚪 Çıkış / Kullanıcı Değiştir İkon Buton (En Sağda!) -->
+      <button type="button" class="hdr-icon-btn hdr-auth-btn" id="btn-header-auth-main" onclick="logoutApp()"
+        title="🚪 Oturumu Kapat ve Giriş Ekranına Dön">
+        <span id="header-auth-icon" class="hdr-btn-icon">🚪</span>
+        <span id="header-auth-label" style="display: none;">Çıkış Yap</span>
       </button>
     </div>
   </header>
@@ -3765,6 +3773,16 @@
             Ayarları</h3>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+          <button type="button" class="btn btn-outline btn-xs" id="btn-header-pwa-install" onclick="triggerPwaInstall()"
+            style="padding: 6px 9px; font-size: 0.74rem; font-weight: 600;"
+            title="Uygulamayı Masaüstüne veya Telefona İkon Olarak Ekle">
+            <span>📲 Masaüstü İkonu</span>
+          </button>
+          <a href="tanitim.html" target="_blank" class="btn btn-outline btn-xs"
+            style="padding: 6px 9px; font-size: 0.74rem; text-decoration: none; color: var(--text-color); font-weight: 600;"
+            title="Müşteri Tanıtım Sayfası ve Paket Fiyatları">
+            <span>📄 Tanıtım & Fiyatlar</span>
+          </a>
           <button type="button" class="btn btn-warning-glow btn-xs" id="btn-quick-to-rates"
             style="border: 1px solid #f59e0b; font-weight: 700; padding: 6px 11px; font-size: 0.76rem;"
             title="İşçilik ve onarım tarifeleri yönetimine doğrudan geç">
@@ -5944,7 +5962,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261119_1150"></script>
+  <script src="app.js?v=20261119_1215"></script>
   <script src="finance.js?v=20261111_3"></script>
   <script src="tr_geo.js?v=1"></script>
   <script src="geo-picker.js?v=1"></script>

@@ -119,7 +119,7 @@ body {
   background: var(--header-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
-  padding: 12px 28px;
+  padding: 10px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -133,6 +133,72 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+}
+
+.brand-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.header-user-subline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 3px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  width: fit-content;
+  user-select: none;
+}
+
+.header-user-subline:hover {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
+}
+
+.header-user-subline .avatar {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-user-subline .user-name {
+  font-size: 0.77rem;
+  font-weight: 600;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.header-user-subline .user-subline-caret {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+
+.header-user-subline:hover .user-subline-caret {
+  opacity: 1;
+  color: var(--primary);
 }
 
 .brand-icon {
@@ -218,11 +284,88 @@ body {
   font-weight: 700;
 }
 
-/* Header Meta */
+/* Header Meta & Aksiyon Butonları */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
+}
+
+.hdr-icon-btn {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  padding: 0;
+  outline: none;
+}
+
+.hdr-icon-btn .hdr-btn-icon {
+  font-size: 1.12rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.hdr-icon-btn:hover {
+  background: var(--bg-subtle);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.hdr-icon-btn:hover .hdr-btn-icon {
+  transform: scale(1.12);
+}
+
+.hdr-icon-btn:active {
+  transform: translateY(0);
+}
+
+/* ➕ Yeni Çağrı İkon Butonu (Vurgulu & Canlı) */
+.hdr-icon-btn.hdr-primary-btn {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border-color: #60a5fa;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+
+.hdr-icon-btn.hdr-primary-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.5);
+}
+
+/* 🚪 Çıkış İkon Butonu (En Sağda Kırmızımsı Güvenli Tasarım) */
+.hdr-icon-btn.hdr-auth-btn {
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.hdr-icon-btn.hdr-auth-btn:hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: #ef4444;
+  color: #ef4444;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+}
+
+/* Dikey Zarif Ayırıcı Çizgi */
+.hdr-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border-color);
+  margin: 0 4px;
 }
 
 .system-status {
