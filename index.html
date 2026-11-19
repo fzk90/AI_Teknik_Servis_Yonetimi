@@ -39,7 +39,7 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261119_1020">
+  <link rel="stylesheet" href="styles.css?v=20261119_1130">
 </head>
 
 <body>
@@ -3487,6 +3487,75 @@
     </div>
   </div>
 
+  <!-- ==================== GİZLİ: ZAFER KOÇAŞ SAAS KOMUTA & DEMO TAKİP MASASI ==================== -->
+  <div class="modal-backdrop" id="boss-saas-modal" style="display: none; z-index: 1000000;">
+    <div class="modal-box" style="max-width: 980px; width: 95%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: #ffffff;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.5rem;">👑</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.1rem; color: #ffffff;">Zafer Koçaş - SaaS Komuta & Demo Takip Masası</h3>
+            <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: #c7d2fe;">Sisteme giriş yapan demo kullanıcıları, 7. ve 12. gün hatırlatmaları ve paket satışları</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" id="btn-close-boss-modal" onclick="closeBossModal()" style="color: #ffffff;">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <!-- KPI Özet Metrikleri -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px;">
+          <div style="background: var(--bg-subtle); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Toplam Demo Kullanıcı</span>
+            <h4 id="boss-total-demos" style="margin: 4px 0 0 0; font-size: 1.3rem; color: var(--primary);">0</h4>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">7. Gün Hatırlatma Bekleyen</span>
+            <h4 id="boss-reminder-7" style="margin: 4px 0 0 0; font-size: 1.3rem; color: #d97706;">0</h4>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">12. Gün Acil Bekleyen</span>
+            <h4 id="boss-reminder-12" style="margin: 4px 0 0 0; font-size: 1.3rem; color: #e11d48;">0</h4>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Aktif Satış / Lisanslı</span>
+            <h4 id="boss-active-paid" style="margin: 4px 0 0 0; font-size: 1.3rem; color: #10b981;">0</h4>
+          </div>
+        </div>
+
+        <!-- Tablo ve Eylemler -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <h4 style="margin: 0; font-size: 0.95rem;">📋 Demo Giriş Kayıtları & Müşteri Listesi</h4>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="exportDemoLogsToExcel()">
+              <span>📥 Excel Olarak İndir</span>
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="promptAddNewDemoUser()">
+              <span>➕ Yeni Demo Kullanıcısı Ekle</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;">
+          <table class="data-table" id="boss-demo-table">
+            <thead>
+              <tr>
+                <th>Ad Soyad / Firma</th>
+                <th>TC Kimlik No</th>
+                <th>Rol & Cihaz</th>
+                <th>İlk Giriş Tarihi</th>
+                <th>Kalan Gün</th>
+                <th>Durum</th>
+                <th style="text-align: right;">Eylemler (WhatsApp Bildirimi)</th>
+              </tr>
+            </thead>
+            <tbody id="boss-demo-tbody">
+              <!-- JavaScript ile doldurulur -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== 14. Servis Araçları & Filo Yönetimi Modalı ==================== -->
   <div class="modal-backdrop" id="fleet-modal" style="display: none;">
     <div class="modal-box fleet-modal-box">
@@ -5864,7 +5933,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261119_1020"></script>
+  <script src="app.js?v=20261119_1130"></script>
   <script src="finance.js?v=20261111_3"></script>
   <script src="tr_geo.js?v=1"></script>
   <script src="geo-picker.js?v=1"></script>

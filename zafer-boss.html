@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zafer Koçaş | SaaS Komuta & Demo Takip Masası</title>
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --text: #f9fafb;
+      --text-dim: #9ca3af;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --accent: #8b5cf6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand img {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .brand p {
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+    .badge-boss {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: transparent; border-color: #374151; color: #d1d5db; }
+    .btn-outline:hover { background: #1f2937; color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-warning { background: var(--warning); color: #000; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      width: 100%;
+      flex: 1;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .kpi-title {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .kpi-val {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-top: 6px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .kpi-sub {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .panel-header h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .table-container {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th {
+      background: #0f172a;
+      padding: 12px 16px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 700;
+      border-bottom: 1px solid var(--card-border);
+    }
+    td {
+      padding: 14px 16px;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #1f2937;
+      vertical-align: middle;
+    }
+    tr:hover {
+      background: rgba(255,255,255,0.02);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-demo { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .badge-day7 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-day12 { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .badge-paid { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-expired { background: rgba(107, 114, 128, 0.2); color: #9ca3af; border: 1px solid rgba(107, 114, 128, 0.4); }
+    .actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .actions .btn {
+      padding: 5px 10px;
+      font-size: 0.75rem;
+    }
+    .pricing-guide {
+      margin-top: 24px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .pricing-guide h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #93c5fd;
+    }
+    .pricing-chips {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .chip {
+      background: #1e293b;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+    }
+    .chip h4 { font-size: 0.85rem; color: #fff; margin-bottom: 4px; }
+    .chip p { font-size: 0.78rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="brand">
+      <img src="logo.jpg" alt="Logo">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h1>FUNZerviceTech.ai</h1>
+          <span class="badge-boss">👑 Zafer Koçaş Komuta Masası</span>
+        </div>
+        <p>Gizli SaaS Takip Masası • 14 Günlük Demo Dönüşüm & Hatırlatma Yönetimi</p>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-outline" onclick="exportToExcel()">
+        📥 Excel Olarak İndir
+      </button>
+      <button class="btn btn-primary" onclick="addNewDemo()">
+        ➕ Yeni Demo Kaydı
+      </button>
+      <a href="index.html" class="btn btn-outline" title="Ana Uygulamaya Dön">
+        🌐 Uygulamayı Aç
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- KPI Kartları -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Toplam Demo Kullanıcı</div>
+        <div class="kpi-val" id="kpi-total" style="color: var(--primary);">0</div>
+        <div class="kpi-sub">Sistemi 14 gün test eden adaylar</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">7. Gün Hatırlatması (Teklif Zamanı)</div>
+        <div class="kpi-val" id="kpi-day7" style="color: var(--warning);">0</div>
+        <div class="kpi-sub">WhatsApp ile 1. kontrol yapılacaklar</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">12. Gün Acil Kapanış</div>
+        <div class="kpi-val" id="kpi-day12" style="color: var(--danger);">0</div>
+        <div class="kpi-sub">Bitmesine 2 gün kalan sıcak müşteriler</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Aktif Lisanslı Satış</div>
+        <div class="kpi-val" id="kpi-paid" style="color: var(--success);">0</div>
+        <div class="kpi-sub">Paket satın alan aktif müşteriler</div>
+      </div>
+    </div>
+
+    <!-- Müşteri Listesi Paneli -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>📋 Demo Girişleri & WhatsApp İletişim Masası</h2>
+        <span style="font-size: 0.78rem; color: var(--text-dim);" id="last-update-time">Son Güncelleme: Şimdi</span>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Ad Soyad / Firma</th>
+              <th>TC Kimlik No (Giriş)</th>
+              <th>Telefon</th>
+              <th>İlk Giriş Tarihi</th>
+              <th>Kalan Süre</th>
+              <th>Durum</th>
+              <th style="text-align: right;">Eylemler & Satış Kapama</th>
+            </tr>
+          </thead>
+          <tbody id="demo-table-body">
+            <!-- JS ile doldurulur -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Fiyatlandırma ve Paket Rehberi -->
+    <div class="pricing-guide">
+      <h3>💡 Zafer Koçaş Satış ve Fiyatlandırma Rehberi (Müşteri ile Konuşurken)</h3>
+      <div class="pricing-chips">
+        <div class="chip" style="border-left-color: #3b82f6;">
+          <h4>1. Atölye Paketi: ₺950 / ay</h4>
+          <p>1 Merkez Atölye, 2 Teknisyen. Küçük tamirhaneler ve beyaz eşya servisleri için. Yıllıkta 2 ay hediye.</p>
+        </div>
+        <div class="chip" style="border-left-color: #10b981;">
+          <h4>2. Saha & Pro Paket: ₺2.250 / ay (En Çok Satan)</h4>
+          <p>1 Merkez + 5 Mobil Araç Deposu, 5 Teknisyen, Yapay Zeka Arıza Teşhisi, Sesli Dikte, Canlı GPS & Stok Virmanı.</p>
+        </div>
+        <div class="chip" style="border-left-color: #8b5cf6;">
+          <h4>3. Filo & Kurumsal: ₺5.500 / ay Taban</h4>
+          <p>Merkez + 2 Şube Dahil, 10 Teknisyen/Araç. Ek Şube: +₺1.250/ay, Ek Teknisyen: +₺250/ay. Sürpriz maliyet koruması.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const BOSS_STORAGE_KEY = 'servisai_boss_demo_logs';
+
+    function getLogs() {
+      try {
+        const raw = localStorage.getItem(BOSS_STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+
+      const seed = [
+        {
+          id: 'demo-101',
+          name: 'Mehmet Yılmaz',
+          tc: '12345678901',
+          phone: '0532 450 12 88',
+          company: 'Yılmaz Soğutma & Klima',
+          role: 'Yönetici / Patron',
+          firstLogin: new Date(Date.now() - 7 * 86400000).toISOString(),
+          lastLogin: new Date(Date.now() - 1 * 86400000).toISOString(),
+          loginCount: 9,
+          status: 'demo_day7',
+          plan: 'Saha & Pro Adayı',
+          notes: 'Sahada 3 araçları var. Rota ve stok virmanını çok beğendi.'
+        },
+        {
+          id: 'demo-102',
+          name: 'Burak Demirtaş',
+          tc: '23456789012',
+          phone: '0542 331 90 45',
+          company: 'Demirtaş Endüstriyel Mutfak',
+          role: 'Servis Müdürü',
+          firstLogin: new Date(Date.now() - 12 * 86400000).toISOString(),
+          lastLogin: new Date(Date.now() - 2 * 86400000).toISOString(),
+          loginCount: 16,
+          status: 'demo_day12',
+          plan: 'Saha & Pro Adayı',
+          notes: 'Demonun bitmesine 2 gün kaldı. WhatsApp üzerinden teklif bekliyor.'
+        },
+        {
+          id: 'demo-103',
+          name: 'Ali Çelik',
+          tc: '34567890123',
+          phone: '0555 789 44 11',
+          company: 'Çelik Bobinaj & Motor Servisi',
+          role: 'Atölye Ustası',
+          firstLogin: new Date(Date.now() - 2 * 86400000).toISOString(),
+          lastLogin: new Date(Date.now() - 3600000).toISOString(),
+          loginCount: 4,
+          status: 'demo_active',
+          plan: 'Atölye Paketi',
+          notes: 'Yeni başladı, arıza teşhisini aktif deniyor.'
+        },
+        {
+          id: 'demo-104',
+          name: 'Kadir Güneş',
+          tc: '45678901234',
+          phone: '0533 112 34 56',
+          company: 'Güneş Jeneratör & Enerji A.Ş.',
+          role: 'Genel Koordinatör',
+          firstLogin: new Date(Date.now() - 25 * 86400000).toISOString(),
+          lastLogin: new Date(Date.now() - 5 * 86400000).toISOString(),
+          loginCount: 38,
+          status: 'paid',
+          plan: 'Filo & Kurumsal (Yıllık Peşin)',
+          notes: '12 teknisyen + 2 şube lisansı satın aldı. Aktif mutlu müşteri.'
+        }
+      ];
+      localStorage.setItem(BOSS_STORAGE_KEY, JSON.stringify(seed));
+      return seed;
+    }
+
+    function renderTable() {
+      const logs = getLogs();
+      const tbody = document.getElementById('demo-table-body');
+      const now = Date.now();
+
+      let total = 0;
+      let day7 = 0;
+      let day12 = 0;
+      let paid = 0;
+
+      tbody.innerHTML = logs.map(item => {
+        const first = new Date(item.firstLogin);
+        const daysPassed = Math.floor((now - first.getTime()) / (1000 * 60 * 60 * 24));
+        const remaining = Math.max(0, 14 - daysPassed);
+        const isPaid = item.status === 'paid';
+
+        if (isPaid) {
+          paid++;
+        } else {
+          total++;
+          if (daysPassed >= 6 && daysPassed <= 10) day7++;
+          if (daysPassed >= 11 && daysPassed <= 14) day12++;
+        }
+
+        const cleanPhone = (item.phone || '').replace(/[^0-9]/g, '');
+        const waPhone = cleanPhone.startsWith('90') ? cleanPhone : (cleanPhone.startsWith('0') ? '9' + cleanPhone : '90' + cleanPhone);
+
+        const waText7 = encodeURIComponent(
+          `Merhaba ${item.name},\nFUNZerviceTech.ai Yapay Zeka Servis Yönetimi 14 günlük deneme sürümünüzün 7. günündesiniz! 🚀\nSaha ekibiniz ve atölyeniz için sistemimizden memnun kaldınız mı? Saha&Pro ve Atölye paketlerimizde bu haftaya özel indirimli geçiş teklifimizi sunmak isteriz. Detayları görüşelim mi?`
+        );
+
+        const waText12 = encodeURIComponent(
+          `Sayın ${item.name},\nFUNZerviceTech.ai 14 günlük ücretsiz deneme sürenizin tamamlanmasına sadece 2 gün kaldı! ⏳\nOluşturduğunuz servis kayıtlarınız, parça stoklarınız ve cihaz geçmişinizin kesintiye uğramaması için paketinizi aktif hale getirebiliriz. Size özel lisans kurulumunu hemen yapalım mı?`
+        );
+
+        let badge = '';
+        let btn = '';
+
+        if (isPaid) {
+          badge = `<span class="badge badge-paid">⭐ Aktif Lisanslı (${item.plan})</span>`;
+          btn = `<span style="font-size: 0.8rem; color: #34d399; font-weight: 600;">✅ Lisans Satıldı</span>`;
+        } else if (daysPassed >= 14) {
+          badge = `<span class="badge badge-expired">❌ 14 Gün Doldu</span>`;
+          btn = `<a href="https://wa.me/${cleanPhone ? waPhone : ''}?text=${waText12}" target="_blank" class="btn btn-danger">💬 Süre Doldu Teklifi</a>`;
+        } else if (daysPassed >= 11) {
+          badge = `<span class="badge badge-day12">🚨 12. Gün (Son 2-3 Gün)</span>`;
+          btn = `<a href="https://wa.me/${cleanPhone ? waPhone : ''}?text=${waText12}" target="_blank" class="btn btn-danger" style="background:#e11d48;">🔥 Acil Kapama</a>`;
+        } else if (daysPassed >= 6) {
+          badge = `<span class="badge badge-day7">🔔 7. Gün Hatırlatması</span>`;
+          btn = `<a href="https://wa.me/${cleanPhone ? waPhone : ''}?text=${waText7}" target="_blank" class="btn btn-warning">📱 7. Gün WhatsApp</a>`;
+        } else {
+          badge = `<span class="badge badge-demo">🟢 Aktif Demo (${daysPassed}. gün)</span>`;
+          btn = `<a href="https://wa.me/${cleanPhone ? waPhone : ''}?text=${waText7}" target="_blank" class="btn btn-outline">💬 WhatsApp</a>`;
+        }
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight: 700; color: #fff;">${item.name}</div>
+              <div style="font-size: 0.78rem; color: var(--text-dim);">${item.company || 'Atölye/Firma'}</div>
+            </td>
+            <td>
+              <code style="background: #1e293b; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; color: #38bdf8;">${item.tc}</code>
+            </td>
+            <td>
+              ${item.phone ? `<a href="tel:${cleanPhone}" style="color: #60a5fa; text-decoration: none;">📞 ${item.phone}</a>` : '—'}
+            </td>
+            <td>${first.toLocaleDateString('tr-TR')}</td>
+            <td style="font-weight: 700; color: ${remaining <= 3 ? '#f87171' : '#fff'};">
+              ${isPaid ? '—' : remaining + ' gün'}
+            </td>
+            <td>${badge}</td>
+            <td>
+              <div class="actions">
+                ${btn}
+                ${!isPaid ? `
+                  <button class="btn btn-success" onclick="markPaid('${item.id}')" title="Satış Yapıldı">
+                    💰 Satıldı
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('kpi-total').textContent = total;
+      document.getElementById('kpi-day7').textContent = day7;
+      document.getElementById('kpi-day12').textContent = day12;
+      document.getElementById('kpi-paid').textContent = paid;
+      document.getElementById('last-update-time').textContent = 'Son Güncelleme: ' + new Date().toLocaleTimeString('tr-TR');
+    }
+
+    function markPaid(id) {
+      const logs = getLogs();
+      const idx = logs.findIndex(l => l.id === id);
+      if (idx >= 0) {
+        const plan = prompt('Satılan Paketi Seçin:\n1: Atölye Paketi (₺950/ay)\n2: Saha & Pro Paketi (₺2.250/ay)\n3: Filo & Kurumsal (₺5.500/ay+)', 'Saha & Pro Paketi (₺2.250/ay)');
+        if (plan) {
+          logs[idx].status = 'paid';
+          logs[idx].plan = plan;
+          localStorage.setItem(BOSS_STORAGE_KEY, JSON.stringify(logs));
+          renderTable();
+          alert('🎉 Lisans satışı başarıyla kaydedildi!');
+        }
+      }
+    }
+
+    function addNewDemo() {
+      const name = prompt('Müşteri Ad Soyad:');
+      if (!name) return;
+      const company = prompt('Firma / Atölye Adı:');
+      const phone = prompt('Telefon Numarası (05xx xxx xx xx):');
+      const tc = prompt('Giriş TC Kimlik No (11 hane):');
+      if (!tc || tc.length !== 11) {
+        alert('Lütfen 11 haneli geçerli TC Kimlik No giriniz.');
+        return;
+      }
+
+      const logs = getLogs();
+      logs.unshift({
+        id: 'demo-' + Date.now(),
+        name,
+        company: company || 'Özel Atölye',
+        phone: phone || '',
+        tc,
+        role: 'Yönetici / Patron',
+        firstLogin: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        loginCount: 1,
+        status: 'demo_active',
+        plan: '14 Günlük Demo',
+        notes: 'Manuel eklendi.'
+      });
+      localStorage.setItem(BOSS_STORAGE_KEY, JSON.stringify(logs));
+      renderTable();
+      alert(`✅ ${name} sisteme eklendi!\nTC: ${tc}\nŞifre (İlk 4 hane): ${tc.substring(0, 4)}`);
+    }
+
+    function exportToExcel() {
+      const logs = getLogs();
+      let csv = '\uFEFF';
+      csv += 'ID,Müşteri Adı,Firma,TC Kimlik,Telefon,Rol,Giriş Sayısı,İlk Giriş,Durum,Paket,Notlar\n';
+      logs.forEach(l => {
+        csv += `"${l.id}","${l.name || ''}","${l.company || ''}","${l.tc || ''}","${l.phone || ''}","${l.role || ''}",${l.loginCount || 1},"${l.firstLogin || ''}","${l.status || ''}","${l.plan || ''}","${l.notes || ''}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FUNZerviceTech_Demo_Musteri_Listesi_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>

@@ -16784,6 +16784,7 @@ function handlePortalLogin(e) {
   state.currentUser = user;
   try {
     localStorage.setItem('servisai_auth_user', JSON.stringify(user));
+    recordLoginLog(user);
   } catch (_) {}
 
   applyRoleAccess(user);
@@ -20796,5 +20797,373 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initPWA);
 } else {
   initPWA();
+}
+
+/* ==========================================================================
+   GİZLİ: ZAFER KOÇAŞ SAAS KOMUTA & DEMO TAKİP MASASI (STEALTH SAAS COCKPIT)
+   Erişim: Ctrl+Alt+Z, F9, ?boss=1 veya Logo'ya 3 kez tıklama
+   ========================================================================== */
+
+const BOSS_STORAGE_KEY = 'servisai_boss_demo_logs';
+
+function getDemoLogs() {
+  try {
+    const raw = localStorage.getItem(BOSS_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+
+  // Başlangıç tohum verileri (gerçekçi demo örnekleri)
+  const seed = [
+    {
+      id: 'demo-101',
+      name: 'Mehmet Yılmaz',
+      tc: '12345678901',
+      phone: '0532 450 12 88',
+      company: 'Yılmaz Soğutma & Klima',
+      role: 'Yönetici / Patron',
+      firstLogin: new Date(Date.now() - 7 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 1 * 86400000).toISOString(),
+      loginCount: 9,
+      status: 'demo_day7',
+      plan: 'Saha & Pro Adayı',
+      notes: 'Sahada 3 araçları var. Rota ve stok virmanını çok beğendi.'
+    },
+    {
+      id: 'demo-102',
+      name: 'Burak Demirtaş',
+      tc: '23456789012',
+      phone: '0542 331 90 45',
+      company: 'Demirtaş Endüstriyel Mutfak',
+      role: 'Servis Müdürü',
+      firstLogin: new Date(Date.now() - 12 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 2 * 86400000).toISOString(),
+      loginCount: 16,
+      status: 'demo_day12',
+      plan: 'Saha & Pro Adayı',
+      notes: 'Demonun bitmesine 2 gün kaldı. WhatsApp üzerinden teklif bekliyor.'
+    },
+    {
+      id: 'demo-103',
+      name: 'Ali Çelik',
+      tc: '34567890123',
+      phone: '0555 789 44 11',
+      company: 'Çelik Bobinaj & Motor Servisi',
+      role: 'Atölye Ustası',
+      firstLogin: new Date(Date.now() - 2 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 3600000).toISOString(),
+      loginCount: 4,
+      status: 'demo_active',
+      plan: 'Atölye Paketi',
+      notes: 'Yeni başladı, arıza teşhisini aktif deniyor.'
+    },
+    {
+      id: 'demo-104',
+      name: 'Kadir Güneş',
+      tc: '45678901234',
+      phone: '0533 112 34 56',
+      company: 'Güneş Jeneratör & Enerji A.Ş.',
+      role: 'Genel Koordinatör',
+      firstLogin: new Date(Date.now() - 25 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 5 * 86400000).toISOString(),
+      loginCount: 38,
+      status: 'paid',
+      plan: 'Filo & Kurumsal (Yıllık Peşin)',
+      notes: '12 teknisyen + 2 şube lisansı satın aldı. Aktif mutlu müşteri.'
+    }
+  ];
+
+  try {
+    localStorage.setItem(BOSS_STORAGE_KEY, JSON.stringify(seed));
+  } catch (e) {}
+  return seed;
+}
+
+function recordLoginLog(user) {
+  if (!user || !user.tc) return;
+  try {
+    let logs = getDemoLogs();
+    const existingIdx = logs.findIndex(l => l.tc === user.tc);
+    const now = new Date().toISOString();
+
+    if (existingIdx >= 0) {
+      logs[existingIdx].lastLogin = now;
+      logs[existingIdx].loginCount = (logs[existingIdx].loginCount || 1) + 1;
+      if (user.name) logs[existingIdx].name = user.name;
+      if (user.role) logs[existingIdx].role = user.role;
+    } else {
+      logs.unshift({
+        id: 'demo-' + Date.now(),
+        name: user.name || 'Demo Kullanıcısı',
+        tc: user.tc,
+        phone: user.phone || '05xx xxx xx xx',
+        company: user.company || 'Servis Firması',
+        role: user.role || 'Kullanıcı',
+        firstLogin: now,
+        lastLogin: now,
+        loginCount: 1,
+        status: 'demo_active',
+        plan: '14 Günlük Demo',
+        notes: 'Sistemden otomatik kaydedildi.'
+      });
+    }
+    localStorage.setItem(BOSS_STORAGE_KEY, JSON.stringify(logs));
+  } catch (e) {
+    console.warn('Boss log kaydedilemedi:', e);
+  }
+}
+
+function openBossModal() {
+  const modal = document.getElementById('boss-saas-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    renderBossDemoTable();
+  }
+}
+
+function closeBossModal() {
+  const modal = document.getElementById('boss-saas-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+function renderBossDemoTable() {
+  const logs = getDemoLogs();
+  const tbody = document.getElementById('boss-demo-tbody');
+  if (!tbody) return;
+
+  let totalDemos = 0;
+  let reminder7Count = 0;
+  let reminder12Count = 0;
+  let paidCount = 0;
+
+  const now = Date.now();
+
+  tbody.innerHTML = logs.map(item => {
+    const firstDate = new Date(item.firstLogin);
+    const daysPassed = Math.floor((now - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+    const remainingDays = Math.max(0, 14 - daysPassed);
+
+    const isPaid = item.status === 'paid';
+    if (isPaid) {
+      paidCount++;
+    } else {
+      totalDemos++;
+      if (daysPassed >= 6 && daysPassed <= 10) reminder7Count++;
+      if (daysPassed >= 11 && daysPassed <= 14) reminder12Count++;
+    }
+
+    let statusBadge = '';
+    let actionButtons = '';
+
+    // WhatsApp Mesaj Şablonları
+    const waText7 = encodeURIComponent(
+      `Merhaba ${item.name},\nFUNZerviceTech.ai Yapay Zeka Servis Yönetimi 14 günlük deneme sürümünüzün 7. günündesiniz! 🚀\nSaha ekibiniz ve atölyeniz için sistemimizden memnun kaldınız mı? Saha&Pro ve Atölye paketlerimizde bu haftaya özel indirimli geçiş teklifimizi sunmak isteriz. Detayları görüşelim mi?`
+    );
+
+    const waText12 = encodeURIComponent(
+      `Sayın ${item.name},\nFUNZerviceTech.ai 14 günlük ücretsiz deneme sürenizin tamamlanmasına sadece 2 gün kaldı! ⏳\nOluşturduğunuz servis kayıtlarınız, parça stoklarınız ve cihaz geçmişinizin kesintiye uğramaması için paketinizi aktif hale getirebiliriz. Size özel lisans kurulumunu hemen yapalım mı?`
+    );
+
+    if (isPaid) {
+      statusBadge = `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 0.78rem;">⭐ Aktif Lisanslı (${item.plan})</span>`;
+      actionButtons = `
+        <span style="font-size: 0.8rem; color: #10b981;">✅ Satış Yapıldı</span>
+      `;
+    } else if (daysPassed >= 14) {
+      statusBadge = `<span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 0.78rem;">❌ Süre Doldu (14 Gün)</span>`;
+      actionButtons = `
+        <a href="https://wa.me/?text=${waText12}" target="_blank" class="btn btn-danger btn-sm" style="text-decoration:none; padding: 4px 10px; font-size: 0.75rem;">
+          💬 WhatsApp ile Yenileme Teklifi
+        </a>
+      `;
+    } else if (daysPassed >= 11) {
+      statusBadge = `<span style="background: rgba(225, 29, 72, 0.15); color: #e11d48; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 0.78rem;">🚨 12. Gün (Son 2-3 Gün)</span>`;
+      actionButtons = `
+        <a href="https://wa.me/?text=${waText12}" target="_blank" class="btn btn-danger btn-sm" style="text-decoration:none; padding: 4px 10px; font-size: 0.75rem; background:#e11d48; border-color:#e11d48;">
+          🔥 WhatsApp Acil Kapanış
+        </a>
+      `;
+    } else if (daysPassed >= 6) {
+      statusBadge = `<span style="background: rgba(217, 119, 6, 0.15); color: #d97706; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 0.78rem;">🔔 7. Gün Hatırlatması</span>`;
+      actionButtons = `
+        <a href="https://wa.me/?text=${waText7}" target="_blank" class="btn btn-warning btn-sm" style="text-decoration:none; padding: 4px 10px; font-size: 0.75rem; background:#d97706; border-color:#d97706; color:#fff;">
+          📱 WhatsApp 7. Gün Mesajı
+        </a>
+      `;
+    } else {
+      statusBadge = `<span style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 0.78rem;">🟢 Aktif Demo (${daysPassed}. gün)</span>`;
+      actionButtons = `
+        <a href="https://wa.me/?text=${waText7}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none; padding: 4px 10px; font-size: 0.75rem;">
+          💬 İletişim Kur
+        </a>
+      `;
+    }
+
+    const firstDateStr = firstDate.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    return `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 10px 12px;">
+          <div style="font-weight: 600; color: var(--text-color);">${item.name}</div>
+          <div style="font-size: 0.78rem; color: var(--text-dim);">${item.company || 'Atölye/Firma'}</div>
+          ${item.phone ? `<div style="font-size: 0.75rem; color: var(--primary);"><a href="tel:${item.phone.replace(/\\s/g,'')}" style="color:inherit; text-decoration:none;">📞 ${item.phone}</a></div>` : ''}
+        </td>
+        <td style="padding: 10px 12px; font-family: monospace; font-size: 0.85rem;">
+          ${item.tc}
+        </td>
+        <td style="padding: 10px 12px; font-size: 0.82rem;">
+          <div>${item.role || 'Kullanıcı'}</div>
+          <div style="font-size: 0.75rem; color: var(--text-dim);">${item.loginCount || 1} kez girdi</div>
+        </td>
+        <td style="padding: 10px 12px; font-size: 0.82rem;">
+          ${firstDateStr}
+        </td>
+        <td style="padding: 10px 12px; font-size: 0.85rem; font-weight: 600; color: ${remainingDays <= 3 ? '#e11d48' : 'var(--text-color)'};">
+          ${isPaid ? '—' : `${remainingDays} gün`}
+        </td>
+        <td style="padding: 10px 12px;">
+          ${statusBadge}
+        </td>
+        <td style="padding: 10px 12px; text-align: right;">
+          <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
+            ${actionButtons}
+            ${!isPaid ? `
+              <button type="button" class="btn btn-outline btn-sm" onclick="markDemoAsPaid('${item.id}')" title="Lisans Satın Aldı Olarak İşaretle" style="padding: 4px 8px; font-size: 0.75rem;">
+                💰 Satıldı
+              </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Metrikleri güncelle
+  const elTotal = document.getElementById('boss-total-demos');
+  const elRem7 = document.getElementById('boss-reminder-7');
+  const elRem12 = document.getElementById('boss-reminder-12');
+  const elPaid = document.getElementById('boss-active-paid');
+
+  if (elTotal) elTotal.textContent = totalDemos;
+  if (elRem7) elRem7.textContent = reminder7Count;
+  if (elRem12) elRem12.textContent = reminder12Count;
+  if (elPaid) elPaid.textContent = paidCount;
+}
+
+function markDemoAsPaid(id) {
+  let logs = getDemoLogs();
+  const idx = logs.findIndex(l => l.id === id);
+  if (idx >= 0) {
+    const planName = prompt('Hangi paketi satın aldı?\n1: Atölye Paketi (₺950)\n2: Saha & Pro Paketi (₺2.250)\n3: Filo & Kurumsal (₺5.500+)', 'Saha & Pro Paketi (₺2.250)');
+    if (planName) {
+      logs[idx].status = 'paid';
+      logs[idx].plan = planName;
+      localStorage.setItem(BOSS_STORAGE_KEY, JSON.stringify(logs));
+      renderBossDemoTable();
+      if (typeof showToast === 'function') showToast('🎉 Lisans satışı başarıyla kaydedildi!');
+    }
+  }
+}
+
+function promptAddNewDemoUser() {
+  const name = prompt('Demo Müşteri Adı & Soyadı:');
+  if (!name) return;
+  const company = prompt('Firma / Atölye Adı:');
+  const phone = prompt('Telefon Numarası (05xx xxx xx xx):');
+  const tc = prompt('Atanacak 11 Haneli TC Kimlik No:');
+  if (!tc || tc.length !== 11) {
+    alert('Lütfen geçerli 11 haneli bir TC Kimlik No giriniz.');
+    return;
+  }
+
+  let logs = getDemoLogs();
+  logs.unshift({
+    id: 'demo-' + Date.now(),
+    name: name,
+    company: company || 'Özel Demo',
+    phone: phone || '',
+    tc: tc,
+    role: 'Yönetici / Patron',
+    firstLogin: new Date().toISOString(),
+    lastLogin: new Date().toISOString(),
+    loginCount: 1,
+    status: 'demo_active',
+    plan: '14 Günlük Demo',
+    notes: 'Zafer Koçaş tarafından manuel eklendi.'
+  });
+
+  localStorage.setItem(BOSS_STORAGE_KEY, JSON.stringify(logs));
+  renderBossDemoTable();
+  alert(`✅ ${name} sisteme demo kullanıcısı olarak eklendi.\nTC: ${tc}\nŞifre (İlk 4 hane): ${tc.substring(0, 4)}`);
+}
+
+function exportDemoLogsToExcel() {
+  const logs = getDemoLogs();
+  let csv = '\uFEFF'; // UTF-8 BOM Excel için
+  csv += 'ID,Müşteri Ad Soyad,Firma,TC Kimlik,Telefon,Rol,Giriş Sayısı,İlk Giriş Tarihi,Son Giriş Tarihi,Durum,Paket,Notlar\n';
+
+  logs.forEach(l => {
+    csv += `"${l.id}","${l.name || ''}","${l.company || ''}","${l.tc || ''}","${l.phone || ''}","${l.role || ''}",${l.loginCount || 1},"${l.firstLogin || ''}","${l.lastLogin || ''}","${l.status || ''}","${l.plan || ''}","${l.notes || ''}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `FUNZerviceTech_Demo_Musteri_Raporu_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Gizli Dinleyiciler: Ctrl+Alt+Z, F9, URL Parametresi, Logo Üçlü Tıklama
+function initBossSecretTriggers() {
+  // 1. Kısayol Tuşları (Ctrl+Alt+Z veya F9)
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey && e.altKey && (e.key === 'z' || e.key === 'Z')) || e.key === 'F9') {
+      e.preventDefault();
+      openBossModal();
+    }
+  });
+
+  // 2. URL Parametresi (?boss=1 veya ?admin=zafer veya #boss)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('boss') === '1' || urlParams.get('admin') === 'zafer' || window.location.hash === '#boss') {
+      setTimeout(() => {
+        openBossModal();
+      }, 500);
+    }
+  } catch (e) {}
+
+  // 3. Logo Üçlü Tıklama (Hem Login Ekranı hem Ana Ekran Logoları)
+  let clickCount = 0;
+  let clickTimer = null;
+
+  function registerTripleClick(selector) {
+    document.querySelectorAll(selector).forEach(el => {
+      el.addEventListener('click', () => {
+        clickCount++;
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => { clickCount = 0; }, 600);
+        if (clickCount >= 3) {
+          clickCount = 0;
+          openBossModal();
+        }
+      });
+    });
+  }
+
+  registerTripleClick('.brand');
+  registerTripleClick('.login-portal-brand');
+  registerTripleClick('.brand-icon');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initBossSecretTriggers);
+} else {
+  initBossSecretTriggers();
 }
 
