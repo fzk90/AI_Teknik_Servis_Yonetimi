@@ -330,6 +330,25 @@
   </main>
 
   <script>
+    const BOSS_SECURITY_PIN = '1390';
+    function verifyBossAuth() {
+      if (sessionStorage.getItem('boss_pin_verified') === BOSS_SECURITY_PIN) {
+        return true;
+      }
+      const pin = prompt('👑 Zafer Koçaş - SaaS Komuta Masası\nLütfen 4 Haneli Güvenlik PIN Kodunuzu Giriniz:');
+      if (pin === BOSS_SECURITY_PIN) {
+        sessionStorage.setItem('boss_pin_verified', BOSS_SECURITY_PIN);
+        return true;
+      }
+      alert('⛔ Hatalı PIN Kodu! Erişim engellendi.');
+      window.location.href = 'index.html';
+      return false;
+    }
+
+    if (!verifyBossAuth()) {
+      document.body.innerHTML = '<div style="display:flex; height:100vh; align-items:center; justify-content:center; color:#ef4444; font-family:sans-serif;"><h2>⛔ Erişim Kilitlendi</h2></div>';
+    }
+
     const BOSS_STORAGE_KEY = 'servisai_boss_demo_logs';
 
     function getLogs() {
