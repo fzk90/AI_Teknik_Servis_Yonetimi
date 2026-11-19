@@ -39,7 +39,7 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261119_0920">
+  <link rel="stylesheet" href="styles.css?v=20261119_0932">
 </head>
 
 <body>
@@ -196,13 +196,33 @@
 
         <!-- Sol Kolon: Servis Çağrıları & Sevk Masası -->
         <div class="content-card dispatch-column">
-          <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+          <!-- Sadeleştirilmiş Tek Başlık ve Tepsi Kontrolleri -->
+          <div class="card-header" style="flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px;">
             <div>
-              <h2 class="card-title">📞 Servis Çağrıları & Sevk Masası</h2>
-              <p class="card-subtitle">Müşteri arıza çağrılarını yönetin, önceliklendirin ve saha ekiplerine atayın</p>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 class="card-title">📞 Servis Çağrıları & Sevk Masası</h2>
+                <span class="badge badge-success" id="incoming-calls-count">0 Bekliyor</span>
+              </div>
+              <p class="card-subtitle mt-1">Müşteri arıza çağrılarını yönetin, önceliklendirin ve saha ekiplerine atayın</p>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <span class="badge badge-success" id="incoming-calls-count">0 Bekliyor</span>
+            
+            <!-- Tepsi Geçiş Butonları (Aktif Sevk Masası / Parça Bekleyenler / Biten İşler Tepsisi) -->
+            <div class="dispatch-tray-tabs" id="dispatch-tray-tabs" role="tablist" aria-label="Sevk Masası Tepsileri">
+              <button type="button" class="btn-tray-tab active" id="tab-dispatch-active" data-tray="active"
+                title="Atama bekleyen veya sahada işlem gören açık servis çağrıları">
+                <span>⚡ Aktif Sevk Masası</span>
+                <span class="tray-pill" id="tray-active-count">1</span>
+              </button>
+              <button type="button" class="btn-tray-tab" id="tab-dispatch-onhold" data-tray="onhold"
+                title="Yedek parça temini veya müşteri onayı bekleyen, askıya alınmış işler">
+                <span>⏸️ Parça Bekleyenler</span>
+                <span class="tray-pill tray-pill-warning" id="tray-onhold-count">0</span>
+              </button>
+              <button type="button" class="btn-tray-tab" id="tab-dispatch-completed" data-tray="completed"
+                title="Onarımı ve testi tamamlanmış, muhasebe/teslimat bekleyen biten işler">
+                <span>✅ Biten İşler</span>
+                <span class="tray-pill tray-pill-success" id="tray-completed-count">0</span>
+              </button>
             </div>
           </div>
 
@@ -252,32 +272,7 @@
           </div>
 
           <!-- Gelen Servis Çağrıları & Sevk Kuyruğu -->
-          <div class="incoming-calls-card" id="incoming-calls-card">
-            <div class="incoming-calls-header"
-              style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="incoming-calls-title">📞 Servis Çağrıları & Sevk Masası</span>
-                <span class="badge badge-success" id="incoming-calls-count">0 Bekliyor</span>
-              </div>
-              <!-- Tepsi Geçiş Butonları (Aktif Sevk Masası / Biten İşler Tepsisi) -->
-              <div class="dispatch-tray-tabs" id="dispatch-tray-tabs" role="tablist" aria-label="Sevk Masası Tepsileri">
-                <button type="button" class="btn-tray-tab active" id="tab-dispatch-active" data-tray="active"
-                  title="Atama bekleyen veya sahada işlem gören açık servis çağrıları">
-                  <span>⚡ Aktif Sevk Masası</span>
-                  <span class="tray-pill" id="tray-active-count">1</span>
-                </button>
-                <button type="button" class="btn-tray-tab" id="tab-dispatch-onhold" data-tray="onhold"
-                  title="Yedek parça temini veya müşteri onayı bekleyen, askıya alınmış işler">
-                  <span>⏸️ Parça Bekleyenler</span>
-                  <span class="tray-pill tray-pill-warning" id="tray-onhold-count">0</span>
-                </button>
-                <button type="button" class="btn-tray-tab" id="tab-dispatch-completed" data-tray="completed"
-                  title="Onarımı ve testi tamamlanmış, muhasebe/teslimat bekleyen biten işler">
-                  <span>✅ Biten İşler Tepsisi</span>
-                  <span class="tray-pill tray-pill-success" id="tray-completed-count">0</span>
-                </button>
-              </div>
-            </div>
+          <div class="incoming-calls-card" id="incoming-calls-card" style="border: none; padding: 0; background: transparent; box-shadow: none;">
             <div class="incoming-calls-list" id="incoming-calls-list">
               <!-- Dinamik çağrı kartları JavaScript ile doldurulur -->
             </div>
@@ -5787,7 +5782,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261119_0920"></script>
+  <script src="app.js?v=20261119_0932"></script>
   <script src="finance.js?v=20261111_3"></script>
   <script src="tr_geo.js?v=1"></script>
   <script src="geo-picker.js?v=1"></script>

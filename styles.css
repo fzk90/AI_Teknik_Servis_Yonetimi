@@ -7825,6 +7825,100 @@ body.tech-tab-active #btn-open-intake-modal {
   }
 }
 
+/* ==================== 33. Sevk Masası & Yönetici Görsel Sadeleştirmesi ==================== */
+:root:not([data-theme="dark"]) .dispatch-column,
+:root:not([data-theme="dark"]) .staff-column {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+:root:not([data-theme="dark"]) .dispatch-tray-tabs {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+:root:not([data-theme="dark"]) .btn-tray-tab {
+  color: #64748b;
+}
+
+:root:not([data-theme="dark"]) .btn-tray-tab:hover {
+  color: #0f172a;
+  background: #e2e8f0;
+}
+
+:root:not([data-theme="dark"]) .btn-tray-tab.active {
+  background: #ffffff;
+  color: #0284c7;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+:root:not([data-theme="dark"]) .dispatch-banner {
+  background: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%);
+  border: 1px solid #bbf7d0;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+}
+
+:root:not([data-theme="dark"]) .dispatch-info-item,
+:root:not([data-theme="dark"]) .dispatch-complaint-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+:root:not([data-theme="dark"]) .incoming-call-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #0284c7;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+:root:not([data-theme="dark"]) .incoming-call-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  border-left-color: #0369a1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+:root:not([data-theme="dark"]) .incoming-call-item.priority-urgent {
+  border-left-color: #e11d48;
+  background: #fff1f2;
+}
+
+:root:not([data-theme="dark"]) .incoming-call-item.priority-high {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+:root:not([data-theme="dark"]) .incoming-call-item.is-completed-call {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+:root:not([data-theme="dark"]) .staff-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+:root:not([data-theme="dark"]) .staff-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+:root:not([data-theme="dark"]) .staff-meta-chip {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+:root:not([data-theme="dark"]) .staff-meta-chip.active-jobs-chip {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+
 
 
 

@@ -881,8 +881,21 @@ function initTabs() {
       if (targetId === 'tech-view') {
         document.body.classList.add('tech-tab-active');
         populateActiveTechDropdown();
-        clearTechWorkbench();
         renderTechJobs();
+        // Eğer iş varsa otomatik olarak ilk aktif işi tezgâha yükle (sağ taraf boş durmasın)
+        const currentTechId = state.activeTechId || (state.staff && state.staff[0] ? state.staff[0].id : null);
+        const activeTech = (state.staff || []).find(s => s.id == currentTechId) || (state.staff ? state.staff[0] : null);
+        if (activeTech) {
+          const allOrders = state.workOrders || [];
+          const myOrders = allOrders.filter(o => 
+            (currentTechId && o.assigned_user_id && String(o.assigned_user_id) === String(currentTechId)) ||
+            (o.assigned_tech && o.assigned_tech.toLowerCase() === activeTech.name.toLowerCase())
+          );
+          if (myOrders.length > 0) {
+            const firstOrderCode = myOrders[0].tracking_code || myOrders[0].code;
+            loadWorkOrderToWorkbench(firstOrderCode);
+          }
+        }
       } else {
         document.body.classList.remove('tech-tab-active');
         if (targetId === 'admin-view') {
