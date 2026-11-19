@@ -3586,7 +3586,25 @@
         <button class="modal-close-btn" id="btn-close-fleet-modal">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="fleet-layout-grid">
+        <!-- Mobil Depo & Filo Yönetimi Sekmeler -->
+        <div class="fleet-tabs-bar" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-fleet-tab-vehicles" onclick="switchFleetModalView('vehicles')" style="font-weight: 600;">
+              🚗 Servis Araçları & Filo
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-fleet-tab-warehouses" onclick="switchFleetModalView('warehouses')" style="font-weight: 600;">
+              📦 Mobil Depolar & Araç İçi Parça Envanteri
+            </button>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openStockTransferModal()" title="Araçlar ve ana depo arasında anlık parça transferi / virman yap">
+              <span>🔄 Parça Transferi / Virman</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Görünüm 1: Araç Tanımlama ve Filo Listesi -->
+        <div id="fleet-view-vehicles" class="fleet-layout-grid">
 
           <!-- Sol Panel: Yeni Araç Tanımlama Formu -->
           <div class="fleet-form-panel">
@@ -3677,6 +3695,24 @@
             </div>
           </div>
 
+        </div>
+
+        <!-- Görünüm 2: Mobil Depolar & Araç İçi Parça Envanteri -->
+        <div id="fleet-view-warehouses" style="display: none; flex-direction: column; gap: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 12px 16px;">
+            <div>
+              <strong style="font-size: 0.95rem; color: var(--text-main); display: block;">📦 Saha Mobil Araç Depoları Genel Durumu</strong>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Saha teknisyenlerinin araçlarında taşıdığı yedek parça envanteri, adetleri ve toplam değerleri</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="openStockTransferModal(null, null, 'central')">
+                <span>➕ Araç Deposuna Parça Yükle (İkmal)</span>
+              </button>
+            </div>
+          </div>
+          <div id="fleet-warehouses-container" style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- JavaScript ile doldurulur -->
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -5962,7 +5998,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261119_1410"></script>
+  <script src="app.js?v=20261119_1440"></script>
   <script src="finance.js?v=20261111_3"></script>
   <script src="tr_geo.js?v=1"></script>
   <script src="geo-picker.js?v=1"></script>

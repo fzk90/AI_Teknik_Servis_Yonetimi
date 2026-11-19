@@ -4111,7 +4111,7 @@ body {
 
 /* ==================== 13. Servis Araçları & Filo Yönetimi Stilleri ==================== */
 .fleet-modal-box {
-  max-width: 960px;
+  max-width: 1040px;
   width: 95%;
   max-height: 90vh;
 }
@@ -8272,6 +8272,21 @@ body.tech-tab-active #btn-header-settings {
 :root:not([data-theme="dark"]) .fleet-vehicle-footer {
   border-top: 1px dashed #e2e8f0 !important;
   color: #64748b !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-warehouse-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-warehouse-card table th {
+  background: #f8fafc !important;
+  color: #475569 !important;
+}
+
+:root:not([data-theme="dark"]) .fleet-warehouse-card table td {
+  border-bottom: 1px solid #f1f5f9 !important;
 }
 
 :root:not([data-theme="dark"]) .veh-action-summary-card,

@@ -2754,21 +2754,38 @@ function getActiveFieldVehicles() {
   return list;
 }
 
-// Belirtilen parça için aracın mevcut stok miktarını çözer
+// Belirtilen parça için aracın mevcut stok miktarını dinamik çözer
 function getItemVehicleStock(item, veh) {
   if (!item || !veh) return 0;
-  if (veh.id === 1 || veh.plate === '34 ABC 101') {
-    if (item.vehicle1 !== undefined) return item.vehicle1;
+  // 1. Plaka ile doğrudan eşleşme
+  if (veh.plate) {
+    if (item[veh.plate] !== undefined) return parseInt(item[veh.plate], 10) || 0;
+    if (item[`veh_${veh.plate}`] !== undefined) return parseInt(item[`veh_${veh.plate}`], 10) || 0;
   }
-  if (veh.id === 2 || veh.plate === '34 DEF 202') {
-    if (item.vehicle2 !== undefined) return item.vehicle2;
+  // 2. Araç id ile eşleşme
+  if (veh.id !== undefined && item[`veh_${veh.id}`] !== undefined) {
+    return parseInt(item[`veh_${veh.id}`], 10) || 0;
   }
-  if (item[`veh_${veh.id}`] !== undefined) return item[`veh_${veh.id}`];
-  if (item[veh.plate] !== undefined) return item[veh.plate];
-  if (item[`veh_${veh.plate}`] !== undefined) return item[`veh_${veh.plate}`];
-  if (veh.driverId && item[`tech_${veh.driverId}`] !== undefined) return item[`tech_${veh.driverId}`];
+  // 3. Personel zimmet anahtarı
+  if (veh.driverId && item[`tech_${veh.driverId}`] !== undefined) {
+    return parseInt(item[`tech_${veh.driverId}`], 10) || 0;
+  }
+  // 4. Filo araç sırası eşleşmesi (vehicle1, vehicle2, vehicle3...)
+  const vList = (state.vehicles && state.vehicles.length > 0) ? state.vehicles : [];
+  const vIdx = vList.findIndex(v => (veh.plate && v.plate === veh.plate) || (veh.id !== undefined && v.id === veh.id));
+  if (vIdx >= 0 && item[`vehicle${vIdx + 1}`] !== undefined) {
+    return parseInt(item[`vehicle${vIdx + 1}`], 10) || 0;
+  }
+  // 5. Standart demo araçları fallback
+  if (veh.id === 1 || (veh.plate && veh.plate.includes('101'))) {
+    if (item.vehicle1 !== undefined) return parseInt(item.vehicle1, 10) || 0;
+  }
+  if (veh.id === 2 || (veh.plate && veh.plate.includes('202'))) {
+    if (item.vehicle2 !== undefined) return parseInt(item.vehicle2, 10) || 0;
+  }
   return 0;
 }
+window.getItemVehicleStock = getItemVehicleStock;
 
 // Stok listesinden parça çıkarma / silme fonksiyonu
 function deleteStockItem(code) {
@@ -13386,6 +13403,7 @@ function initFleetManagement() {
   const openModal = () => {
     updateFleetDriverDropdown();
     renderFleetCards();
+    renderFleetMobileWarehouses();
     fleetModal.style.display = 'flex';
   };
 
@@ -13482,6 +13500,238 @@ function initFleetManagement() {
   }
 }
 
+/**
+ * Belirtilen aracın mobil deposunda bulunan tüm yedek parçaları,
+ * toplam adet ve toplam TL tutarı ile birlikte döndürür.
+ */
+function getVehicleStockInventory(veh) {
+  if (!state.stock || !Array.isArray(state.stock)) return { items: [], totalQty: 0, totalValue: 0 };
+  const items = [];
+  let totalQty = 0;
+  let totalValue = 0;
+
+  state.stock.forEach(part => {
+    const qty = (typeof getItemVehicleStock === 'function') 
+      ? getItemVehicleStock(part, veh) 
+      : (part[veh.plate] || 0);
+
+    if (qty > 0) {
+      const price = parseFloat(part.price) || 0;
+      const subtotal = qty * price;
+      totalQty += qty;
+      totalValue += subtotal;
+      items.push({
+        code: part.code,
+        name: part.name || part.code,
+        category: part.category || 'Yedek Parça',
+        qty: qty,
+        minQty: part.minStock || 2,
+        price: price,
+        subtotal: subtotal,
+        warranty: part.warranty || '12 Ay'
+      });
+    }
+  });
+
+  return { items, totalQty, totalValue };
+}
+window.getVehicleStockInventory = getVehicleStockInventory;
+
+/**
+ * Servis Araçları ve Mobil Depo görünümü arasında geçiş yapar
+ */
+function switchFleetModalView(viewName) {
+  const viewVehicles = document.getElementById('fleet-view-vehicles');
+  const viewWarehouses = document.getElementById('fleet-view-warehouses');
+  const tabVehicles = document.getElementById('btn-fleet-tab-vehicles');
+  const tabWarehouses = document.getElementById('btn-fleet-tab-warehouses');
+
+  if (viewName === 'warehouses') {
+    if (viewVehicles) viewVehicles.style.display = 'none';
+    if (viewWarehouses) viewWarehouses.style.display = 'flex';
+    if (tabVehicles) {
+      tabVehicles.classList.remove('btn-primary');
+      tabVehicles.classList.add('btn-outline');
+    }
+    if (tabWarehouses) {
+      tabWarehouses.classList.remove('btn-outline');
+      tabWarehouses.classList.add('btn-primary');
+    }
+    renderFleetMobileWarehouses();
+  } else {
+    if (viewVehicles) viewVehicles.style.display = 'grid';
+    if (viewWarehouses) viewWarehouses.style.display = 'none';
+    if (tabVehicles) {
+      tabVehicles.classList.remove('btn-outline');
+      tabVehicles.classList.add('btn-primary');
+    }
+    if (tabWarehouses) {
+      tabWarehouses.classList.remove('btn-primary');
+      tabWarehouses.classList.add('btn-outline');
+    }
+    renderFleetCards();
+  }
+}
+window.switchFleetModalView = switchFleetModalView;
+
+/**
+ * Belirli bir aracın mobil depo kartına doğrudan odaklanır
+ */
+function openVehicleWarehouse(plate) {
+  switchFleetModalView('warehouses');
+  renderFleetMobileWarehouses(plate);
+}
+window.openVehicleWarehouse = openVehicleWarehouse;
+
+/**
+ * Filodaki tüm araçların mobil depolarını ve parça envanterini listeler
+ */
+function renderFleetMobileWarehouses(focusPlate = null) {
+  const container = document.getElementById('fleet-warehouses-container');
+  if (!container) return;
+
+  if (!state.vehicles || state.vehicles.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 36px 16px; background: rgba(255,255,255,0.02); border: 1px dashed var(--border-color); border-radius: 8px;">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 8px;">🚗💨</span>
+        <strong style="color: var(--text-main); font-size: 1rem;">Filoda Kayıtlı Servis Aracı Bulunamadı</strong>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">
+          Mobil depoları görüntülemek için önce "Servis Araçları & Filo" sekmesinden yeni araç tanımlayınız.
+        </p>
+        <button type="button" class="btn btn-primary btn-sm mt-3" onclick="switchFleetModalView('vehicles')">
+          ➕ Yeni Araç Ekle
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const formatTL = (n) => (parseFloat(n) || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+
+  container.innerHTML = state.vehicles.map(v => {
+    const inv = getVehicleStockInventory(v);
+    const vehIcon = getVehicleIcon(v.type);
+    const isAssigned = v.driverName && !v.driverName.includes("Boşta") && !v.driverName.includes("Zimmetsiz");
+    const isFocused = focusPlate && v.plate === focusPlate;
+
+    // Hedef transfer lokasyon anahtarı
+    let locTargetKey = 'vehicle1';
+    if (v.plate.includes('101')) locTargetKey = 'vehicle1';
+    else if (v.plate.includes('202')) locTargetKey = 'vehicle2';
+    else locTargetKey = `veh_${v.id || v.plate}`;
+
+    let partsTableHtml = '';
+    if (inv.items.length === 0) {
+      partsTableHtml = `
+        <div style="padding: 16px; text-align: center; background: rgba(0,0,0,0.05); border-radius: 6px; border: 1px dashed var(--border-color); margin-top: 12px;">
+          <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">Bu servis aracının mobil deposunda henüz yedek parça bulunmuyor.</span>
+          <button type="button" class="btn btn-outline btn-xs mt-2" onclick="openStockTransferModal(null, '${locTargetKey}', 'central')">
+            📦 Merkez Depodan Parça Transfer Et
+          </button>
+        </div>
+      `;
+    } else {
+      const rows = inv.items.map(it => {
+        const isCritical = it.qty <= it.minQty;
+        return `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 8px 10px; font-weight: 600; color: var(--accent-cyan);">${it.code}</td>
+            <td style="padding: 8px 10px;">
+              <strong style="color: var(--text-main); font-size: 0.85rem;">${it.name}</strong>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">${it.category} &bull; Garanti: ${it.warranty}</div>
+            </td>
+            <td style="padding: 8px 10px; text-align: center;">
+              <span class="badge ${isCritical ? 'badge-warning' : 'badge-success'}" style="font-size: 0.82rem; font-weight: 700;">
+                ${it.qty} Adet ${isCritical ? '⚠️ (Kritik)' : ''}
+              </span>
+            </td>
+            <td style="padding: 8px 10px; text-align: right; color: var(--text-muted);">${formatTL(it.price)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: var(--text-main);">${formatTL(it.subtotal)}</td>
+            <td style="padding: 8px 10px; text-align: center;">
+              <div style="display: flex; gap: 4px; justify-content: center;">
+                <button type="button" class="btn btn-outline btn-xs" onclick="openStockTransferModal('${it.code}', null, '${locTargetKey}')" title="Bu parçayı başka araca veya merkeze aktar">
+                  🔄 Transfer
+                </button>
+                <button type="button" class="btn btn-outline-info btn-xs" onclick="openStockTransferModal('${it.code}', '${locTargetKey}', 'central')" title="Merkez depodan bu araca ilave yükle">
+                  ➕ İkmal
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      partsTableHtml = `
+        <div style="overflow-x: auto; margin-top: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left;">
+            <thead>
+              <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                <th style="padding: 8px 10px;">Parça Kodu</th>
+                <th style="padding: 8px 10px;">Parça Tanımı</th>
+                <th style="padding: 8px 10px; text-align: center;">Araç İçi Stok</th>
+                <th style="padding: 8px 10px; text-align: right;">Birim Fiyat</th>
+                <th style="padding: 8px 10px; text-align: right;">Toplam Tutar</th>
+                <th style="padding: 8px 10px; text-align: center;">Hızlı İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="fleet-warehouse-card" id="warehouse-card-${v.plate.replace(/\s+/g, '-')}" style="border: 1px solid ${isFocused ? 'var(--accent-primary)' : 'var(--border-color)'}; border-radius: 8px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="plate-badge" style="font-size: 0.85rem; padding: 3px 8px;">
+              <span class="plate-tr" style="font-size: 0.65rem;">TR</span>
+              <strong>${v.plate}</strong>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span>${vehIcon}</span>
+                <strong style="color: var(--text-main); font-size: 0.95rem;">${v.model}</strong>
+                <span class="badge ${v.status === 'Sahada Aktif' ? 'badge-success' : 'badge-info'}" style="font-size: 0.72rem;">${v.status || 'Aktif'}</span>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                👤 Zimmetli Teknisyen: <strong style="color: ${isAssigned ? 'var(--text-main)' : 'var(--accent-amber)'};">${v.driverName}</strong>
+                ${v.type ? ` &bull; <span>${v.type}</span>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="text-align: right;">
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Mobil Depo Envanteri:</div>
+              <strong style="color: var(--accent-cyan); font-size: 0.95rem;">${inv.totalQty} Adet</strong>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">(${inv.items.length} Kalem)</span>
+              <strong style="color: var(--accent-emerald); font-size: 0.95rem; margin-left: 6px;">${formatTL(inv.totalValue)}</strong>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="openStockTransferModal(null, '${locTargetKey}', 'central')" title="Merkez depodan bu araca parça yükle">
+              ➕ Parça Ekle
+            </button>
+          </div>
+        </div>
+
+        ${partsTableHtml}
+      </div>
+    `;
+  }).join('');
+
+  if (focusPlate) {
+    setTimeout(() => {
+      const cardEl = document.getElementById(`warehouse-card-${focusPlate.replace(/\s+/g, '-')}`);
+      if (cardEl) {
+        cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
+  }
+}
+window.renderFleetMobileWarehouses = renderFleetMobileWarehouses;
+
 function renderFleetCards() {
   const container = document.getElementById('fleet-cards-container');
   if (!container) return;
@@ -13502,15 +13752,10 @@ function renderFleetCards() {
         ? '<span class="badge badge-info">Merkezde Hazır</span>'
         : '<span class="badge badge-warning">Periyodik Bakımda</span>';
 
-    // Bu araçtaki toplam yedek parça sayısı (state.stock üzerinden)
-    let partStockCount = 0;
-    if (v.plate.includes("101")) {
-      partStockCount = state.stock.reduce((acc, curr) => acc + (curr.vehicle1 || 0), 0);
-    } else if (v.plate.includes("202")) {
-      partStockCount = state.stock.reduce((acc, curr) => acc + (curr.vehicle2 || 0), 0);
-    } else {
-      partStockCount = 0;
-    }
+    // Bu araçtaki toplam yedek parça sayısı ve tutarı dinamik hesaplanır
+    const inv = getVehicleStockInventory(v);
+    const partStockCount = inv.totalQty;
+    const partTotalValue = (parseFloat(inv.totalValue) || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     const vehIcon = getVehicleIcon(v.type);
 
@@ -13536,13 +13781,23 @@ function renderFleetCards() {
             </strong>
           </div>
         </div>
-        <div class="fleet-vehicle-footer">
-          <span style="color: var(--text-muted);">📦 Araç Stoğu: <strong>${partStockCount} Adet</strong></span>
-          <div style="display: flex; gap: 6px; align-items: center;">
-            <button class="btn btn-primary btn-sm btn-manage-vehicle" data-plate="${v.plate}" title="Aracı geri al, başka elemana ver veya durumunu değiştir" style="padding: 2px 8px; font-size: 0.72rem;">
-              ⚙️ İşlem & Zimmet
+        <div class="fleet-vehicle-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.8rem; display: block;">
+              📦 Mobil Depo: <strong>${partStockCount} Adet</strong> (${inv.items.length} Kalem)
+            </span>
+            <span style="color: var(--accent-emerald); font-size: 0.76rem; font-weight: 600;">
+              ${partTotalValue} ₺
+            </span>
+          </div>
+          <div style="display: flex; gap: 5px; align-items: center;">
+            <button class="btn btn-outline-info btn-xs btn-view-vehicle-stock" data-plate="${v.plate}" title="Bu aracın mobil deposundaki yedek parçaları görüntüle" style="padding: 2px 7px; font-size: 0.72rem;">
+              📦 Parçalar
             </button>
-            <button class="btn btn-outline btn-sm btn-delete-vehicle" data-plate="${v.plate}" title="Aracı filodan çıkar ve parçaları Merkeze devret" style="color: var(--accent-rose); border-color: rgba(244,63,94,0.3); padding: 2px 8px; font-size: 0.72rem;">
+            <button class="btn btn-primary btn-xs btn-manage-vehicle" data-plate="${v.plate}" title="Aracı geri al, başka elemana ver veya durumunu değiştir" style="padding: 2px 7px; font-size: 0.72rem;">
+              ⚙️ İşlem
+            </button>
+            <button class="btn btn-outline btn-xs btn-delete-vehicle" data-plate="${v.plate}" title="Aracı filodan çıkar ve parçaları Merkeze devret" style="color: var(--accent-rose); border-color: rgba(244,63,94,0.3); padding: 2px 7px; font-size: 0.72rem;">
               ❌ Sil
             </button>
           </div>
@@ -13555,9 +13810,18 @@ function renderFleetCards() {
   container.querySelectorAll('.fleet-vehicle-card').forEach(card => {
     card.style.cursor = 'pointer';
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.btn-delete-vehicle')) return;
+      if (e.target.closest('.btn-delete-vehicle') || e.target.closest('.btn-view-vehicle-stock')) return;
       const plate = card.getAttribute('data-plate');
       openVehicleActionModal(plate);
+    });
+  });
+
+  // Mobil Depo Parça Görüntüleme Butonları
+  container.querySelectorAll('.btn-view-vehicle-stock').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const plate = e.currentTarget.getAttribute('data-plate');
+      openVehicleWarehouse(plate);
     });
   });
 
@@ -13714,8 +13978,12 @@ function updateFleetKPI() {
   const elSub = document.getElementById('kpi-fleet-subtext');
   if (!elCount) return;
 
-  const activeVehicles = state.vehicles.filter(v => v.status === "Sahada Aktif").length;
-  elCount.textContent = `${state.vehicles.length} Araç / Ekip`;
+  const totalVehicles = (state.vehicles || []).length;
+  const activeVehicles = (state.vehicles || []).filter(v => 
+    v.status === "Sahada Aktif" || v.status === "Aktif" || (v.driverName && !v.driverName.includes("Boşta") && !v.driverName.includes("Zimmetsiz"))
+  ).length;
+
+  elCount.textContent = `${totalVehicles} Araç / Ekip`;
   if (elSub) elSub.textContent = `${activeVehicles} aktif mobil depo görevde`;
 }
 
@@ -20647,7 +20915,7 @@ function finishAndLaunchSystem() {
         driverId: 100 + idx,
         driverName: t.name,
         type: 'Araç',
-        status: 'Aktif',
+        status: 'Sahada Aktif',
         battery: 85,
         km: 45000 + idx * 12500
       };
@@ -20741,6 +21009,18 @@ function finishAndLaunchSystem() {
     } catch (e) {}
     if (typeof renderLaborPresets === 'function') renderLaborPresets();
   }
+
+  // 5. Filo, Personel, Depolar ve KPI'ları Anında Senkronize Et
+  if (typeof updateFleetKPI === 'function') updateFleetKPI();
+  if (typeof renderFleetCards === 'function') renderFleetCards();
+  if (typeof renderFleetMobileWarehouses === 'function') renderFleetMobileWarehouses();
+  if (typeof renderStaffList === 'function') renderStaffList();
+  if (typeof updateCriticalStockKPI === 'function') updateCriticalStockKPI();
+  if (typeof updateActiveOrdersKPI === 'function') updateActiveOrdersKPI();
+  if (typeof updateStaffProfileUI === 'function') updateStaffProfileUI();
+  if (typeof updateFleetDriverDropdown === 'function') updateFleetDriverDropdown();
+  if (typeof populateMapTechDropdown === 'function') populateMapTechDropdown();
+  if (typeof populateActiveTechDropdown === 'function') populateActiveTechDropdown();
 
   // Sihirbazı Kapat
   const modal = document.getElementById('onboarding-wizard-modal');
