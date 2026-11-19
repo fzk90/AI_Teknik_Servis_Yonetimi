@@ -9179,6 +9179,48 @@ body.tech-tab-active #btn-header-settings {
   color: #334155 !important;
 }
 
+/* ==================== Mobil & Dar Ekranlar İçin Yatay Tablo Kaydırma Göstergeleri ==================== */
+.table-scroll-hint {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .table-scroll-hint.mobile-only {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent-cyan, #38bdf8);
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px dashed rgba(56, 189, 248, 0.3);
+    border-radius: 6px;
+  }
+
+  .stock-table-wrapper,
+  .table-responsive,
+  .tech-expenses-table-wrapper,
+  .passport-parts-table-wrap,
+  .mini-table-box {
+    position: relative;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    box-shadow: inset -10px 0 10px -8px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Teknisyen Masası Oturum Çubuğu Mobil Uyumu */
+  .tech-session-switcher-bar {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+}
+
+
 
 
 

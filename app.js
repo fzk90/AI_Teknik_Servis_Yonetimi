@@ -5476,6 +5476,14 @@ function updateActiveTechProfileHeader() {
 
   infoEl.innerHTML = `Teknisyen: <strong>${activeTech.name}</strong> • 🚗 Araç: <strong>${plate}</strong> • Durum: ${statusBadge}${phone}${spec}`;
 
+  const sessionActiveName = document.getElementById('tech-session-active-name');
+  if (sessionActiveName) sessionActiveName.textContent = activeTech.name;
+  const sessionStatusBadge = document.getElementById('tech-session-status-badge');
+  if (sessionStatusBadge) {
+    sessionStatusBadge.textContent = activeTech.status;
+    sessionStatusBadge.className = `badge ${activeTech.status === 'Görevde' ? 'badge-primary' : activeTech.status === 'Yolda' ? 'badge-warning' : 'badge-success'}`;
+  }
+
   const vehSubtitle = document.getElementById('vehicle-part-subtitle');
   if (vehSubtitle) {
     vehSubtitle.textContent = `Araç stoğunuzdan (${plate}) seçtiğiniz parça anında iş emrine eklenir ve araç stoğundan düşülür.`;
@@ -12217,6 +12225,9 @@ async function openStaffJobsModal(staffId) {
             <button class="btn btn-outline btn-sm btn-load-to-bench" data-code="${order.tracking_code}" title="İşi teknisyen tezgahına yükle">
               🔧 Tezgâha Al
             </button>
+            <button class="btn btn-outline-cyan btn-sm btn-open-report-from-jobs" data-code="${order.tracking_code}" title="Resmi servis formunu ve müşteri teslim tutanağını aç / yazdır">
+              🖨️ Servis Formu
+            </button>
             <button class="btn btn-whatsapp btn-sm btn-open-wa-for-job" data-code="${order.tracking_code}" title="Müşteriye WhatsApp mesajı hazırla">
               💬 WhatsApp
             </button>
@@ -12242,6 +12253,14 @@ async function openStaffJobsModal(staffId) {
       const techTabBtn = document.getElementById('btn-tab-tech');
       if (techTabBtn) techTabBtn.click();
       loadWorkOrderToWorkbench(code);
+    });
+  });
+
+  listContainer.querySelectorAll('.btn-open-report-from-jobs').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const code = e.currentTarget.getAttribute('data-code');
+      modal.style.display = 'none';
+      openServiceReportModal(code);
     });
   });
 
@@ -21791,5 +21810,98 @@ function closeAppVideoModal() {
 
 window.openAppVideoModal = openAppVideoModal;
 window.closeAppVideoModal = closeAppVideoModal;
+
+// ==================== Tam Sistem Veri Yedekleme ve Geri Yükleme (JSON) ====================
+function exportFullSystemBackupJSON() {
+  try {
+    const backupData = {
+      app: "FUNZerviceTech.ai",
+      version: "2026.11",
+      exportedAt: new Date().toISOString(),
+      companyProfile: JSON.parse(localStorage.getItem('servisai_company_profile') || '{}'),
+      storage: {}
+    };
+
+    // Tüm localStorage anahtarlarını topla
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        backupData.storage[key] = localStorage.getItem(key);
+      }
+    }
+
+    const companyShort = backupData.companyProfile.short_name || backupData.companyProfile.name || "Servis";
+    const safeCompanyName = companyShort.replace(/[^a-zA-Z0-9_\u00C0-\u017F-]/g, '_');
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+    const fileName = `FUNZerviceTech_Yedek_${safeCompanyName}_${dateStr}.json`;
+
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (typeof showToast === 'function') {
+      showToast("💾 Şirket ve sistem yedeğiniz başarıyla indirildi!", "success");
+    } else {
+      alert("💾 Şirket ve sistem yedeğiniz başarıyla indirildi!");
+    }
+  } catch (err) {
+    console.error("Yedekleme hatası:", err);
+    alert("Yedek alınırken bir hata oluştu: " + err.message);
+  }
+}
+
+function importFullSystemBackupJSON(event) {
+  const file = event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const content = e.target.result;
+      const backup = JSON.parse(content);
+
+      if (!backup || (!backup.app && !backup.storage)) {
+        alert("⚠️ Geçersiz yedek dosyası! FUNZerviceTech.ai yedek formatına uygun değil.");
+        return;
+      }
+
+      const confirmMsg = "⚠️ DİKKAT: Yedeği geri yüklediğinizde mevcut tüm verilerinizin yerine bu yedekteki veriler yazılacaktır.\n\nDevam etmek istiyor musunuz?";
+      if (!confirm(confirmMsg)) {
+        if (event.target) event.target.value = '';
+        return;
+      }
+
+      if (backup.storage && typeof backup.storage === 'object') {
+        Object.keys(backup.storage).forEach(k => {
+          localStorage.setItem(k, backup.storage[k]);
+        });
+      }
+
+      if (typeof showToast === 'function') {
+        showToast("✅ Sistem yedeği başarıyla geri yüklendi! Sayfa yenileniyor...", "success");
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      console.error("Yedek yükleme hatası:", err);
+      alert("Yedek yüklenirken hata oluştu: " + err.message);
+    } finally {
+      if (event.target) event.target.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+window.exportFullSystemBackupJSON = exportFullSystemBackupJSON;
+window.importFullSystemBackupJSON = importFullSystemBackupJSON;
+
 
 

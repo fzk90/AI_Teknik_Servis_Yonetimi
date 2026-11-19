@@ -39,7 +39,7 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css?v=20261119_1535">
+  <link rel="stylesheet" href="styles.css?v=20261119_1550">
 </head>
 
 <body>
@@ -759,6 +759,11 @@
           <!-- JavaScript ile doldurulur: MERKEZ DEPO, MERKEZ ATÖLYE/LAB, ARAÇLAR (Murat, Caner, Levent...) -->
         </div>
 
+        <!-- Mobil Ekranlar İçin Yatay Kaydırma Uyarısı -->
+        <div class="table-scroll-hint mobile-only">
+          <span>👉 Parmakla sağa/sola kaydırarak araç ve depo stoklarını inceleyebilirsiniz</span>
+        </div>
+
         <div class="stock-table-wrapper">
           <table class="data-table" id="stock-table">
             <thead id="stock-thead">
@@ -792,6 +797,31 @@
     </section>
 
     <section id="tech-view" class="view-panel">
+      <!-- Aktif Oturum ve Rol Çubuğu (Teknisyen <-> Yönetici Hızlı Geçiş) -->
+      <div class="tech-session-switcher-bar" id="tech-session-switcher-bar"
+        style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 10px; padding: 10px 16px; margin-bottom: 12px; flex-wrap: wrap; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.5rem;">👨‍🔧</span>
+          <div>
+            <div style="font-size: 0.9rem; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px;">
+              <span>Aktif Saha Teknisyeni:</span>
+              <span id="tech-session-active-name" style="color: #38bdf8; font-weight: 800;">Zafer Koçaş</span>
+              <span class="badge badge-success" id="tech-session-status-badge" style="font-size: 0.72rem;">Görevde</span>
+            </div>
+            <div style="font-size: 0.76rem; color: #94a3b8;">
+              Teknisyen tezgâhındasınız. Size atanan işleri yürütebilir, harcama girebilir ve müşteri imzasını alabilirsiniz.
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn btn-outline btn-sm" id="btn-tech-switch-to-admin" onclick="switchToAdminSection('orders')"
+            style="padding: 6px 14px; font-size: 0.78rem; font-weight: 700; border-color: rgba(56, 189, 248, 0.5); color: #38bdf8; display: flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.08);"
+            title="Yönetici Sevk ve Kontrol Paneline Geri Dön">
+            <span>🔙 Yönetici Paneline Dön</span>
+          </button>
+        </div>
+      </div>
+
       <!-- PWA Telefona Uygulama Olarak Yükle Şeridi -->
       <div id="pwa-install-banner"
         style="display: flex; background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(16, 185, 129, 0.2)); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
@@ -1406,7 +1436,10 @@
             </div>
 
             <!-- Masraflar Tablosu -->
-            <div class="tech-expenses-table-wrapper mt-3" style="max-height: 220px; overflow-y: auto;">
+            <div class="table-scroll-hint mobile-only">
+              <span>👉 Parmakla sağa/sola kaydırarak harcama fişlerini görebilirsiniz</span>
+            </div>
+            <div class="tech-expenses-table-wrapper mt-2" style="max-height: 220px; overflow-y: auto;">
               <table class="mini-table">
                 <thead>
                   <tr>
@@ -1430,6 +1463,12 @@
             <button class="btn btn-outline" id="btn-open-notification-modal">💬 Müşteriye WhatsApp/SMS Gönder</button>
             <button class="btn btn-outline" id="btn-print-service-label">🏷️ Servis Etiketi Baskısı</button>
             <button class="btn btn-outline" id="btn-generate-ai-report">📄 AI Otomatik Servis Raporu Yaz</button>
+            <button type="button" class="btn btn-outline-success" id="btn-tech-open-official-report"
+              onclick="openServiceReportModal(state.activeOrder ? (state.activeOrder.tracking_code || state.activeOrder.code) : null)"
+              style="font-weight: 700; border-color: #10b981; color: #10b981;"
+              title="Resmi A4 Teknik Servis Raporunu ve Müşteri Teslim Tutanağını Görüntüle / Yazdır">
+              <span>🖨️ Servis Formu & Raporu Yazdır</span>
+            </button>
             <button class="btn btn-outline-cyan" id="btn-open-customer-signature-modal"
               title="Müşterinin cep telefonu ekranına parmakla teslim imzası atması">
               <span>✍️ Müşteri Teslim İmzası Al (Dokunmatik)</span>
@@ -3809,6 +3848,16 @@
             Ayarları</h3>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+          <button type="button" class="btn btn-outline-success btn-xs" id="btn-settings-backup" onclick="exportFullSystemBackupJSON()"
+            style="padding: 6px 10px; font-size: 0.74rem; font-weight: 700; border-color: #10b981; color: #10b981;"
+            title="Tüm şirket, personel, filo, iş emri ve stok verilerini tek tıkla bilgisayara yedekle (JSON)">
+            <span>💾 Yedekle</span>
+          </button>
+          <button type="button" class="btn btn-outline-cyan btn-xs" id="btn-settings-restore" onclick="document.getElementById('input-restore-backup-file')?.click()"
+            style="padding: 6px 10px; font-size: 0.74rem; font-weight: 700;"
+            title="Önceden indirilmiş JSON yedeğinden sistemi anında geri yükle">
+            <span>📥 Geri Yükle</span>
+          </button>
           <button type="button" class="btn btn-outline btn-xs" id="btn-header-pwa-install" onclick="triggerPwaInstall()"
             style="padding: 6px 9px; font-size: 0.74rem; font-weight: 600;"
             title="Uygulamayı Masaüstüne veya Telefona İkon Olarak Ekle">
@@ -3919,6 +3968,16 @@
               </p>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm btn-outline-success" onclick="exportFullSystemBackupJSON()"
+                style="font-size: 0.76rem; font-weight: 700; border-color: #10b981; color: #10b981;"
+                title="Tüm şirket, personel, filo, iş emri ve stok verilerini tek tıkla bilgisayara yedekle (JSON)">
+                <span>💾 Tüm Verileri Yedekle (JSON)</span>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-cyan" onclick="document.getElementById('input-restore-backup-file')?.click()"
+                style="font-size: 0.76rem; font-weight: 700;"
+                title="Daha önce indirdiğiniz JSON yedeği yükleyerek tüm verilerinizi anında geri getirin">
+                <span>📥 Yedekten Geri Yükle</span>
+              </button>
               <button type="button" class="btn btn-sm btn-warning-glow" id="btn-banner-to-rates"
                 style="font-size: 0.76rem;" title="Doğrudan işçilik ve onarım tarifelerine git">
                 <span>💰 4. Sekme: İşçilik Tarifelerine Git</span>
@@ -5998,7 +6057,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script src="xlsx.full.min.js"></script>
-  <script src="app.js?v=20261119_1535"></script>
+  <script src="app.js?v=20261119_1550"></script>
   <script src="finance.js?v=20261111_3"></script>
   <script src="tr_geo.js?v=1"></script>
   <script src="geo-picker.js?v=1"></script>
@@ -6126,6 +6185,9 @@
     </div>
   </div>
 
+  <!-- Global JSON Yedek Geri Yükleme Inputu -->
+  <input type="file" id="input-restore-backup-file" accept=".json" style="display: none;" onchange="importFullSystemBackupJSON(event)">
+
   <!-- ==================== 5. İLK KURULUM & ŞİRKET YAPILANDIRMA SİHİRBAZI MODALI ==================== -->
   <div class="modal-backdrop" id="onboarding-wizard-modal" style="display: none;">
     <div class="modal-card"
@@ -6181,6 +6243,16 @@
             <span class="wizard-step-num">7</span>
             <span class="wizard-step-title">Özet & Başlat</span>
           </div>
+        </div>
+
+        <!-- Önceden Alınmış Yedek Varsa Hızlı Geri Yükleme Banner'ı -->
+        <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+          <div style="font-size: 0.82rem; color: #cbd5e1;">
+            💡 <strong>Daha önce indirdiğiniz bir sistem yedeğiniz var mı?</strong> 7 adımı doldurmak yerine tek tıkla eski yedeğinizi yükleyip başlayabilirsiniz:
+          </div>
+          <button type="button" class="btn btn-outline-cyan btn-xs" onclick="document.getElementById('input-restore-backup-file')?.click()" style="font-weight: 700; padding: 5px 12px;">
+            <span>📥 Yedek Dosyası Yükle (JSON)</span>
+          </button>
         </div>
 
         <!-- ==================== ADIM 1: ŞİRKET & SEKTÖR ==================== -->
