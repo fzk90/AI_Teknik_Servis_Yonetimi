@@ -19868,6 +19868,7 @@ function openSanalPosModal(orderCode) {
   const elSumOrder = document.getElementById('pos-summary-order');
   const elSumAmt = document.getElementById('pos-summary-amount');
   const elUrl = document.getElementById('pos-generated-url');
+  const qrImg = document.getElementById('pos-qr-img');
 
   const order = (state.workOrders || []).find(o => (o.tracking_code || o.code) === activePosOrderCode);
   const cust = order ? (order.customer || order.customer_name) : 'ISISAN İklimlendirme A.Ş.';
@@ -19884,9 +19885,33 @@ function openSanalPosModal(orderCode) {
   if (elSumOrder) elSumOrder.textContent = `${activePosOrderCode} • ${cust}`;
   if (elSumAmt) elSumAmt.textContent = amt;
 
+  // Sağlayıcı ayarlarını kontrol et (PayTR / iyzico tanımlı mı?)
+  let isProviderConfigured = false;
+  try {
+    const rawPos = localStorage.getItem('servisai_pos_settings');
+    if (rawPos) {
+      const posConf = JSON.parse(rawPos);
+      if (posConf && posConf.mId && posConf.mKey) {
+        isProviderConfigured = true;
+      }
+    }
+  } catch (e) {}
+
   const cleanNum = (activePosOrderCode.match(/\d+/) || ['104'])[0];
   const token = `paytr_token_srv${cleanNum}_${Math.random().toString(36).substring(2, 7)}`;
-  if (elUrl) elUrl.value = `https://odeme.funzervicetech.ai/pos/${token}`;
+
+  // Sağlayıcı canlı API anahtarları tanımlıysa gerçek PayTR/iyzico ödeme gateway'i,
+  // Henüz tanımlanmadıysa müşterinin kendi takip ekranında ödeme ve onay dökümünü açan güvenli deep-link
+  const paymentUrl = isProviderConfigured
+    ? `https://odeme.funzervicetech.ai/pos/${token}`
+    : `https://funzervicetech.ai/index.html?track=${encodeURIComponent(activePosOrderCode)}&pay=1`;
+
+  if (elUrl) elUrl.value = paymentUrl;
+
+  // Telefon kamerasıyla anında taranabilen gerçek dinamik QR kodu oluştur
+  if (qrImg) {
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=2&data=${encodeURIComponent(paymentUrl)}`;
+  }
 
   if (modal) modal.style.display = 'flex';
 }
