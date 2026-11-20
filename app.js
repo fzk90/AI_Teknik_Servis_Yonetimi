@@ -6314,10 +6314,12 @@ function removeTechWorkStep(index) {
 }
 window.removeTechWorkStep = removeTechWorkStep;
 
-function saveCurrentSolutionToKnowledgeBase() {
+function saveCurrentSolutionToKnowledgeBase(options = {}) {
   const currentOrder = state.activeOrder;
   if (!currentOrder) {
-    showToast("⚠️ Bilgi bankasına kaydetmek için aktif bir iş emri bulunmalıdır.", "warning");
+    if (!options.silent) {
+      showToast("⚠️ Bilgi bankasına kaydetmek için aktif bir iş emri bulunmalıdır.", "warning");
+    }
     return;
   }
 
@@ -6325,9 +6327,9 @@ function saveCurrentSolutionToKnowledgeBase() {
   const solutionInput = document.getElementById('tech-solution-input');
   const actionInput = document.getElementById('tech-action-input');
 
-  const findings = (findingsInput ? findingsInput.value : '') || currentOrder.findings || "Tespit girilmedi";
-  const solution = (solutionInput ? solutionInput.value : '') || currentOrder.solution || "Çözüm girilmedi";
-  const action = (actionInput ? actionInput.value : '') || currentOrder.action || "Müdahale girilmedi";
+  const findings = (findingsInput ? findingsInput.value.trim() : '') || currentOrder.findings || "Tespit girilmedi";
+  const solution = (solutionInput ? solutionInput.value.trim() : '') || currentOrder.solution || "Çözüm girilmedi";
+  const action = (actionInput ? actionInput.value.trim() : '') || currentOrder.action || "Müdahale girilmedi";
   const workSteps = (currentOrder.workSteps && currentOrder.workSteps.length > 0) ? currentOrder.workSteps : [action];
 
   const currentTech = (state.staff || []).find(s => s.id == state.activeTechId);
@@ -6356,16 +6358,26 @@ function saveCurrentSolutionToKnowledgeBase() {
       }
     });
   }
+  // Teknisyenin sahada dikte ettiği tespit kelimelerinden de anahtar kelimeler ekle
+  if (findings && findings !== "Tespit girilmedi") {
+    findings.toLowerCase().split(/\s+/).forEach(w => {
+      const cleanWord = w.replace(/[^a-zA-ZçğıöşüÇĞİÖŞÜ0-9]/g, '');
+      if (cleanWord.length > 3 && !stopWords.has(cleanWord) && !keywords.includes(cleanWord)) {
+        keywords.push(cleanWord);
+      }
+    });
+  }
 
   if (!state.serviceKnowledgeBase) {
     loadServiceKnowledgeBaseFromLocalStorage();
   }
 
+  const isVoice = !!options.isVoice;
   const newKb = {
     id: `KB-SAVED-${Date.now().toString().slice(-6)}`,
     learnedFromOrder: orderCode, // Gelecekteki benzer iş emirlerinde de eşleşebilmesi için orderCode kilidi konmaz!
     deviceType: brand.toLowerCase(),
-    title: `${brand} ${model} - ${complaint.slice(0, 40)}`,
+    title: `${brand} ${model} - ${(complaint || findings).slice(0, 45)}`,
     keywordMatch: keywords,
     rootCause: findings,
     solution: solution,
@@ -6373,13 +6385,38 @@ function saveCurrentSolutionToKnowledgeBase() {
     steps: workSteps,
     parts: (currentOrder.usedParts || []).map(p => p.code).filter(Boolean),
     techName: techName,
-    confidence: "%99 Saha Uzmanı Onaylı",
+    confidence: isVoice ? "%99 Saha Teknisyeni Gerçek Teşhisi (Sesli Dikte)" : "%99 Saha Uzmanı Onaylı",
     savedAt: new Date().toLocaleDateString('tr-TR')
   };
 
-  state.serviceKnowledgeBase.unshift(newKb);
+  // Varsa aynı iş emrine ait önceki kaydı güncelle, yoksa en başa ekle
+  const existingIdx = orderCode ? (state.serviceKnowledgeBase || []).findIndex(k => k.learnedFromOrder === orderCode) : -1;
+  if (existingIdx !== -1) {
+    state.serviceKnowledgeBase[existingIdx] = newKb;
+  } else {
+    state.serviceKnowledgeBase.unshift(newKb);
+  }
+
   saveServiceKnowledgeBaseToLocalStorage();
-  showToast(`🧠 Harika! Bu çözüm Yapay Zeka Servis Bilgi Bankası'na kaydedildi. Gelecekteki benzer arızalarda öneri olarak kullanılacak!`, "success");
+
+  const statusEl = document.getElementById('tech-diag-save-status');
+  if (statusEl) {
+    statusEl.textContent = isVoice ? '🧠 AI Kütüphanesine Aktarıldı (Teknisyen Diktesi)' : '🧠 AI Kütüphanesine Kaydedildi';
+    statusEl.style.display = 'inline';
+    clearTimeout(statusEl._saveTimer);
+    statusEl._saveTimer = setTimeout(() => {
+      statusEl.style.display = 'none';
+      statusEl.textContent = '✓ Değişiklikler Kaydedildi';
+    }, 3500);
+  }
+
+  if (!options.silent) {
+    if (isVoice) {
+      showToast(`🧠 Teknisyen diktesi doğrudan kaydedildi ve AI Çözüm Kütüphanesi'ne aktarıldı!`, "success");
+    } else {
+      showToast(`🧠 Harika! Bu çözüm Yapay Zeka Servis Bilgi Bankası'na kaydedildi. Gelecekteki benzer arızalarda öneri olarak kullanılacak!`, "success");
+    }
+  }
 }
 window.saveCurrentSolutionToKnowledgeBase = saveCurrentSolutionToKnowledgeBase;
 
@@ -18531,6 +18568,7 @@ window.initEquipmentActions = initEquipmentActions;
 let speechRecognitionInstance = null;
 let isVoiceRecordingActive = false;
 let activeVoiceTargetId = null; // null: Akıllı 3 Adıma Ayrıştırma, ya da input ID'si
+let voiceSessionClearedTargets = new Set(); // Bu sesli kayıt oturumunda içeriği sıfırlanıp dikte yazılan kutular
 
 function initVoiceInterventionEngine() {
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -18625,6 +18663,7 @@ function initVoiceInterventionEngine() {
 
 function startVoiceRecognition(targetId = null) {
   activeVoiceTargetId = targetId;
+  voiceSessionClearedTargets.clear(); // Yeni dikte oturumu: Eski yazıların üzerine yazılmasını sağla
 
   if (speechRecognitionInstance) {
     try {
@@ -18681,7 +18720,7 @@ function applySpokenText(spokenText) {
   if (!spokenText || !spokenText.trim()) return;
   const clean = spokenText.trim();
 
-  // 1. Durum: Belirli tek bir kutuya dikte ediliyor
+  // 1. Durum: Belirli tek bir kutuya dikte ediliyor (1. Adım Kök Neden, 2. Adım Çözüm, 3. Adım Müdahale)
   if (activeVoiceTargetId) {
     const targetEl = document.getElementById(activeVoiceTargetId);
     if (targetEl) {
@@ -18690,11 +18729,24 @@ function applySpokenText(spokenText) {
         addTechWorkStep(clean);
         targetEl.value = '';
       } else {
-        const existing = targetEl.value.trim();
-        targetEl.value = existing ? `${existing} ${clean}` : clean;
+        // Kural: AI'nin daha önce yazdığı metnin sonuna eklemeyecek;
+        // kutuyu doğrudan teknisyenin dikte ettiği metinle dolduracak!
+        if (!voiceSessionClearedTargets.has(activeVoiceTargetId)) {
+          targetEl.value = clean;
+          voiceSessionClearedTargets.add(activeVoiceTargetId);
+        } else {
+          // Teknisyen aynı dikte oturumu açıkken konuşmaya devam ediyorsa arkasına ekle
+          const existing = targetEl.value.trim();
+          targetEl.value = existing ? `${existing} ${clean}` : clean;
+        }
         targetEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Bu dikteyi DOĞRUDAN AI Bilgi Bankası / Çözüm Kütüphanesi'ne aktar
+        if (typeof saveCurrentSolutionToKnowledgeBase === 'function') {
+          saveCurrentSolutionToKnowledgeBase({ isVoice: true, silent: true, targetField: activeVoiceTargetId });
+        }
       }
-      showToast(`🎙️ Ses metne döküldü: "${clean.slice(0, 35)}..."`, 'info');
+      showToast(`🎙️ Teknisyen diktesi yazıldı ve AI Kütüphanesine aktarıldı: "${clean.slice(0, 35)}..."`, 'success');
     }
     return;
   }
@@ -18710,7 +18762,7 @@ function distributeVoiceTranscriptSmartly(transcript) {
   let solutionPart = [];
   let actionPart = [];
 
-  const findingsKeywords = ['arıza', 'ariza', 'tespit', 'hata', 'yandı', 'yandi', 'patlak', 'kısa devre', 'kisa devre', 'yanık', 'yanik', 'şase', 'sase', 'ölçüm', 'olcum', 'kod', 'oc-a', 'err', 'f00', 'voltaj', 'akım', 'akim'];
+  const findingsKeywords = ['arıza', 'ariza', 'tespit', 'hata', 'yandı', 'yandi', 'patlak', 'kısa devre', 'kisa devre', 'yanık', 'yanik', 'şase', 'sase', 'ölçüm', 'olcum', 'kod', 'oc-a', 'err', 'f00', 'voltaj', 'akım', 'akim', 'kök neden', 'kok neden'];
   const solutionKeywords = ['çözüm', 'cozum', 'plan', 'değişecek', 'degisecek', 'yenilenecek', 'sipariş', 'siparis', 'metot', 'yapılmalı', 'yapilmali', 'lehimlenecek', 'gerekiyor'];
   const actionKeywords = ['yaptım', 'yaptim', 'değiştirdim', 'degistirdim', 'lehimledim', 'taktım', 'taktim', 'bağladım', 'bagladim', 'temizledim', 'test ettim', 'çalışıyor', 'calisiyor', 'tamamlandı', 'tamamlandi', 'onarıldı', 'onarildi'];
 
@@ -18730,7 +18782,7 @@ function distributeVoiceTranscriptSmartly(transcript) {
 
   // Eğer tüm cümleler tek bir kategoriye düşmüşse akıllı doldur
   if (findingsPart.length === 0 && actionPart.length > 0) {
-    findingsPart.push(`Cihaz arıza belirtileri ve sesli saha tespiti: ${transcript}`);
+    findingsPart.push(transcript);
   }
   if (actionPart.length === 0) {
     actionPart.push(transcript);
@@ -18740,32 +18792,54 @@ function distributeVoiceTranscriptSmartly(transcript) {
   const solutionInput = document.getElementById('tech-solution-input');
   const actionInput = document.getElementById('tech-action-input');
 
+  // AI'nin eski yazılarını temizleyip teknisyenin dikte ettiği cümleleri yaz
   if (findingsInput && findingsPart.length > 0) {
     const text = findingsPart.join(' ');
-    findingsInput.value = findingsInput.value ? `${findingsInput.value} ${text}` : text;
+    if (!voiceSessionClearedTargets.has('tech-findings-input')) {
+      findingsInput.value = text;
+      voiceSessionClearedTargets.add('tech-findings-input');
+    } else {
+      findingsInput.value = findingsInput.value ? `${findingsInput.value} ${text}` : text;
+    }
     findingsInput.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   if (solutionInput && solutionPart.length > 0) {
     const text = solutionPart.join(' ');
-    solutionInput.value = solutionInput.value ? `${solutionInput.value} ${text}` : text;
+    if (!voiceSessionClearedTargets.has('tech-solution-input')) {
+      solutionInput.value = text;
+      voiceSessionClearedTargets.add('tech-solution-input');
+    } else {
+      solutionInput.value = solutionInput.value ? `${solutionInput.value} ${text}` : text;
+    }
     solutionInput.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   if (actionInput && actionPart.length > 0) {
     const text = actionPart.join(' ');
-    actionInput.value = actionInput.value ? `${actionInput.value} ${text}` : text;
+    if (!voiceSessionClearedTargets.has('tech-action-input')) {
+      actionInput.value = text;
+      voiceSessionClearedTargets.add('tech-action-input');
+    } else {
+      actionInput.value = actionInput.value ? `${actionInput.value} ${text}` : text;
+    }
     actionInput.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   // İş Adımları günlüğüne de ekle
   addTechWorkStep(actionPart.join(' ') || transcript);
 
-  showToast(`🧠 Yapay Zeka sesinizi dinledi: Tespit, Çözüm ve Müdahale kutuları otomatik dolduruldu!`, 'success');
+  // AI Kütüphanesine (Bilgi Bankası) anında aktar
+  if (typeof saveCurrentSolutionToKnowledgeBase === 'function') {
+    saveCurrentSolutionToKnowledgeBase({ isVoice: true, silent: true, targetField: 'smart' });
+  }
+
+  showToast(`🧠 Yapay Zeka sesinizi dinledi: Teknisyen diktesi doğrudan yazıldı ve AI Bilgi Bankası'na aktarıldı!`, 'success');
 }
 
 // Mikrofon olmayan veya simülasyon ortamları için test diktesi
 function simulateVoiceDictationFallback(targetId) {
+  voiceSessionClearedTargets.clear();
   updateVoiceUIState(true);
   const liveTextEl = document.getElementById('tech-voice-live-text');
   if (liveTextEl) {
