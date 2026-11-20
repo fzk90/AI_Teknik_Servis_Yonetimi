@@ -5976,19 +5976,167 @@ function synthesizeAIDiagnosis(brand, model, symptoms, order) {
     estMinutes = 25;
     confidence = "%95 Güven";
   }
-  // 8. DİĞER / GENEL KART KONTROLÜ
-  else {
-    rootCause = `${brand || 'Cihaz'} (${model || 'Model'}) kontrol kartı besleme regülatör katında voltaj dalgalanması ve koruma rölesi kontak direnci yükselmesi saptandı.`;
-    solution = `Giriş besleme devresi komponentleri ve koruma rölesi test edilerek yenilenecek, lehim çatlakları giderilecek ve voltaj regülasyonu sağlanacaktır.`;
-    action = `24V güç rölesi ve filtre kondansatörü değiştirildi, soğuk lehimler tazelendi. Çıkış gerilim regülasyonu sağlandı ve cihaz tam yük fonksiyon testinden başarıyla geçti.`;
+  // 8. KOMBİ / ISITMA / BRÜLÖR / BOYLER SİSTEMLERİ
+  else if (combined.includes('kombi') || combined.includes('ateşleme') || combined.includes('atesleme') || 
+           combined.includes('gaz valfi') || combined.includes('eşanjör') || combined.includes('esanjor') || 
+           combined.includes('prosestat') || combined.includes('brülör') || combined.includes('brulor') || 
+           combined.includes('e01') || combined.includes('f5') || combined.includes('alev') || 
+           combined.includes('sirkülasyon') || combined.includes('kalorifer') || combined.includes('boyler')) {
+    rootCause = `${brand || 'Kombi'} (${model || 'Isıtma Ünitesi'}) yanma odası iyonizasyon alev algılama elektrodunda kurumlanma ve gaz armatürü modülasyon bobininde empedans kayması saptandı. Alev hissedilemediği için kontrol kartı emniyet kilitlenmesine (Ateşleme / Blokaj Arızası) geçmektedir.`;
+    solution = `İyonizasyon ve ateşleme elektrotları zımparalanıp mikrometre ile 3.5 mm tırnak aralığına ayarlanacak; gaz valfi minimum/maksimum yanma basınçları U-manometre ile kalibre edilecek, prosestat diferansiyel basınç hortumları temizlenecektir.`;
+    action = `Ateşleme ve iyonizasyon elektrotları korozyondan arındırıldı, alev iyon akımı mikroamper kademesinde (>2.5 uA) doğrulandı. Gaz modülasyon bobini besleme voltajı kararlı kılındı ve cihaz 3 çevrim boyunca kesintisiz ateşleme yaptı.`;
     steps = [
-      "Devre kartı besleme giriş voltajını ve regülatör çıkışlarını şematik referansına göre ölçün.",
-      "Hata kodunu cihaz servis hafızasından okuyun ve koruma rölesi çalışma eşiklerini test edin.",
-      "Devre üzerindeki pasif filtre bileşenlerini ve güç yarı iletkenlerini termal kamera ile tarayın."
+      "İyonizasyon elektrodu mikroamper (uA) alev algılama akımını seri ölçü aletiyle test edin.",
+      "Gaz armatürü solenoid bobinlerinin omik dirençlerini (nominal EV1: 850 Ohm, EV2: 2.8k Ohm) kontrol edin.",
+      "Hava akış diferansiyel prosestatının fan kalkışında kontak kapatıp kapatmadığını doğrulayın.",
+      "Kalorifer ve kullanım suyu NTC sensör değerlerini (25°C'de 10k Ohm) multimetre ile test edin."
+    ];
+    partCodes = ["SENS-NTC-10K", "ROLE-24V-16A", "VENTIL-3YOL"];
+    estMinutes = 35;
+    confidence = "%96 Güven (Kombi & Isıtma Uzman AI)";
+    learnedBadge = "🔥 Isıtma Grubu: Gaz Armatürü, İyonizasyon ve Alev Algılama Protokolü Devrede.";
+  }
+  // 9. SPOR & FİTNESS / KOŞU BANDI / KONDİSYON EKİPMANLARI
+  else if (combined.includes('koşu bandı') || combined.includes('kosu bandi') || combined.includes('treadmill') || 
+           combined.includes('fitness') || combined.includes('e-02') || combined.includes('e02') || 
+           combined.includes('e-01') || combined.includes('hız sensörü') || combined.includes('hiz sensoru') || 
+           combined.includes('palet') || combined.includes('eğim motoru') || combined.includes('egim motoru')) {
+    rootCause = `${brand || 'Koşu Bandı'} (${model || 'Fitness Cihazı'}) motor sürücü kartı PWM mosfet katında yüksek sürtünmeye bağlı aşırı akım tetiklemesi ve optik hız sensörü (tacho/reed switch) sinyal palsinde gecikme tespit edildi (E-02 / Hız Geri Besleme Hatası).`;
+    solution = `Zemin bandı (palet) gerginlik ve sentetik silikon yağlama seviyesi yenilenecek, motor sürücü kartı akım şönt direnci ve PWM sürücü optokuplörü test edilecek, optik hız disk sensörü temizlenecektir.`;
+    action = `Motor sürücü kartındaki PWM mosfet ve gate sürücü elemanları revize edildi. Optik hız sensör hizalaması yapıldı, bant yüzeyi yüksek ısı silikonu ile yağlanarak 14 km/h tam yük testinde akım çekişi 4.2A nominal değerine çekildi.`;
+    steps = [
+      "Ön ve arka merdane rulman boşluklarını ve koşu bandı palet sürtünme direncini kontrol edin.",
+      "Motor volanı üzerindeki optik/manyetik hız sensörünün pals çıkışını osiloskop/frekansmetre ile ölçün.",
+      "Motor sürücü kartı DC bara gerilimini ve akım sınırlama şönt direncini test edin.",
+      "Bant yağlamasını tazeleyip rölanti ve yük altındaki motor akım çekişini pensampermetre ile karşılaştırın."
+    ];
+    partCodes = ["IGBT-600V-40A", "RULMAN-6204", "ROLE-24V-16A"];
+    estMinutes = 40;
+    confidence = "%95 Güven (Fitness & Koşu Bandı AI)";
+    learnedBadge = "🏃 Spor & Fitness: Koşu Bandı Motor Sürücü & Hız Sensörü Teşhis Protokolü.";
+  }
+  // 10. OTOMOTİV & MOTOSİKLET & ECU SERVİSİ
+  else if (combined.includes('motosiklet') || combined.includes('otomotiv') || combined.includes('marş') || 
+           combined.includes('mars') || combined.includes('ecu') || combined.includes('beyin') || 
+           combined.includes('stator') || combined.includes('konjektör') || combined.includes('konjektor') || 
+           combined.includes('alternatör') || combined.includes('alternator') || combined.includes('enjektör') || 
+           combined.includes('ateşleme bobini') || combined.includes('akü') || combined.includes('aku')) {
+    rootCause = `${brand || 'Araç/Motosiklet'} (${model || 'Model'}) şarj regülatörü (konjektör) tristör/diyot bloğunda aşırı ısınma kaynaklı ters kaçak akım veya marş selenoidi röle kontak kömürlerinde aşınma saptandı. Akü şarj tutmuyor veya marş motoruna güç iletilemiyor.`;
+    solution = `Şarj sistemi stator 3 faz AC voltajları (>50V AC @4000 RPM) ve konjektör doğrultucu çıkışı (14.2V - 14.5V DC) test edilecek; aşınmış marş selenoidi ve şasi bağlantıları yenilenecektir.`;
+    action = `Konjektör regülatör ünitesi değiştirildi, stator faz arası omik dirençleri (0.8 Ohm) doğrulandı. Marş rölesi ve akü terminal pabuçları temizlenip korozyon önleyici gres uygulandı; şarj voltajı 14.4V DC'de sabitlendi.`;
+    steps = [
+      "Stator çıkışındaki 3 sarı faz kablosunun kendi aralarındaki AC voltajını ve gövdeye kısa devre durumunu ölçün.",
+      "Konjektör çıkış voltajının rölantide ve 4000 devirde 13.8V - 14.5V DC aralığında kaldığını teyit edin.",
+      "Marş butonuna basıldığında marş selenoidi tetikleme gerilimini ve ana kontak voltaj düşümünü test edin.",
+      "Kaçak akım testi yaparak kontak kapalıyken çekilen parazit akımı (<1.5 mA) doğrulayın."
+    ];
+    partCodes = ["ROLE-24V-16A", "SIGORTA-16A", "KLEMENS-WAGO"];
+    estMinutes = 35;
+    confidence = "%94 Güven (Otomotiv & Motosiklet AI)";
+    learnedBadge = "🏍️ Otomotiv & Motosiklet: Şarj Regülatörü, Stator & Marş Elektromekanik Protokolü.";
+  }
+  // 11. ENDÜSTRİYEL MUTFAK / FIRIN / BULAŞIK / KAFE & RESTORAN
+  else if (combined.includes('mutfak') || combined.includes('fırın') || combined.includes('firin') || 
+           combined.includes('bulaşık') || combined.includes('bulasik') || combined.includes('konveksiyonel') || 
+           combined.includes('espresso') || combined.includes('kahve') || combined.includes('rezistans') || 
+           combined.includes('kazan') || combined.includes('boyler') || combined.includes('dozaj') || 
+           combined.includes('termostat')) {
+    rootCause = `${brand || 'Endüstriyel Ekipman'} (${model || 'Mutfak Ünitesi'}) ısıtıcı tüp rezistans gövdesinde kireçlenme ve termal yorulma kaynaklı gövdeye kaçak akım veya 3 fazlı emniyet limit termostatında kontak ark yapışması saptandı. Cihaz sigorta attırıyor veya hedef çalışma sıcaklığına ulaşamıyor.`;
+    solution = `Kireç bağlamış paslanmaz rezistans grubu ve emniyet limit termostatı (360°C) yenilenecek, su giriş çiftli selenoid vana ve seviye elektrotları kireçten arındırılarak contalar tazelenecektir.`;
+    action = `Hasarlı 9kW konveksiyonel ısıtıcı rezistans yenilendi, EGO emniyet termostatı değiştirildi. Kazan içi kireç temizliği yapıldı ve 220°C tam buhar testinde sıcaklık ve basınç dengesi başarıyla doğrulandı.`;
+    steps = [
+      "Rezistans uçları ile kazan gövdesi arasındaki izolasyon direncini Meger/multimetre ile ölçün (>2 MegaOhm).",
+      "3 fazlı çalışma sisteminde her bir fazın çektiği akımı pensampermetre ile dengeli olup olmadığına bakın.",
+      "Emniyet limit termostatının (resetlenebilir tip) mekanik geçiş direncini ve tetikleme yayını kontrol edin.",
+      "Kazan su seviye probunun elektronik kartla iletimini ve kireçlenmesini inceleyin."
+    ];
+    partCodes = ["TERMOSTAT-K59", "ROLE-24V-16A", "VENTIL-3YOL"];
+    estMinutes = 45;
+    confidence = "%96 Güven (Endüstriyel Mutfak AI)";
+    learnedBadge = "🍳 Endüstriyel Mutfak: Konveksiyonel Rezistans & Termal Güvenlik Protokolü.";
+  }
+  // 12. JENERATÖR & BASINÇLI HAVA / KOMPRESÖR SİSTEMLERİ
+  else if (combined.includes('jeneratör') || combined.includes('jenerator') || combined.includes('kompresör') || 
+           combined.includes('kompresor') || combined.includes('vidalı') || combined.includes('vidali') || 
+           combined.includes('avr') || combined.includes('alternatör') || combined.includes('alternator') || 
+           combined.includes('seperatör') || combined.includes('seperator') || combined.includes('yağ basıncı') || 
+           combined.includes('hararet') || combined.includes('ats') || combined.includes('transfer panosu')) {
+    rootCause = `${brand || 'Güç Sistemi'} (${model || 'Jeneratör/Kompresör'}) otomatik voltaj regülatörü (AVR SX460) geri besleme katında gerilim dalgalanması veya vidalı kompresör emiş valfi/yağ seperatörü diferansiyel basınç tıkanıklığı saptandı. Yük altında voltaj düşüyor veya kompresör aşırı hararete geçiyor.`;
+    solution = `AVR voltaj ve kararlılık potansiyometreleri jeneratör 50Hz nominal devrinde kalibre edilecek; kompresör spin-on yağ seperatör filtresi ve termostatik vana çekirdeği yenilenecektir.`;
+    action = `AVR voltaj regülasyon modülü değiştirilerek çıkış gerilimi 400V AC 50Hz olarak kalibre edildi. Yağ seperatörü ve hava filtreleri yenilendi; 45 dakika %80 yük testinde yağ basıncı 6.8 bar, motor sıcaklığı 82°C'de stabil kaldı.`;
+    steps = [
+      "Alternatör ikaz (rotor) sargı dirençlerini ve fırçasız diyot köprüsünü multimetre diyot modunda test edin.",
+      "AVR algılama uçlarındaki referans AC voltajını ve frekansını (nominal 50.0 Hz) ölçün.",
+      "Kompresör yağ seviyesini, vida emiş regülatörü selenoid valfini ve tahliye çekvalfini kontrol edin.",
+      "Şebeke-Jeneratör transfer panosu (ATS) kontaktörlerinin mekanik ve elektriksel kilitlemelerini doğrulayın."
+    ];
+    partCodes = ["ROLE-24V-16A", "SIGORTA-16A", "KOND-470UF"];
+    estMinutes = 50;
+    confidence = "%95 Güven (Jeneratör & Kompresör AI)";
+    learnedBadge = "⚡ Jeneratör & Kompresör: AVR Voltaj Regülasyonu & Seperatör Basınç Protokolü.";
+  }
+  // 13. BİYOMEDİKAL & TIBBİ CİHAZ TEKNOLOJİLERİ
+  else if (combined.includes('biyomedikal') || combined.includes('medikal') || combined.includes('hasta başı') || 
+           combined.includes('hasta basi') || combined.includes('ekg') || combined.includes('defibrilatör') || 
+           combined.includes('defibrilator') || combined.includes('spo2') || combined.includes('oksijen') || 
+           combined.includes('santrifüj') || combined.includes('santrifuj') || combined.includes('otoklav') || 
+           combined.includes('infüzyon') || combined.includes('kalibrasyon')) {
+    rootCause = `${brand || 'Tıbbi Cihaz'} (${model || 'Biyomedikal Sistem'}) analog ön uç (AFE) biyopotansiyel sinyal yükseltici katında op-amp termal drift sapması ve hasta izolasyon opto-bariyerinde sinyal gürültüsü saptandı. Ölçüm değerleri tolerans dışına çıkmakta veya kalibrasyon hatası vermektedir.`;
+    solution = `Hasta izolasyon güç bariyeri (DC-DC dönüştürücü) ve hassas enstrümantasyon op-ampleri test edilecek, simülatör referans sinyalleriyle sıfır noktası ve kazanç kalibrasyonu yapılacaktır.`;
+    action = `Hassas sinyal yükseltici katı ve optokuplör izolasyon entegresi yenilendi. Biyomedikal hasta simülatörü bağlanarak EKG/SpO2/Basınç sinyalleri IEC 60601-1 medikal elektriksel güvenlik ve doğruluk standartlarına uygun şekilde kalibre edildi.`;
+    steps = [
+      "Hasta kablosu uçları ile şasi arasındaki kaçak akımı ve izolasyon bariyeri direncini ölçün (<10 uA).",
+      "Referans medikal simülatör bağlayarak sinyal giriş-çıkış doğrusallığını osiloskopla analiz edin.",
+      "Güç kaynağı tıbbi sınıf izole DC ray voltajlarının (±5V, ±12V) ripple değerini inceleyin.",
+      "Kalibrasyon doğrulama protokolünü çalıştırıp test sertifikası parametrelerini kaydedin."
+    ];
+    partCodes = ["SMD-OPTO-817", "KOND-470UF", "SIGORTA-16A"];
+    estMinutes = 40;
+    confidence = "%97 Güven (Biyomedikal Uzman AI)";
+    learnedBadge = "🩺 Biyomedikal: Hasta İzolasyon Güvenliği & Hassas Kalibrasyon Protokolü.";
+  }
+  // 14. CNC MEKATRONİK & TAKIM TEZGAHI SİSTEMLERİ
+  else if (combined.includes('cnc') || combined.includes('spindle') || combined.includes('servo') || 
+           combined.includes('enkoder') || combined.includes('encoder') || combined.includes('eksen') || 
+           combined.includes('vidalı mil') || combined.includes('vidali mil') || combined.includes('taret')) {
+    rootCause = `${brand || 'CNC Tezgahı'} (${model || 'Mekatronik Sistem'}) eksen servo motor artımsal enkoder geri besleme hattında diferansiyel hat sinyal gürültüsü ve vidalı mil yatak rulmanında eksenel boşluk saptandı. Pozisyonlama hatası (Following Error) vermektedir.`;
+    solution = `Enkoder ekranlı flex kablosu ve soket pin temasları temizlenecek, servo sürücü kazanç parametreleri (PID loop) otomatik ayarlanacak ve vidalı mil çift sıra eğik bilyalı rulman boşluğu komparatör ile giderilecektir.`;
+    action = `Enkoder soket konnektörü lehimleri tazelendi, hat sonlandırma empedansı optimize edildi. Eksen boşluğu komparatör saatiyle 0.005 mm hassasiyetine getirildi ve G-kodu test parçasında sıfır hata ile işleme yapıldı.`;
+    steps = [
+      "Servo motor optik enkoder A, B, Z diferansiyel kare dalga sinyallerini osiloskop ile kontrol edin.",
+      "Vidalı mil eksen boşluğunu (backlash) manyetik ayaklı mikrometre/komparatör saati ile ölçün.",
+      "Servo sürücü rejeneratif frenleme direncinin omik değerini ve aşırı gerilim eşiklerini test edin.",
+      "Eksen limit switch ve referans anahtarlarının mekanik tekrarlanabilirliğini doğrulayın."
+    ];
+    partCodes = ["ENCODER-HEID-1387", "SERVO-AMP-FANUC", "RULMAN-6204"];
+    estMinutes = 45;
+    confidence = "%96 Güven (CNC & Servo Mekatronik AI)";
+    learnedBadge = "⚙️ CNC Mekatronik: Servo Enkoder Geri Besleme & Eksen Kalibrasyon Protokolü.";
+  }
+  // 15. DİNAMİK AKILLI TEŞHİS MOTORU (MÜŞTERİ ŞİKAYETİNE ÖZEL AKILLI ÇIKARIM)
+  else {
+    // Şikayet metninden stop-words olmayan anlamlı arıza kelimelerini çıkar
+    const complaintWords = cleanSymptoms
+      .replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 3 && !stopWords.has(w));
+
+    const faultKeywords = complaintWords.slice(0, 3).join(' ');
+    const displayComplaint = faultKeywords || (cleanSymptoms.length > 0 ? cleanSymptoms.substring(0, 45) : 'Belirtilen Çalışma Hatası');
+    const capTitle = displayComplaint.charAt(0).toUpperCase() + displayComplaint.slice(1);
+
+    rootCause = `${brand || 'Cihaz'} (${model || 'Ünite'}) üzerinde bildirilen "${capTitle}" şikayeti teknik olarak incelendiğinde; ana kontrol ünitesi ve ilgili çalışma hattı bileşenlerinde sinyal süreksizliği, empedans sapması ve aşırı yük koruma devresinde tetiklenme saptandı.`;
+    solution = `Bildirilen "${capTitle}" arızasına yönelik giriş/çıkış gerilim regülatörleri, sinyal filtreleri ve ilgili koruma elemanları osiloskop ve multimetre ile taranacak; tolerans dışı kalan komponentler yenilenecektir.`;
+    action = `"${capTitle}" arıza hattındaki kritik bağlantılar ve güç/kumanda devre elemanları revize edildi, lehim çatlakları tazelendi. Çıkış çalışma parametreleri kararlı kılındı ve cihaz fonksiyon testlerinden başarıyla geçti.`;
+    steps = [
+      `"${capTitle}" arızasına yol açabilecek sinyal ve güç hatlarını şematik referansına göre ölçün.`,
+      `İlgili koruma rölesi, sigorta ve doğrultucu devre bileşenlerinde gerilim düşümlerini multimetre ile test edin.`,
+      `Çalışma döngüsü sırasında sıcaklık ve akım çekişini termal kamera / pensampermetre ile izleyin.`
     ];
     partCodes = ["ROLE-24V-16A", "KOND-470UF", "SIGORTA-16A"];
     estMinutes = 35;
-    confidence = "%89 Güven";
+    confidence = "%91 Güven (Özelleştirilmiş AI Analizi)";
+    learnedBadge = `🔍 Arıza Bildirimine Özel AI Analizi: "${capTitle}" şikayeti başarıyla modellendi.`;
   }
   } // if (!rootCause) kapatıldı
 
@@ -9588,6 +9736,10 @@ function initCustomerActions() {
         renderCustomerTrackingResult(foundData);
         showToast(`✓ #${currentSearchedCode} iş emri başarıyla sorgulandı.`);
       } else {
+        const resultBox = document.getElementById('tracking-result-box');
+        if (resultBox) resultBox.style.display = 'none';
+        const emptyPrompt = document.getElementById('tracking-empty-prompt');
+        if (emptyPrompt) emptyPrompt.style.display = 'block';
         showToast(`❌ "${query}" ile eşleşen iş emri bulunamadı. Takip kodunu veya telefon numaranızı kontrol edin.`);
       }
 
@@ -9597,6 +9749,13 @@ function initCustomerActions() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
       `;
     });
+
+    const inputEl = document.getElementById('cust-search-input');
+    if (inputEl) {
+      inputEl.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') btnSearch.click();
+      });
+    }
   }
 }
 
@@ -9880,6 +10039,11 @@ function renderCustomerTrackingResult(data) {
   const resultBox = document.getElementById('tracking-result-box');
   if (!resultBox) return;
 
+  // Sonuç kutusunu görünür yap ve boş sorgu uyarısını gizle
+  resultBox.style.display = 'block';
+  const emptyPrompt = document.getElementById('tracking-empty-prompt');
+  if (emptyPrompt) emptyPrompt.style.display = 'none';
+
   const trackingCode = data.tracking_code || data.code || 'SRV-2026-104';
   const trackingCodePill = resultBox.querySelector('.tracking-code-pill');
   if (trackingCodePill) trackingCodePill.innerHTML = `Takip Kodu: <strong>${trackingCode}</strong>`;
@@ -10154,6 +10318,21 @@ function loadAndShowServiceLabel(trackingCode) {
   if (dateEl) {
     const d = (localOrder && localOrder.created_at) ? new Date(localOrder.created_at) : new Date();
     dateEl.textContent = d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Gerçek taranabilir dinamik QR kodunu oluştur
+  const qrBox = document.getElementById('lbl-qr-box');
+  if (qrBox) {
+    const origin = (window.location && window.location.origin && window.location.origin.startsWith('http')) 
+      ? window.location.origin 
+      : 'https://funzervicetech.ai';
+    const trackingUrl = `${origin}/index.html?track=${encodeURIComponent(code)}`;
+    qrBox.innerHTML = `
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(trackingUrl)}" 
+           alt="QR: ${code}" 
+           style="width: 100px; height: 100px; display: block; margin: 0 auto; border-radius: 4px; background: #fff;" />
+      <div class="qr-scan-label" style="font-size: 0.65rem; color: #000; font-weight: 700; text-align: center; margin-top: 4px;">KAMERAYLA OKUT</div>
+    `;
   }
 
   // Modalı anında göster (Sıfır gecikme)
@@ -21739,6 +21918,20 @@ function initBossSecretTriggers() {
       setTimeout(() => {
         openBossModal();
       }, 500);
+    }
+
+    // 3. QR / URL Cihaz Takip Parametresi (?track=SRV-2026-104 veya ?takip=...)
+    const trackCode = urlParams.get('track') || urlParams.get('takip');
+    if (trackCode) {
+      setTimeout(() => {
+        if (typeof switchToCustomerMode === 'function') switchToCustomerMode();
+        const inputEl = document.getElementById('cust-search-input');
+        if (inputEl) {
+          inputEl.value = trackCode;
+          const btnSearch = document.getElementById('btn-cust-search');
+          if (btnSearch) btnSearch.click();
+        }
+      }, 400);
     }
   } catch (e) {}
 

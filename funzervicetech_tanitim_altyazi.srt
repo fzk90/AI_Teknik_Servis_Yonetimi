@@ -1,0 +1,155 @@
+1
+00:00:00,500 --> 00:00:05,200
+Bir teknik servis operasyonunu yönetiyorsanız şu tablo size çok tanıdık gelecektir:
+
+2
+00:00:05,300 --> 00:00:09,800
+WhatsApp gruplarında kaybolan müşteri adresleri, unutulan arıza çağrıları,
+
+3
+00:00:09,900 --> 00:00:15,400
+yağlı eldivenleriyle dar alanda cep telefonundan form doldurmaya çalışan teknisyenler,
+
+4
+00:00:15,500 --> 00:00:20,800
+döviz kuru fırlarken eski fiyattan yazılıp şirketi zarara uğratan ithal yedek parçalar
+
+5
+00:00:20,900 --> 00:00:25,600
+ve "Bu cihaza 6 ay önce hangi kart takılmıştı?" sorusuna bulunamayan cevaplar.
+
+6
+00:00:25,800 --> 00:00:30,200
+Yıllarca sahada bir Elektronik ve Haberleşme Mühendisi olarak bu dertleri bizzat yaşadım.
+
+7
+00:00:30,300 --> 00:00:35,200
+Ve şu gerçeği gördüm: Masa başı muhasebe programları sahanın dilinden anlamıyor.
+
+8
+00:00:35,300 --> 00:00:39,000
+İşte FUNZerviceTech.ai tam olarak bu sahadaki mühendislik sancısından doğdu.
+
+9
+00:00:39,500 --> 00:00:42,500
+Peki FUNZerviceTech.ai nedir?
+
+10
+00:00:42,600 --> 00:00:47,000
+FUNZerviceTech.ai; tek bir sektöre sıkışıp kalmış dar kalıplı bir yazılım değildir.
+
+11
+00:00:47,100 --> 00:00:52,400
+Endüstriyel otomasyon ve CNC mekatronikten biyomedikal ve tıbbi cihazlara;
+
+12
+00:00:52,500 --> 00:00:57,200
+jeneratör ve kompresörden iklimlendirme ve ısıtma sistemlerine;
+
+13
+00:00:57,300 --> 00:01:03,000
+spor ve fitness ekipmanlarından endüstriyel mutfak, otomotiv, motosiklet ve bilişime kadar...
+
+14
+00:01:03,100 --> 00:01:08,200
+Kısacası sahada teknisyeni, arabasında yedek parçası ve cihaz başında emeği olan
+
+15
+00:01:08,300 --> 00:01:14,200
+tüm teknik servis sektörleri için özel olarak geliştirilmiş yapay zeka destekli bir servis işletim sistemidir.
+
+16
+00:01:14,300 --> 00:01:19,500
+Müşteri çağrısından saha diktesine, parça stoğundan e-faturaya tüm döngüyü tek ekosistemde buluşturur.
+
+17
+00:01:19,600 --> 00:01:25,000
+Şimdi gelin, bu sistemin operasyonunuza kazandırdığı 5 büyük güce canlı ekranlar üzerinden bakalım.
+
+18
+00:01:25,500 --> 00:01:28,800
+Birinci Güç: Sıfır telefon trafiği ve harita sevk masası.
+
+19
+00:01:28,900 --> 00:01:34,000
+Müşterileriniz web sitenizden veya sosyal medya formunuzdan tek tıkla arıza kaydı açar.
+
+20
+00:01:34,100 --> 00:01:38,200
+Bildirim anında sevk masasına ve GPS haritasına canlı konumla düşer.
+
+21
+00:01:38,300 --> 00:01:43,000
+Yönetici, arızaya en yakın teknisyeni görüp saniyeler içinde rotayı oluşturur.
+
+22
+00:01:43,500 --> 00:01:47,200
+İkinci Güç: Klavyesiz saha ve yapay zeka canlı sesli dikte.
+
+23
+00:01:47,300 --> 00:01:52,500
+Teknisyen cihaz başındayken eldivenle telefon ekranında yazı yazmakla vakit kaybetmez.
+
+24
+00:01:52,600 --> 00:01:55,500
+Tek bir tuşa basar ve sadece konuşur.
+
+25
+00:01:55,600 --> 00:02:00,500
+Sistemdeki Türkçe doğal dil motoru sesi analiz eder; sorunun tespiti,
+
+26
+00:02:00,600 --> 00:02:06,000
+yapılan müdahale ve kullanılan parçaları ayrı kutucuklara otomatik olarak doldurur.
+
+27
+00:02:06,500 --> 00:02:10,200
+Üçüncü Güç: Canlı TCMB kur kalkanı ve mobil araç depoları.
+
+28
+00:02:10,300 --> 00:02:15,000
+Özellikle ithal yedek parçalarda döviz yükselirken zarar etme devri kapandı.
+
+29
+00:02:15,100 --> 00:02:20,200
+Parçayı Dolar veya Euro olarak girersiniz; TCMB kuruyla anlık TL satış fiyatı hesaplanır.
+
+30
+00:02:20,300 --> 00:02:25,000
+Üstelik her servis aracı bağımsız bir mobil depo olarak canlı takip edilir.
+
+31
+00:02:25,500 --> 00:02:29,500
+Dördüncü Güç: Dokunmatik müşteri imzası ve Dijital Cihaz Pasaportu.
+
+32
+00:02:29,600 --> 00:02:34,800
+Müşteri teslimat anında cep telefonu ekranına parmağıyla teslim imzasını atar.
+
+33
+00:02:34,900 --> 00:02:40,500
+Cihazın tüm tamir geçmişi, takılan parçaları ve garantisi QR kodlu pasaporta işlenir.
+
+34
+00:02:41,000 --> 00:02:44,800
+Ve Beşinci Güç: Tek tıkla resmi GİB e-Fatura ve tahsilat.
+
+35
+00:02:44,900 --> 00:02:50,000
+İş bittiği an Maliye Bakanlığı uyumlu resmi fatura üretilir ve WhatsApp'tan ödeme linkiyle iletilir.
+
+36
+00:02:50,500 --> 00:02:55,500
+Gördüğünüz gibi FUNZerviceTech.ai teknik servisinizi otonom bir ekosisteme dönüştürüyor.
+
+37
+00:02:55,600 --> 00:03:00,500
+Üstelik Hızlı Kurulum Sihirbazı ile kendi firmanızı 2 dakikada yayına alabilirsiniz.
+
+38
+00:03:00,600 --> 00:03:06,500
+Hemen funzervicetech.ai adresine girin, canlı demoyu bizzat test edin.
+
+39
+00:03:06,600 --> 00:03:11,500
+Geleceğin teknik servisinde görüşmek üzere!
