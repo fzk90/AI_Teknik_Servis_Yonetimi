@@ -2425,13 +2425,30 @@ function initAccountingReceiptActions() {
         order.status = "Tamamlandı / Teslim Edildi";
         order.accountingSettled = true;
         order.paymentMethod = method;
+        const nowIso = new Date().toISOString();
+        order.settled_at = nowIso;
+        order.completed_at = order.completed_at || order.completedAt || nowIso;
+        order.completedAt = order.completed_at;
+
+        // Tutar ve işçilik alanlarını sağlama al
+        const labor = parseFloat(order.labor_cost !== undefined ? order.labor_cost : (order.laborCost !== undefined ? order.laborCost : 600));
+        order.labor_cost = labor;
+        order.laborCost = labor;
+        if (!order.total_cost && !order.totalCost) {
+          order.total_cost = labor + (parseFloat(order.parts_cost || order.partsCost || 0));
+        }
+
         saveWorkOrdersToLocalStorage();
       }
 
-      showToast(`💾 #${code} tahsilatı (${method}) başarıyla muhasebe sistemine işlendi ve kapatıldı!`);
+      if (window.Fin && typeof window.Fin.render === 'function') {
+        window.Fin.render();
+      }
+
+      showToast(`💾 #${code} tahsilatı (${method}) başarıyla muhasebe sistemine işlendi ve Gelir & Gider tablosuna aktarıldı!`, 'success');
       if (modal) modal.style.display = 'none';
       renderIncomingCalls();
-  if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
+      if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
     });
   }
 }
@@ -19824,7 +19841,24 @@ function initSanalPosEngine() {
         order.accountingSettled = true;
         order.status = 'Tamamlandı / Teslim Edildi';
         order.paymentMethod = 'PayTR Sanal POS (Kredi Kartı)';
+        const nowIso = new Date().toISOString();
+        order.settled_at = nowIso;
+        order.completed_at = order.completed_at || order.completedAt || nowIso;
+        order.completedAt = order.completed_at;
+
+        // Tutar ve işçilik alanlarını sağlama al
+        const labor = parseFloat(order.labor_cost !== undefined ? order.labor_cost : (order.laborCost !== undefined ? order.laborCost : 600));
+        order.labor_cost = labor;
+        order.laborCost = labor;
+        if (!order.total_cost && !order.totalCost) {
+          order.total_cost = labor + (parseFloat(order.parts_cost || order.partsCost || 0));
+        }
+
         saveWorkOrdersToLocalStorage();
+      }
+
+      if (window.Fin && typeof window.Fin.render === 'function') {
+        window.Fin.render();
       }
 
       // Teknisyen ekranındaki butonları yeşil rozete dönüştür

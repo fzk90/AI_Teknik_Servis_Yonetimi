@@ -63,14 +63,31 @@
 
   function monthKey(any) {
     if (!any) return '';
+    if (any instanceof Date && !isNaN(any)) {
+      return any.toISOString().slice(0, 7);
+    }
     const s = String(any).trim();
-    let m = s.match(/^(\d{4})-(\d{2})/);
+    let m = s.match(/(\d{4})-(\d{2})/);
     if (m) return m[1] + '-' + m[2];
-    m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    m = s.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
     if (m) return m[3] + '-' + String(m[2]).padStart(2, '0');
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 7);
     return '';
   }
   const S = () => (typeof state !== 'undefined' ? state : { workOrders: [], stock: [], staff: [], vehicles: [], technicianExpenses: [] });
+
+  function isCompletedOrder(o) {
+    if (!o) return false;
+    if (o.accountingSettled) return true;
+    const s = String(o.status || '').toLowerCase().trim();
+    return s.includes('tamamlan') || s.includes('teslim') || s.includes('kapat');
+  }
+
+  function getOrderDate(o) {
+    if (!o) return todayIso();
+    return o.settled_at || o.completed_at || o.completedAt || o.created_at || o.createdAt || o.date || todayIso();
+  }
 
   function findStaff(order) {
     const st = S().staff || [];
@@ -90,8 +107,8 @@
     if (meta.hours !== undefined && meta.hours !== '') return num(meta.hours);
     const mins = num(o.travel_duration_minutes || o.travelDurationMinutes) + num(o.repair_duration_minutes || o.repairDurationMinutes);
     if (mins > 0) return mins / 60;
-    if (o.arrived_at && o.completed_at) {
-      const d = (new Date(o.completed_at) - new Date(o.arrived_at)) / 36e5;
+    if (o.arrived_at && (o.completed_at || o.completedAt)) {
+      const d = (new Date(o.completed_at || o.completedAt) - new Date(o.arrived_at)) / 36e5;
       if (isFinite(d) && d > 0) return d;
     }
     return 1;
@@ -105,12 +122,22 @@
   // ---------- Hesaplama ----------
   function compute(month) {
     const st = S();
-    const orders = (st.workOrders || []).filter((o) => o.status === 'Tamamlandı' &&
-      monthKey(o.completed_at || o.created_at) === month);
+    const orders = (st.workOrders || []).filter((o) => isCompletedOrder(o) &&
+      monthKey(getOrderDate(o)) === month);
 
     const monthExp = (data.expenses || []).filter((e) => monthKey(e.date) === month);
-    const techExp = (st.technicianExpenses || []).filter((e) => monthKey(e.date) === month)
-      .map((e) => ({ id: e.id, date: e.date, category: e.category || 'Saha Masrafı', desc: e.desc, net: num(e.amount), vat: 0, orderCode: e.workOrderCode, techId: e.techId, ext: true }));
+    const techExp = (st.technicianExpenses || []).filter((e) => monthKey(e.date || todayIso()) === month)
+      .map((e) => ({
+        id: e.id,
+        date: e.date || todayIso(),
+        category: e.category || 'Saha Masrafı',
+        desc: e.description || e.desc || 'Saha Harcaması',
+        net: num(e.amount),
+        vat: 0,
+        orderCode: e.workOrderCode || e.orderCode,
+        techId: e.techId,
+        ext: true
+      }));
     const incomes = (data.incomes || []).filter((i) => monthKey(i.date) === month);
 
     // Teknisyen saat toplamları (garanti dahil tüm işler)
@@ -124,10 +151,10 @@
       if (key) techHours[key] = (techHours[key] || 0) + hours;
       const warranty = !!meta.warranty;
 
-      let parts = Array.isArray(o.usedParts) ? o.usedParts : [];
+      let parts = Array.isArray(o.usedParts) ? o.usedParts : (Array.isArray(o.used_parts) ? o.used_parts : []);
       // usedParts.price satır toplamıdır (adet x birim); birim fiyat varsa ondan hesapla
       const lineRev = (p) => (p.unitPrice !== undefined && p.unitPrice !== null) ? num(p.qty || 1) * num(p.unitPrice) : num(p.price);
-      let partsRev = parts.length ? parts.reduce((a, p) => a + lineRev(p), 0) : num(o.parts_cost);
+      let partsRev = parts.length ? parts.reduce((a, p) => a + lineRev(p), 0) : num(o.parts_cost !== undefined ? o.parts_cost : (o.partsCost !== undefined ? o.partsCost : 0));
       let partsCost = 0, missingCost = 0;
       parts.forEach((p) => {
         if (p.isLocalPurchase) return; // dış alım zaten masraf kaydı olarak giderde
@@ -135,10 +162,17 @@
         if (!c) missingCost += 1;
         partsCost += num(p.qty || 1) * c;
       });
-      const laborRev = num(o.labor_cost);
+      let laborRev = num(o.labor_cost !== undefined ? o.labor_cost : (o.laborCost !== undefined ? o.laborCost : 0));
+      const orderTotal = num(o.total_cost || o.totalCost || o.grand_total || o.grandTotal || 0);
+      if (laborRev === 0 && partsRev === 0 && orderTotal > 0) {
+        laborRev = orderTotal;
+      }
+      if (laborRev === 0 && partsRev === 0 && !warranty) {
+        laborRev = 600;
+      }
       return {
         o, code, tech, key, hours, warranty,
-        revenue: warranty ? 0 : laborRev + partsRev,
+        revenue: warranty ? 0 : (laborRev + partsRev),
         laborRev, partsRev, partsCost, missingCost,
         direct: 0, labor: 0, vehicle: 0
       };
@@ -225,7 +259,7 @@
   // ---------- Arayüz ----------
   function monthOptions() {
     const set = new Set([todayIso().slice(0, 7)]);
-    (S().workOrders || []).forEach((o) => { const m = monthKey(o.completed_at || o.created_at); if (m) set.add(m); });
+    (S().workOrders || []).forEach((o) => { const m = monthKey(getOrderDate(o)); if (m) set.add(m); });
     (data.expenses || []).forEach((e) => { const m = monthKey(e.date); if (m) set.add(m); });
     return Array.from(set).sort().reverse();
   }
@@ -269,16 +303,22 @@
 
     const jobRows = r.rows.map((x) => `
       <tr>
-        <td><strong>${esc(x.code)}</strong><div style="font-size:.7rem;color:#94a3b8;">${esc(x.o.customer_name || '')}</div></td>
+        <td>
+          <strong>${esc(x.code)}</strong>
+          <div style="font-size:.7rem;color:#94a3b8;">${esc(x.o.customer_name || x.o.customer || '')}</div>
+          <span style="font-size:.65rem;padding:1px 6px;border-radius:4px;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);display:inline-block;margin-top:2px;">
+            ${esc(x.o.paymentMethod || (x.o.accountingSettled ? 'Tahsil Edildi' : 'Tamamlandı'))}
+          </span>
+        </td>
         <td>${esc(x.tech ? x.tech.name : '-')}</td>
         <td><input type="number" step="0.25" min="0" value="${(Math.round(x.hours * 100) / 100)}" style="width:70px;" onchange="Fin.setMeta('${esc(x.code)}','hours',this.value)"></td>
         <td style="text-align:center;"><input type="checkbox" ${x.warranty ? 'checked' : ''} onchange="Fin.setMeta('${esc(x.code)}','warranty',this.checked)"></td>
-        <td>${money(x.revenue)}</td>
+        <td style="font-weight:700;color:#38bdf8;">${money(x.revenue)}</td>
         <td>${money(x.partsCost)}</td>
         <td>${money(x.labor)}</td>
         <td>${money(x.direct + x.vehicle)}</td>
         <td style="font-weight:800;color:${col(x.profit)};">${money(x.profit)}</td>
-      </tr>`).join('') || '<tr><td colspan="9" style="color:#64748b;">Kayıt yok</td></tr>';
+      </tr>`).join('') || '<tr><td colspan="9" style="color:#64748b;text-align:center;padding:14px;">Bu ay için henüz tamamlanmış ve tahsilatı işlenmiş servis kaydı bulunmuyor.</td></tr>';
 
     const techRows = Object.values(r.techInfo).map((t) => `
       <tr><td>${esc(t.name)}</td><td>${money(t.cost)}</td><td>${t.hours.toFixed(1)} sa</td><td>${money(t.rate)}/sa</td>
