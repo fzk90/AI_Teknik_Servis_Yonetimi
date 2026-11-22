@@ -770,8 +770,9 @@
           <table class="data-table" id="stock-table">
             <thead id="stock-thead">
               <tr>
-                <th style="min-width: 170px;">Parça Kodu & Tanımı</th>
-                <th style="min-width: 150px; white-space: nowrap;">Satış Fiyatı (KDV hariç)<br><small>Alış • Kâr %</small></th>
+                <th style="width: 120px; white-space: nowrap;">Parça Kodu</th>
+                <th style="min-width: 170px;">Parça Tanımı & Kategori</th>
+                <th style="min-width: 125px; white-space: nowrap;">Satış Fiyatı</th>
                 <th class="col-central">🏢 MERKEZ DEPO</th>
                 <th class="col-workshop">🔬 MERKEZ ATÖLYE / LAB</th>
                 <th class="col-v1">🚐 ARAÇ (34 ABC 101 - MURAT)</th>
@@ -789,6 +790,12 @@
           <div class="stock-footer-info" id="stock-footer-info">
             Görüntülenen: <strong>12</strong> / 12 Kalem Parça
           </div>
+
+          <!-- Sayfalama (Pagination) Kontrolleri -->
+          <div class="stock-pagination-wrap" id="stock-pagination-wrap">
+            <!-- JavaScript ile dinamik oluşturulur -->
+          </div>
+
           <div class="stock-legend">
             <span class="legend-item"><span class="indicator safe"></span> Güvenli Stok</span>
             <span class="legend-item"><span class="indicator warning"></span> Kritik Seviye (&le; 2 adet)</span>

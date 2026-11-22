@@ -3017,12 +3017,13 @@ function renderStockTable() {
     elFooterInfo.innerHTML = `Görüntülenen: <strong>${filtered.length}</strong> / ${totalKinds} Kalem Parça ${filter.category !== 'all' ? `• [${filter.category}]` : ''} ${filter.criticalOnly ? '• <span class="text-rose" style="font-weight: 600;">⚠️ Kritik Filtresi Aktif</span>' : ''}`;
   }
 
-  // Dinamik THEAD Oluşturma
+  // Dinamik THEAD Oluşturma (Parça Kodu ve Tanımı Ayrı Sütunlar)
   if (thead) {
     thead.innerHTML = `
       <tr>
-        <th style="min-width: 170px;">Parça Kodu & Tanımı</th>
-        <th style="min-width: 130px; white-space: nowrap;">Birim Fiyat</th>
+        <th style="width: 120px; white-space: nowrap;">Parça Kodu</th>
+        <th style="min-width: 170px;">Parça Tanımı & Kategori</th>
+        <th style="min-width: 125px; white-space: nowrap;">Satış Fiyatı</th>
         ${showCentral ? `<th class="col-central" style="white-space: nowrap;">🏢 MERKEZ DEPO</th>` : ''}
         ${showWorkshop ? `<th class="col-workshop" style="white-space: nowrap;">🔬 MERKEZ ATÖLYE / LAB</th>` : ''}
         ${visibleVehicles.map(v => {
@@ -3031,13 +3032,13 @@ function renderStockTable() {
           const colClass = (v.id === 1 || v.plate === '34 ABC 101') ? 'col-v1' : (v.id === 2 || v.plate === '34 DEF 202') ? 'col-v2' : 'col-veh';
           return `<th class="${colClass}" style="white-space: nowrap;">${icon} ARAÇ (${v.plate} - ${driver})</th>`;
         }).join('')}
-        <th style="text-align: right; min-width: 150px; white-space: nowrap;">İşlem / İkmal & Sil</th>
+        <th style="text-align: right; min-width: 140px; white-space: nowrap;">İşlem / İkmal & Sil</th>
       </tr>
     `;
   }
 
   // 3. Boş Sonuç Durumu
-  const totalCols = 1 + 1 + (showCentral ? 1 : 0) + (showWorkshop ? 1 : 0) + visibleVehicles.length + 1;
+  const totalCols = 1 + 1 + 1 + (showCentral ? 1 : 0) + (showWorkshop ? 1 : 0) + visibleVehicles.length + 1;
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
@@ -3053,6 +3054,7 @@ function renderStockTable() {
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
         state.stockFilter = { search: '', category: 'all', criticalOnly: false, locationView: 'all' };
+        state.stockPage = 1;
         const searchInput = document.getElementById('stock-search-input');
         if (searchInput) searchInput.value = '';
         const clearBtn = document.getElementById('btn-clear-stock-search');
@@ -3076,17 +3078,91 @@ function renderStockTable() {
         renderStockTable();
       });
     }
+
+    const paginationWrap = document.getElementById('stock-pagination-wrap');
+    if (paginationWrap) paginationWrap.innerHTML = '';
     return;
   }
 
-  // 4. Tablo Satırlarını Oluşturma
-  tbody.innerHTML = filtered.map(item => {
+  // Sayfalama (Pagination) Hesaplaması (Yüzlerce ve Binlerce Parça İçin)
+  state.stockPage = state.stockPage || 1;
+  state.stockPageSize = state.stockPageSize !== undefined ? state.stockPageSize : 25;
+
+  const totalFiltered = filtered.length;
+  const isAll = state.stockPageSize === 'all' || state.stockPageSize === -1;
+  const pageSize = isAll ? totalFiltered : (Number(state.stockPageSize) || 25);
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / (pageSize || 1)));
+
+  if (state.stockPage > totalPages) state.stockPage = totalPages;
+  if (state.stockPage < 1) state.stockPage = 1;
+
+  const startIndex = isAll ? 0 : (state.stockPage - 1) * pageSize;
+  const endIndex = isAll ? totalFiltered : Math.min(startIndex + pageSize, totalFiltered);
+  const displayItems = filtered.slice(startIndex, endIndex);
+
+  // Sayfalama Kontrollerini ve Alt Bilgiyi Güncelle
+  if (elFooterInfo) {
+    if (totalFiltered === 0) {
+      elFooterInfo.innerHTML = `Görüntülenen: <strong>0</strong> / ${totalKinds} Kalem Parça`;
+    } else {
+      elFooterInfo.innerHTML = `Görüntülenen: <strong>${startIndex + 1} - ${endIndex}</strong> / Toplam ${totalFiltered} Kalem ${filter.category !== 'all' ? `• [${filter.category}]` : ''} ${filter.criticalOnly ? '• <span class="text-rose" style="font-weight: 600;">⚠️ Kritik Filtresi Aktif</span>' : ''}`;
+    }
+  }
+
+  const paginationWrap = document.getElementById('stock-pagination-wrap');
+  if (paginationWrap) {
+    paginationWrap.innerHTML = `
+      <div class="stock-page-size-selector">
+        <span>Sayfa Başı:</span>
+        <select id="select-stock-page-size" class="form-select-xs" style="padding: 2px 6px; font-size: 0.76rem; border-radius: 4px; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-color); cursor: pointer;">
+          <option value="15" ${state.stockPageSize == 15 ? 'selected' : ''}>15</option>
+          <option value="25" ${state.stockPageSize == 25 ? 'selected' : ''}>25</option>
+          <option value="50" ${state.stockPageSize == 50 ? 'selected' : ''}>50</option>
+          <option value="100" ${state.stockPageSize == 100 ? 'selected' : ''}>100</option>
+          <option value="all" ${state.stockPageSize === 'all' ? 'selected' : ''}>Tümü (${totalFiltered})</option>
+        </select>
+      </div>
+      <div class="stock-page-nav">
+        <button type="button" class="stock-page-btn" id="btn-stock-prev-page" ${state.stockPage <= 1 ? 'disabled' : ''} title="Önceki Sayfa">◀</button>
+        <span class="stock-page-indicator">${state.stockPage} / ${totalPages}</span>
+        <button type="button" class="stock-page-btn" id="btn-stock-next-page" ${state.stockPage >= totalPages ? 'disabled' : ''} title="Sonraki Sayfa">▶</button>
+      </div>
+    `;
+
+    const sizeSelect = document.getElementById('select-stock-page-size');
+    if (sizeSelect) {
+      sizeSelect.addEventListener('change', (e) => {
+        state.stockPageSize = e.target.value === 'all' ? 'all' : Number(e.target.value);
+        state.stockPage = 1;
+        renderStockTable();
+      });
+    }
+
+    const btnPrev = document.getElementById('btn-stock-prev-page');
+    if (btnPrev && state.stockPage > 1) {
+      btnPrev.addEventListener('click', () => {
+        state.stockPage--;
+        renderStockTable();
+      });
+    }
+
+    const btnNext = document.getElementById('btn-stock-next-page');
+    if (btnNext && state.stockPage < totalPages) {
+      btnNext.addEventListener('click', () => {
+        state.stockPage++;
+        renderStockTable();
+      });
+    }
+  }
+
+  // 4. Tablo Satırlarını Oluşturma (Sayfalanmış ve Ayrılmış Sütunlar)
+  tbody.innerHTML = displayItems.map(item => {
     const workshopQty = item.workshop !== undefined ? item.workshop : 10;
     const wStatus = workshopQty === 0 ? 'danger' : workshopQty <= 2 ? 'warning' : 'safe';
 
     const catObj = (state.categories || []).find(c => (c.name || '').toLowerCase() === (item.category || '').toLowerCase());
     const catIcon = catObj ? catObj.icon + ' ' : '';
-    const catHtml = item.category ? `<span class="stock-cat-tag">${catIcon}${item.category}</span><br>` : '';
+    const catHtml = item.category ? `<span class="stock-cat-tag">${catIcon}${item.category}</span>` : '';
 
     let vehiclesCellsHtml = visibleVehicles.map(v => {
       const vQty = getItemVehicleStock(item, v);
@@ -3111,19 +3187,47 @@ function renderStockTable() {
 
     return `
       <tr>
+        <td style="white-space: nowrap;">
+          <span class="stock-code-pill" title="Parça Kodu / SKU">${item.code}</span>
+        </td>
         <td>
-          ${catHtml}
-          <strong style="color: var(--text-main); font-size: 0.9rem;">${item.name}</strong><br>
-          <small class="text-dim" style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">${item.code}</small>
-          <small class="text-dim">• Garanti: ${item.warranty || '12 Ay'}</small>
+          ${catHtml ? `<div style="margin-bottom: 2px;">${catHtml}</div>` : ''}
+          <strong style="color: var(--text-main); font-size: 0.9rem;">${item.name}</strong>
+          <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">
+            <span>🛡️ Garanti: ${item.warranty || '12 Ay'}</span>
+          </div>
         </td>
         <td style="white-space: nowrap;">
-          <div style="font-size: 0.95rem; font-weight: 700; color: var(--accent-emerald, #10b981);" title="Satış fiyatı (KDV hariç)">${(item.price || 0).toLocaleString('tr-TR')} ₺</div>
-          <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
-            ${item.cost ? `Alış: ${Number(item.cost).toLocaleString('tr-TR')} ₺ • Kâr %${item.margin !== undefined ? item.margin : '-'}` : 'Alış fiyatı girilmemiş'}
+          <div class="stock-price-hover-wrap" onclick="editStockMargin('${String(item.code).replace(/'/g, "\\'")}')" title="Fiyat & Kâr Detaylarını Düzenle (Tıklayın)">
+            <div class="stock-price-main">
+              <span class="stock-price-val">${(item.price || 0).toLocaleString('tr-TR')} ₺</span>
+              <span class="stock-tax-badge">KDV Hariç</span>
+            </div>
+            
+            <!-- Hover Detay Popover / Tooltip -->
+            <div class="stock-price-tooltip">
+              <div class="tooltip-header">📊 Fiyat & Maliyet Analizi</div>
+              <div class="tooltip-row">
+                <span>🛒 Alış Maliyeti:</span>
+                <strong style="color: #f8fafc;">${item.cost ? Number(item.cost).toLocaleString('tr-TR') + ' ₺' : '<span style="color: #94a3b8; font-weight: normal;">Girilmemiş</span>'}</strong>
+              </div>
+              <div class="tooltip-row">
+                <span>📈 Kâr Marjı:</span>
+                <strong style="color: #34d399;">%${item.margin !== undefined ? item.margin : '-'}</strong>
+              </div>
+              <div class="tooltip-row">
+                <span>🏷️ Satış Fiyatı:</span>
+                <strong style="color: #10b981;">${(item.price || 0).toLocaleString('tr-TR')} ₺</strong>
+              </div>
+              ${currencyBadgeHtml ? `
+                <div class="tooltip-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                  <span>💱 İthal / TCMB:</span>
+                  <strong>${currencyBadgeHtml}</strong>
+                </div>
+              ` : ''}
+              <div class="tooltip-hint">✏️ Kâr / Alış Fiyatını Düzenlemek İçin Tıklayın</div>
+            </div>
           </div>
-          <button type="button" class="btn btn-xs btn-outline" style="margin-top: 3px; font-size: 0.68rem; padding: 1px 6px;" onclick="editStockMargin('${String(item.code).replace(/'/g, "\\'")}')">💹 ${item.cost ? '% Kâr / Alış' : 'Alış & Kâr gir'}</button>
-          ${currencyBadgeHtml ? `<div style="margin-top: 4px;">${currencyBadgeHtml}</div>` : ''}
         </td>
         ${showCentral ? `
           <td class="col-central">
@@ -3238,6 +3342,7 @@ function initStockFilterControls() {
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       state.stockFilter.search = e.target.value.trim();
+      state.stockPage = 1;
       if (clearBtn) clearBtn.style.display = state.stockFilter.search ? 'block' : 'none';
       renderStockTable();
     });
@@ -3248,6 +3353,7 @@ function initStockFilterControls() {
     clearBtn.addEventListener('click', () => {
       searchInput.value = '';
       state.stockFilter.search = '';
+      state.stockPage = 1;
       clearBtn.style.display = 'none';
       renderStockTable();
       searchInput.focus();
@@ -3264,6 +3370,7 @@ function initStockFilterControls() {
   // 5. Kritik / Azalan Stok Filtresi Toggle
   const toggleCritical = () => {
     state.stockFilter.criticalOnly = !state.stockFilter.criticalOnly;
+    state.stockPage = 1;
     if (btnCritical) {
       btnCritical.classList.toggle('active', state.stockFilter.criticalOnly);
       btnCritical.setAttribute('data-active', state.stockFilter.criticalOnly ? 'true' : 'false');
@@ -3281,6 +3388,7 @@ function initStockFilterControls() {
   const btnCurrency = document.getElementById('btn-filter-currency');
   const toggleCurrency = () => {
     state.stockFilter.currencyOnly = !state.stockFilter.currencyOnly;
+    state.stockPage = 1;
     if (btnCurrency) {
       btnCurrency.classList.toggle('active', state.stockFilter.currencyOnly);
       btnCurrency.setAttribute('data-active', state.stockFilter.currencyOnly ? 'true' : 'false');
@@ -3296,6 +3404,7 @@ function initStockFilterControls() {
   if (locViewFilter) {
     locViewFilter.addEventListener('change', (e) => {
       state.stockFilter.locationView = e.target.value;
+      state.stockPage = 1;
       const pillsContainer = document.getElementById('stock-location-pills');
       if (pillsContainer) {
         pillsContainer.querySelectorAll('.location-pill').forEach(p => {
@@ -15424,6 +15533,7 @@ function renderStockCategoryPills() {
       container.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
       state.stockFilter.category = pill.getAttribute('data-category');
+      state.stockPage = 1;
       renderStockTable();
     });
   });
