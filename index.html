@@ -682,8 +682,6 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">Mobil Araç Stokları, Atölye ve Depo Takibi</h2>
-            <p class="card-subtitle">Merkez depo, atölye laboratuvarı ve saha servis araçlarındaki çoklu parça envanteri
-            </p>
           </div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="btn btn-primary btn-sm" id="btn-open-stock-modal">➕ Yeni Parça / Stok Girişi</button>
@@ -724,7 +722,7 @@
           <div class="stock-search-box">
             <span class="stock-search-icon">🔍</span>
             <input type="text" id="stock-search-input" class="stock-search-input"
-              placeholder="Parça adı, kodu veya kategori ile anında ara (örn: Rulman, IGBT, Röle, Vana, Sigorta, 6204)...">
+              placeholder="Parça adı, kod veya kategori ara...">
             <button type="button" class="stock-search-clear" id="btn-clear-stock-search" title="Aramayı Temizle"
               style="display: none;">&times;</button>
           </div>
@@ -736,7 +734,7 @@
             <button class="btn btn-sm btn-outline stock-filter-btn" id="btn-filter-currency" data-active="false" title="Sadece USD ($) ve EUR (€) cinsinden dövizli ithal parçaları listele">
               <span>💱 İthal / Dövizli ($/€)</span>
             </button>
-            <select id="stock-location-view-filter" class="form-select form-select-sm" style="min-width: 180px;">
+            <select id="stock-location-view-filter" class="form-select form-select-sm" style="min-width: 160px; max-width: 220px; font-size: 0.8rem;">
               <option value="all">📍 Tüm Lokasyonlar</option>
               <option value="central">🏢 Yalnızca Merkez Depolar (Depo + Atölye)</option>
               <option value="workshop">🔬 Yalnızca Merkez Atölye / Lab</option>

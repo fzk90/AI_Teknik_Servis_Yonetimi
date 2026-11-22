@@ -3955,11 +3955,11 @@ select optgroup {
   transform: translateY(-1px);
 }
 
-/* Arama ve Filtreleme Araç Çubuğu */
+/* Arama ve Filtreleme Araç Çubuğu (Tek Sıra Kompakt Yerleşim) */
 .stock-filter-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 10px;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
@@ -3968,7 +3968,8 @@ select optgroup {
 
 .stock-search-box {
   position: relative;
-  flex: 1 1 200px;
+  flex: 1 1 240px;
+  max-width: 360px;
   min-width: 180px;
   display: flex;
   align-items: center;
@@ -3987,8 +3988,8 @@ select optgroup {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 9px 36px 9px 34px;
-  font-size: 0.85rem;
+  padding: 8px 32px 8px 32px;
+  font-size: 0.84rem;
   color: var(--text-main);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -4019,7 +4020,24 @@ select optgroup {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+@media (max-width: 900px) {
+  .stock-filter-toolbar {
+    flex-wrap: wrap;
+  }
+  .stock-search-box {
+    max-width: 100%;
+    flex: 1 1 100%;
+  }
+  .stock-quick-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
+  }
 }
 
 .stock-filter-btn {
