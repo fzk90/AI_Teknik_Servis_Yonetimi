@@ -3424,6 +3424,59 @@ function renderMaintenance() {
 }
 
 function initAdminActions() {
+  // KPI 1: Aktif İş Emirleri Butonu (Sevk Masası Aktif Tepsi & Otomatik Odaklanma)
+  const btnKpiActiveOrders = document.getElementById('kpi-card-active-orders');
+  if (btnKpiActiveOrders) {
+    btnKpiActiveOrders.addEventListener('click', () => {
+      if (typeof switchToAdminSection === 'function') switchToAdminSection('admin-view');
+      state.dispatchTray = 'active';
+      if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+      if (typeof updateDispatchBanner === 'function') updateDispatchBanner();
+      const activeCol = document.querySelector('.dispatch-column') || document.getElementById('incoming-calls-list');
+      if (activeCol) {
+        activeCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        activeCol.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+        activeCol.style.boxShadow = '0 0 25px rgba(56, 189, 248, 0.45)';
+        activeCol.style.borderColor = 'rgba(56, 189, 248, 0.7)';
+        setTimeout(() => {
+          activeCol.style.boxShadow = '';
+          activeCol.style.borderColor = '';
+        }, 2200);
+      }
+      if (typeof showToast === 'function') {
+        showToast("📋 Aktif Sevk Masası ve açık iş emirleri listelendi.", "info");
+      }
+    });
+  }
+
+  // KPI 4: Periyodik Bakım Zamanı Butonu (Bakım & Garanti Radarına Odaklanma / Modal Açma)
+  const btnKpiMaintenance = document.getElementById('kpi-card-maintenance');
+  if (btnKpiMaintenance) {
+    btnKpiMaintenance.addEventListener('click', () => {
+      if (typeof switchToAdminSection === 'function') switchToAdminSection('admin-view');
+      const maintSection = document.getElementById('maintenance-section-card') || document.getElementById('maintenance-container');
+      if (maintSection) {
+        maintSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        maintSection.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+        maintSection.style.boxShadow = '0 0 25px rgba(16, 185, 129, 0.5)';
+        maintSection.style.borderColor = 'rgba(16, 185, 129, 0.8)';
+        setTimeout(() => {
+          maintSection.style.boxShadow = '';
+          maintSection.style.borderColor = '';
+        }, 2200);
+      }
+      const maintCount = (state.maintenance || []).length;
+      if (maintCount === 0) {
+        const btnOpenMaint = document.getElementById('btn-open-maintenance-modal');
+        if (btnOpenMaint) btnOpenMaint.click();
+      } else {
+        if (typeof showToast === 'function') {
+          showToast(`📅 Periyodik Bakım Sözleşmeleri & Garanti Takibi açıldı (${maintCount} cihaz).`, "info");
+        }
+      }
+    });
+  }
+
   // Akıllı Atama Butonu (Yapay Zeka Eşleştirmesi & Canlı API)
   const btnSmart = document.getElementById('btn-smart-dispatch');
   if (btnSmart) {

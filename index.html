@@ -245,12 +245,13 @@
 
       <!-- KPI Cards -->
       <div class="kpi-grid">
-        <div class="kpi-card accent-blue">
+        <div class="kpi-card accent-blue" id="kpi-card-active-orders" style="cursor: pointer;"
+          title="Aktif Sevk Masası ve İş Emirlerini Görüntüle (Tıkla ➔)">
           <div class="kpi-icon">📋</div>
           <div class="kpi-info">
             <span class="kpi-title">Aktif İş Emirleri</span>
             <span class="kpi-value" id="kpi-active-orders">8</span>
-            <span class="kpi-subtext" id="kpi-active-orders-subtext">3 parça bekliyor, 2 sahada</span>
+            <span class="kpi-subtext" id="kpi-active-orders-subtext">3 parça bekliyor, 2 sahada (Görüntüle ➔)</span>
           </div>
         </div>
         <div class="kpi-card accent-purple" id="kpi-card-fleet" style="cursor: pointer;"
@@ -271,12 +272,13 @@
             <span class="kpi-subtext">Servis aracında tükenmek üzere (Görüntüle ➔)</span>
           </div>
         </div>
-        <div class="kpi-card accent-emerald">
+        <div class="kpi-card accent-emerald" id="kpi-card-maintenance" style="cursor: pointer;"
+          title="Periyodik Bakım Sözleşmeleri & Garanti Takibini Aç (Tıkla ➔)">
           <div class="kpi-icon">📅</div>
           <div class="kpi-info">
             <span class="kpi-title">Periyodik Bakım Zamanı</span>
             <span class="kpi-value" id="kpi-maintenance-count">0 Cihaz</span>
-            <span class="kpi-subtext">Bu hafta planlanan kontroller</span>
+            <span class="kpi-subtext">Bu hafta planlanan kontroller (Yönet ➔)</span>
           </div>
         </div>
       </div>
@@ -402,7 +404,7 @@
       </div>
 
       <!-- Alt Bölüm: Periyodik Bakım ve Garanti Radarı -->
-      <div class="content-card mt-6">
+      <div class="content-card mt-6" id="maintenance-section-card">
         <div class="card-header">
           <div>
             <h2 class="card-title">Periyodik Bakım Sözleşmeleri & Garanti Takibi</h2>
