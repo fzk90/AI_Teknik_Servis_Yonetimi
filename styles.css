@@ -1971,13 +1971,21 @@ select optgroup {
 
 .gps-map-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 20px;
 }
 
 @media (max-width: 960px) {
   .gps-map-grid {
     grid-template-columns: 1fr;
+  }
+  .real-map-canvas {
+    height: 420px !important;
+    min-height: 380px;
+  }
+  .vector-map-canvas {
+    height: 420px !important;
+    min-height: 380px;
   }
 }
 
@@ -2013,7 +2021,8 @@ select optgroup {
 
 .vector-map-canvas {
   position: relative;
-  height: 240px;
+  height: 580px;
+  min-height: 520px;
   width: 100%;
   background: radial-gradient(circle at 60% 40%, #0F1D38, #070D1A 85%);
   border-radius: var(--radius-sm);
@@ -3051,7 +3060,8 @@ select optgroup {
 
 /* Gerçek Google Harita Leaflet Stilleri */
 .real-map-canvas {
-  height: 310px !important;
+  height: 580px !important;
+  min-height: 520px;
   background: #0B1329;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-sm);
