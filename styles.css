@@ -9444,6 +9444,21 @@ body.tech-tab-active #btn-header-settings {
   }
 }
 
+/* ==================== 37. Boss SaaS Komuta & Demo Takip Filtre Kartları ==================== */
+.boss-kpi-card {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  user-select: none;
+}
+
+.boss-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.boss-kpi-card:active {
+  transform: scale(0.98);
+}
+
 
 
 

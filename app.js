@@ -22006,6 +22006,18 @@ function closeBossModal() {
   }
 }
 
+let currentBossFilter = 'all';
+
+function filterBossDemoTable(filterType) {
+  // Aynı filtreye tekrar tıklanırsa filtreyi kaldırıp tümünü göster
+  if (currentBossFilter === filterType) {
+    currentBossFilter = 'all';
+  } else {
+    currentBossFilter = filterType;
+  }
+  renderBossDemoTable();
+}
+
 function renderBossDemoTable() {
   const logs = getDemoLogs();
   const tbody = document.getElementById('boss-demo-tbody');
@@ -22018,7 +22030,124 @@ function renderBossDemoTable() {
 
   const now = Date.now();
 
-  tbody.innerHTML = logs.map(item => {
+  // 1. Önce tüm kayıtlar üzerinden metrik sayılarını doğru hesapla
+  logs.forEach(item => {
+    const firstDate = new Date(item.firstLogin);
+    const daysPassed = Math.floor((now - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+    const isPaid = item.status === 'paid';
+    if (isPaid) {
+      paidCount++;
+    } else {
+      totalDemos++;
+      if (daysPassed >= 6 && daysPassed <= 10) reminder7Count++;
+      if (daysPassed >= 11 && daysPassed <= 14) reminder12Count++;
+    }
+  });
+
+  // Metrikleri güncelle
+  const elTotal = document.getElementById('boss-total-demos');
+  const elRem7 = document.getElementById('boss-reminder-7');
+  const elRem12 = document.getElementById('boss-reminder-12');
+  const elPaid = document.getElementById('boss-active-paid');
+
+  if (elTotal) elTotal.textContent = totalDemos;
+  if (elRem7) elRem7.textContent = reminder7Count;
+  if (elRem12) elRem12.textContent = reminder12Count;
+  if (elPaid) elPaid.textContent = paidCount;
+
+  // 2. Butonların Aktiflik Görselini ve Vurgusunu Güncelle
+  const filter = currentBossFilter || 'all';
+  const cardDemos = document.getElementById('boss-card-filter-demos');
+  const cardRem7 = document.getElementById('boss-card-filter-rem7');
+  const cardRem12 = document.getElementById('boss-card-filter-rem12');
+  const cardPaid = document.getElementById('boss-card-filter-paid');
+  const btnReset = document.getElementById('btn-boss-reset-filter');
+
+  const updateCardVisual = (card, isActive, color, glow) => {
+    if (!card) return;
+    const indicator = card.querySelector('.boss-card-indicator');
+    if (isActive) {
+      card.style.borderColor = color;
+      card.style.boxShadow = `0 0 16px ${glow}`;
+      card.style.background = 'rgba(255, 255, 255, 0.06)';
+      if (indicator) {
+        indicator.textContent = '✓ Aktif Filtre';
+        indicator.style.color = color;
+        indicator.style.fontWeight = '700';
+      }
+    } else {
+      card.style.borderColor = 'transparent';
+      card.style.boxShadow = 'none';
+      card.style.background = 'var(--bg-subtle)';
+      if (indicator) {
+        indicator.textContent = 'Filtrele ➔';
+        indicator.style.color = color;
+        indicator.style.fontWeight = 'normal';
+      }
+    }
+  };
+
+  updateCardVisual(cardDemos, filter === 'demos', 'var(--primary, #38bdf8)', 'rgba(56, 189, 248, 0.45)');
+  updateCardVisual(cardRem7, filter === 'rem7', '#d97706', 'rgba(217, 119, 6, 0.45)');
+  updateCardVisual(cardRem12, filter === 'rem12', '#e11d48', 'rgba(225, 29, 72, 0.45)');
+  updateCardVisual(cardPaid, filter === 'paid', '#10b981', 'rgba(16, 185, 129, 0.45)');
+
+  if (btnReset) {
+    btnReset.style.display = filter !== 'all' ? 'inline-flex' : 'none';
+  }
+
+  // 3. Seçili Filtreye Göre Kayıtları Süz
+  const filteredLogs = logs.filter(item => {
+    const firstDate = new Date(item.firstLogin);
+    const daysPassed = Math.floor((now - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+    const isPaid = item.status === 'paid';
+
+    if (filter === 'demos') {
+      return !isPaid;
+    }
+    if (filter === 'rem7') {
+      return !isPaid && daysPassed >= 6 && daysPassed <= 10;
+    }
+    if (filter === 'rem12') {
+      return !isPaid && daysPassed >= 11 && daysPassed <= 14;
+    }
+    if (filter === 'paid') {
+      return isPaid;
+    }
+    return true; // 'all'
+  });
+
+  // Tablo Başlığı / Filtre Durumu Göstergesi
+  const headerTitle = document.getElementById('boss-table-filter-title');
+  if (headerTitle) {
+    const filterLabels = {
+      all: `📋 Demo Giriş Kayıtları & Müşteri Listesi (${filteredLogs.length} Kayıt)`,
+      demos: `👥 Tüm Demo Kullanıcılar (${filteredLogs.length} Kayıt)`,
+      rem7: `🔔 7. Gün Hatırlatması Bekleyen Müşteriler (${filteredLogs.length} Kayıt)`,
+      rem12: `🚨 12. Gün Acil Kapanış Bekleyen Müşteriler (${filteredLogs.length} Kayıt)`,
+      paid: `⭐ Aktif Satış Yapılmış / Lisanslı Müşteriler (${filteredLogs.length} Kayıt)`
+    };
+    headerTitle.textContent = filterLabels[filter] || `Müşteri Listesi (${filteredLogs.length} Kayıt)`;
+  }
+
+  if (filteredLogs.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 36px 16px; color: var(--text-dim);">
+          <div style="font-size: 1.6rem; margin-bottom: 6px;">🔍</div>
+          <strong style="color: var(--text-main);">Bu filtreye uygun kayıt bulunmuyor.</strong>
+          <p style="font-size: 0.8rem; margin-top: 4px;">Tüm kullanıcıları görmek için aşağıdaki butona tıklayabilirsiniz.</p>
+          <button type="button" class="btn btn-xs btn-outline mt-2" onclick="filterBossDemoTable('all')">
+            Tüm Kayıtları Göster
+          </button>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // 4. Tablo Satırlarını Oluştur
+  tbody.innerHTML = filteredLogs.map(item => {
     const firstDate = new Date(item.firstLogin);
     const daysPassed = Math.floor((now - firstDate.getTime()) / (1000 * 60 * 60 * 24));
     const remainingDays = Math.max(0, 14 - daysPassed);
@@ -22117,17 +22246,6 @@ function renderBossDemoTable() {
       </tr>
     `;
   }).join('');
-
-  // Metrikleri güncelle
-  const elTotal = document.getElementById('boss-total-demos');
-  const elRem7 = document.getElementById('boss-reminder-7');
-  const elRem12 = document.getElementById('boss-reminder-12');
-  const elPaid = document.getElementById('boss-active-paid');
-
-  if (elTotal) elTotal.textContent = totalDemos;
-  if (elRem7) elRem7.textContent = reminder7Count;
-  if (elRem12) elRem12.textContent = reminder12Count;
-  if (elPaid) elPaid.textContent = paidCount;
 }
 
 function markDemoAsPaid(id) {
