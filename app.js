@@ -1004,6 +1004,30 @@ function switchToAdminSection(targetId) {
 }
 window.switchToAdminSection = switchToAdminSection;
 
+// ==================== Ana Ekran Modüler Görünüm Seçici (Sevk Masası vs Saha Radarı) ====================
+function switchAdminMainView(mode) {
+  if (!mode) mode = 'dispatch';
+  state.adminMainView = mode;
+  try {
+    localStorage.setItem('servisai_admin_main_view', mode);
+  } catch (e) {}
+
+  const btnDispatch = document.getElementById('btn-admin-view-dispatch');
+  const btnStaff = document.getElementById('btn-admin-view-staff');
+  const btnSplit = document.getElementById('btn-admin-view-split');
+  const gridLayout = document.querySelector('.admin-grid-layout');
+
+  if (btnDispatch) btnDispatch.classList.toggle('active', mode === 'dispatch');
+  if (btnStaff) btnStaff.classList.toggle('active', mode === 'staff');
+  if (btnSplit) btnSplit.classList.toggle('active', mode === 'split');
+
+  if (gridLayout) {
+    gridLayout.classList.remove('mode-dispatch', 'mode-staff', 'mode-split');
+    gridLayout.classList.add(`mode-${mode}`);
+  }
+}
+window.switchAdminMainView = switchAdminMainView;
+
 // ==================== 1. Admin / Dispatcher Functions ====================
 function renderStaffList() {
   const container = document.getElementById('staff-container');
@@ -1020,6 +1044,11 @@ function renderStaffList() {
     if (appMode === 'clean' && DEMO_STAFF_NAMES.has((person.name || '').trim())) return false;
     return true;
   });
+
+  const badgeStaff = document.getElementById('switch-badge-staff');
+  if (badgeStaff) {
+    badgeStaff.textContent = `${fieldStaff.length} Uzman`;
+  }
   if (fieldStaff.length === 0) {
     container.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 32px 16px; background: rgba(255,255,255,0.015); border: 1px dashed var(--border-color); border-radius: 8px; color: var(--text-dim);">
@@ -1217,6 +1246,10 @@ function updateActiveOrdersKPI() {
   const pendingOrders = orders.filter(o => !o.assigned_tech || o.status === 'Kabul Edildi');
 
   kpiOrders.textContent = activeOrders.length;
+  const badgeDispatch = document.getElementById('switch-badge-dispatch');
+  if (badgeDispatch) {
+    badgeDispatch.textContent = `${activeOrders.length} İş`;
+  }
   if (kpiSub) {
     if (approvedOrders.length > 0) {
       kpiSub.innerHTML = `<span style="color: #10b981; font-weight: 700;">✅ ${approvedOrders.length} Müşteri Onaylı</span> • ${pendingOrders.length} sevk bekliyor`;
@@ -3533,11 +3566,22 @@ function renderMaintenance() {
 }
 
 function initAdminActions() {
+  // Ana Ekran Modüler Görünüm (Mobil İçin Sevk Masası, Geniş Ekran İçin Tercih)
+  try {
+    const savedMainView = localStorage.getItem('servisai_admin_main_view') || (window.innerWidth < 992 ? 'dispatch' : 'split');
+    if (typeof switchAdminMainView === 'function') {
+      switchAdminMainView(savedMainView);
+    }
+  } catch (e) {
+    console.warn("Modüler görünüm başlatılamadı:", e);
+  }
+
   // KPI 1: Aktif İş Emirleri Butonu (Sevk Masası Aktif Tepsi & Otomatik Odaklanma)
   const btnKpiActiveOrders = document.getElementById('kpi-card-active-orders');
   if (btnKpiActiveOrders) {
     btnKpiActiveOrders.addEventListener('click', () => {
       if (typeof switchToAdminSection === 'function') switchToAdminSection('admin-view');
+      if (typeof switchAdminMainView === 'function') switchAdminMainView('dispatch');
       state.dispatchTray = 'active';
       if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
       if (typeof updateDispatchBanner === 'function') updateDispatchBanner();

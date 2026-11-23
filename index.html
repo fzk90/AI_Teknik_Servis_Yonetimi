@@ -283,6 +283,27 @@
         </div>
       </div>
 
+      <!-- Ana Ekran Modüler Görünüm Seçici Butonları (Mobil & Sadeleştirilmiş Kullanıcı Deneyimi) -->
+      <div class="admin-main-view-switcher" id="admin-main-view-switcher" role="tablist" aria-label="Ana Ekran Panel Seçimi">
+        <button type="button" class="admin-main-switch-btn active" id="btn-admin-view-dispatch"
+          onclick="switchAdminMainView('dispatch')" title="Servis Çağrıları ve Sevk Masasını Aç">
+          <span class="switch-btn-icon">📞</span>
+          <span class="switch-btn-text">Sevk Çağrıları & Sevk Masası</span>
+          <span class="badge badge-primary switch-btn-badge" id="switch-badge-dispatch">0 İş</span>
+        </button>
+        <button type="button" class="admin-main-switch-btn" id="btn-admin-view-staff"
+          onclick="switchAdminMainView('staff')" title="Saha Ekibi ve Uzman Radarını Aç">
+          <span class="switch-btn-icon">👷</span>
+          <span class="switch-btn-text">Saha Ekibi & Uzman Radarı</span>
+          <span class="badge badge-success switch-btn-badge" id="switch-badge-staff">0 Uzman</span>
+        </button>
+        <button type="button" class="admin-main-switch-btn desktop-only" id="btn-admin-view-split"
+          onclick="switchAdminMainView('split')" title="Masaüstü için iki paneli yan yana aç">
+          <span class="switch-btn-icon">⚡</span>
+          <span class="switch-btn-text">İkili Panel (Yan Yana)</span>
+        </button>
+      </div>
+
       <!-- 2 Kolonlu Dengeli ve Ferah Sevk Masası -->
       <div class="admin-grid-layout">
 
