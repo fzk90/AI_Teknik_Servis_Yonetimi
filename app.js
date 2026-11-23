@@ -8591,9 +8591,34 @@ function openSettingsModal(targetTabId = null) {
 }
 window.openSettingsModal = openSettingsModal;
 
+function toggleSettingsToolsDropdown(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('settings-tools-dropdown-menu');
+  const trigger = document.getElementById('btn-settings-tools-menu');
+  if (!menu) return;
+  const isHidden = menu.style.display === 'none' || menu.style.display === '';
+  if (isHidden) {
+    menu.style.display = 'block';
+    if (trigger) trigger.classList.add('active');
+  } else {
+    menu.style.display = 'none';
+    if (trigger) trigger.classList.remove('active');
+  }
+}
+window.toggleSettingsToolsDropdown = toggleSettingsToolsDropdown;
+
+function closeSettingsToolsDropdown() {
+  const menu = document.getElementById('settings-tools-dropdown-menu');
+  const trigger = document.getElementById('btn-settings-tools-menu');
+  if (menu) menu.style.display = 'none';
+  if (trigger) trigger.classList.remove('active');
+}
+window.closeSettingsToolsDropdown = closeSettingsToolsDropdown;
+
 function closeSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (modal) modal.style.display = 'none';
+  closeSettingsToolsDropdown();
 }
 
 function initSettingsActions() {
@@ -8607,6 +8632,23 @@ function initSettingsActions() {
   const btnResetDefaults = document.getElementById('btn-reset-default-rates');
   const formNewRate = document.getElementById('form-new-service-rate');
   const btnRefreshTcmb = document.getElementById('btn-refresh-tcmb-rates');
+
+  // Sistem Araçları Pop-down Menü Olayları
+  document.addEventListener('click', (e) => {
+    const wrapper = document.getElementById('settings-tools-dropdown-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      closeSettingsToolsDropdown();
+    }
+  });
+
+  const toolsMenu = document.getElementById('settings-tools-dropdown-menu');
+  if (toolsMenu) {
+    toolsMenu.addEventListener('click', (e) => {
+      if (e.target.closest('.dropdown-item')) {
+        closeSettingsToolsDropdown();
+      }
+    });
+  }
 
   // Hızlı Aksiyon Butonları & Formlar
   const btnStartWizard = document.getElementById('btn-start-onboarding-wizard');
